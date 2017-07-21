@@ -6,7 +6,8 @@ export const fetchData = () => {
 		//Generate 6000 random data points
 		const data = Array.from({length:6000}).map((v,i)=>{
 			return {
-				id:uuidv4()
+				id:uuidv4(),
+				//pickingColor:[Math.random(),Math.random(),Math.random(),1]
 			}
 		});
 
