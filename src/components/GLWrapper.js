@@ -18,13 +18,13 @@ class GLWrapper extends Component{
 		this.state = {
 			cameraPosition:[4,12,12],
 			cameraLookAt:[0,7,0],
-			speed:200000, //300s for all signs to march through
+			speed:600000, //300s for all signs to march through
 			globalPct:0, //progress of the march, from 0 - 1;
 			//Distribution of signs
 			X0:-10,
 			X1:10, 
 			Y_SPREAD:2,
-			Z0:-900,
+			Z0:-1800,
 			Z1:100,
 			//Grid
 			GRID_X0:-200,
@@ -99,7 +99,10 @@ class GLWrapper extends Component{
 		//Reverse pixel value into id
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 		if(this.instances && this.instances[id]){
-			console.log(this.instances[id].id);
+			//console.log(this.instances[id].offsetPosition);
+			const {offsetPosition} = this.instances[id];
+			console.log(offsetPosition[0],1,offsetPosition[2]);
+			this.meshes.target.position.set(offsetPosition[0],1,offsetPosition[2]);
 		}
 	}
 
@@ -131,11 +134,22 @@ class GLWrapper extends Component{
 
 		// TODO: TARGET
 		const targetGeometry0 = new THREE.BufferGeometry();
-		const targetVertices0 = new Float32Array([
-
-		]);
+		const targetVertices0 = new THREE.BufferAttribute(new Float32Array([
+			-.3,.3,0,
+			0,-.6,0,
+			.3,.3,0,
+			0,.3,-.3,
+			0,-.6,0,
+			0,.3,.3
+		]), 3);
+		targetGeometry0.addAttribute('position',targetVertices0);
+		const targetMaterial0 = new THREE.MeshNormalMaterial({
+			side:THREE.DoubleSide
+		});
+		this.meshes.target = new THREE.Mesh(targetGeometry0,targetMaterial0);
 
 		this.scene.add(this.meshes.grid);
+		this.scene.add(this.meshes.target);
 	}
 
 	_processData(data){
@@ -257,7 +271,7 @@ class GLWrapper extends Component{
 		//https://stackoverflow.com/questions/40100640/three-js-read-a-three-instancedbufferattribute-of-type-mat4-from-the-shader
 		//TODO: assume aspect ratio information is provided as image width/image height
 		const transformMatrix = new THREE.Matrix4();
-		transformMatrix.makeScale(2, 1, Math.random()*.5+.5);
+		transformMatrix.makeScale(Math.random()*2, 1, Math.random()*.5+.5);
 
 		return {
 			id:v.id,
@@ -279,6 +293,8 @@ class GLWrapper extends Component{
 			this.meshes.arrows.material.uniforms.uGlobalPct.value = globalPct;
 			this.meshes.signsPicking.material.uniforms.uGlobalPct.value = globalPct;
 		}
+
+		this.meshes.target.rotation.y += .03;
 
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._animate);
