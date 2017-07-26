@@ -3,7 +3,6 @@ const vertexShaderText = `
 	attribute vec3 instanceOffset;
 	attribute vec4 instanceColor;
 	attribute vec4 instanceOrientation;
-	attribute float instancePctStart;
 
 	attribute vec4 instanceTransformCol0;
 	attribute vec4 instanceTransformCol1;
@@ -13,9 +12,6 @@ const vertexShaderText = `
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
 
-	uniform float uGlobalPct;
-	uniform float uZ0;
-	uniform float uZ1;
 	uniform vec4 uColor;
 	uniform bool uUsePickingColor;
 	uniform bool uUseInstanceTransform;
@@ -32,14 +28,6 @@ const vertexShaderText = `
 			instanceTransformCol3
 		);
 
-		//Calculate instanceOffsetAtPct at given % progress
-		float pct = instancePctStart + uGlobalPct;
-		if(pct>1.0){
-			pct = pct - 1.0;
-		}
-		float zOffset = uZ0*(1.0-pct) + uZ1*pct;
-		vec3 instanceOffsetAtPct = vec3(instanceOffset.xy, zOffset);
-
 		//Transform (scale) vertex position
 		vec4 transformedPosition;
 		if(uUseInstanceTransform){
@@ -53,7 +41,7 @@ const vertexShaderText = `
 		vec3 orientedPosition = vcV * (2.0 * instanceOrientation.w) + (cross(instanceOrientation.xyz,vcV)*2.0+transformedPosition.xyz);
 
 		//Offset position per instance in model coordinates
-		vec3 offsetPosition = instanceOffsetAtPct + orientedPosition;
+		vec3 offsetPosition = instanceOffset + orientedPosition;
 
 		//Vertex in view coordinates
 		vec4 mvPosition = modelViewMatrix * vec4(offsetPosition, 1.0);

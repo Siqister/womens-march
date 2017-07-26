@@ -16,15 +16,13 @@ class GLWrapper extends Component{
 		this.onMouseMove = this.onMouseMove.bind(this);
 
 		this.state = {
-			cameraPosition:[4,12,12],
-			cameraLookAt:[0,7,0],
-			speed:600000, //300s for all signs to march through
+			cameraPosition:[400,0,-400],
+			cameraLookAt:[0,0,0],
+			speed:-.0005, //300s for all signs to march through
 			//Distribution of signs
-			X0:-10,
-			X1:10, 
-			Y_SPREAD:2,
-			Z0:-1800,
-			Z1:100,
+			X0:-15,
+			X1:15, 
+			R:300,
 			//Grid
 			GRID_X0:-200,
 			GRID_X1:200,
@@ -42,8 +40,6 @@ class GLWrapper extends Component{
 			grid:null,
 			target:null
 		}
-		this.globalPct = 0;
-		this.targetOffsetPct = 0;
 	}
 
 	componentDidMount(){
@@ -71,7 +67,7 @@ class GLWrapper extends Component{
 		this.pickingTexture = new THREE.WebGLRenderTarget(width,height);
 
 		//Init static meshes and start animation loop
-		this._initStaticMeshes();
+		//this._initStaticMeshes();
 		this._animate();
 	}
 
@@ -174,7 +170,7 @@ class GLWrapper extends Component{
 	_processData(data){
 		//Process data array
 		//Will be called every time component updates with props.data
-		const {X0,X1,Y_SPREAD,Z0,Z1, instances} = this.state;
+		const {instances} = this.state;
 		const COUNT = instances.length;
 
 		//SIGNS
@@ -216,8 +212,8 @@ class GLWrapper extends Component{
 			instanceTransformCol2.setXYZW(i, ...transformMatrixElements.slice(8,12));
 			instanceTransformCol3.setXYZW(i, ...transformMatrixElements.slice(12));
 
-			arrowOffsets.setXYZ(i, offsetPosition[0], -Y_SPREAD*3+.005, offsetPosition[2]);
-			arrowOrientations.setXYZW(i, 0.0, 0.0, 1.0, 0.0);
+			arrowOffsets.setXYZ(i, ...offsetPosition);
+			//arrowOrientations.setXYZW(i, 0.0, 0.0, 1.0, 0.0);
 
 			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
 		}
@@ -230,7 +226,6 @@ class GLWrapper extends Component{
 		geometry.addAttribute('instanceOffset', instanceOffsets);
 		geometry.addAttribute('instanceColor', instanceColors);
 		geometry.addAttribute('instanceOrientation', instanceOrientations);
-		geometry.addAttribute('instancePctStart', instancePctStarts);
 		geometry.addAttribute('instanceTransformCol0',instanceTransformCol0);
 		geometry.addAttribute('instanceTransformCol1',instanceTransformCol1);
 		geometry.addAttribute('instanceTransformCol2',instanceTransformCol2);
@@ -238,10 +233,7 @@ class GLWrapper extends Component{
 		//RawShaderMaterial
 		let material = new THREE.RawShaderMaterial({
 			uniforms:{
-				uGlobalPct:{value:0.0},
-				uZ0:{value:Z0},
-				uZ1:{value:Z1},
-				uFogFactor:{value:0.0002},
+				uFogFactor:{value:0},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true}
@@ -259,8 +251,7 @@ class GLWrapper extends Component{
 		arrowsGeometry.addAttribute('position', arrowVertices);
 		arrowsGeometry.addAttribute('instanceOffset', arrowOffsets);
 		arrowsGeometry.addAttribute('instanceColor', instanceColors);
-		arrowsGeometry.addAttribute('instanceOrientation', arrowOrientations);
-		arrowsGeometry.addAttribute('instancePctStart', instancePctStarts);
+		arrowsGeometry.addAttribute('instanceOrientation', instanceOrientations);
 		material = material.clone();
 		material.uniforms.uColor.value = new THREE.Vector4(.3,.3,.3,1.0);
 		material.uniforms.uUseInstanceTransform.value = false;
@@ -278,39 +269,38 @@ class GLWrapper extends Component{
 	}
 
 	_setPerInstanceProperties(v,i){
-		const {X0,X1,Y_SPREAD,Z0,Z1} = this.state;
+		const {X0,X1,R} = this.state;
+		const theta = Math.random()*Math.PI*2; 
 
-		//Set per instance transform matrix here
+		//Convert polor coordinate [theta, R] to cartesian [z, y];
+		const z = Math.cos(theta)*R,
+			y = Math.sin(theta)*R;
+
+		//Set per instance transform mat4 here
 		//https://stackoverflow.com/questions/40100640/three-js-read-a-three-instancedbufferattribute-of-type-mat4-from-the-shader
 		//TODO: assume aspect ratio information is provided as image width/image height
 		const transformMatrix = new THREE.Matrix4();
 		transformMatrix.makeScale(Math.random()*2, 1, Math.random()*.5+.5);
 
+		//Set per instance orientation vec4
+		const orientation = new THREE.Vector3();
+		orientation.crossVectors(new THREE.Vector3(0,y,z), new THREE.Vector3(1,0,0));
+
 		return {
 			id:v.id,
-			offsetPosition:[(Math.random()*2-1)*(X1-X0), (Math.random()*2-1)*Y_SPREAD, Math.random()*(Z1-Z0)+Z0], 
-			pctOffset:Math.random(), //How far along the march?
-			orientation: (new THREE.Vector4(Math.random()*1-.5, Math.random()*.2-.05, 1.0, 0.0)).normalize(),
+			offsetPosition:[(Math.random()*2-1)*(X1-X0), y, z], 
+			orientation: (new THREE.Vector4(orientation.x, orientation.y, orientation.z, 0)).normalize(),
 			transformMatrix,
 			pickingColor: (new THREE.Color()).setHex(i)
 		};
 	}
 
 	_animate(delta){
-		this.globalPct = (delta%this.state.speed)/this.state.speed;
-
-		//Each animation frame, update uniforms
 		if(this.meshes.signs){
-			this.meshes.signs.material.uniforms.uGlobalPct.value = this.globalPct;
-			this.meshes.arrows.material.uniforms.uGlobalPct.value = this.globalPct;
-			this.meshes.signsPicking.material.uniforms.uGlobalPct.value = this.globalPct;
+			this.meshes.signs.rotation.x += this.state.speed;
+			this.meshes.signsPicking.rotation.x += this.state.speed;
+			this.meshes.arrows.rotation.x += this.state.speed;
 		}
-
-		//Reposition target
-		let pct = this.globalPct + this.targetOffsetPct;
-		if(pct > 1){ pct -= 1; }
-		this.meshes.target.position.z = this.state.Z0*(1-pct) + this.state.Z1*pct;
-		this.meshes.target.rotation.y += .03;
 
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._animate);
@@ -323,7 +313,6 @@ class GLWrapper extends Component{
 			<div className='gl-wrapper'
 				style={{width,height}}
 				ref={(node)=>{this.wrapperNode=node}}
-				onMouseMove={this.onMouseMove}
 			>
 			</div>
 		);
