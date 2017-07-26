@@ -19,7 +19,6 @@ class GLWrapper extends Component{
 			cameraPosition:[4,12,12],
 			cameraLookAt:[0,7,0],
 			speed:600000, //300s for all signs to march through
-			globalPct:0, //progress of the march, from 0 - 1;
 			//Distribution of signs
 			X0:-10,
 			X1:10, 
@@ -30,7 +29,9 @@ class GLWrapper extends Component{
 			GRID_X0:-200,
 			GRID_X1:200,
 			GRID_SPACING_X:3,
-			GRID_SPACING_Z:6
+			GRID_SPACING_Z:6,
+			//Instance data for signs
+			instances:[]
 		};
 
 		//Direct references to meshes
@@ -41,6 +42,8 @@ class GLWrapper extends Component{
 			grid:null,
 			target:null
 		}
+		this.globalPct = 0;
+		this.targetOffsetPct = 0;
 	}
 
 	componentDidMount(){
@@ -67,15 +70,23 @@ class GLWrapper extends Component{
 		this.pickingScene = new THREE.Scene();
 		this.pickingTexture = new THREE.WebGLRenderTarget(width,height);
 
-		//If data...
+		//Init static meshes and start animation loop
 		this._initStaticMeshes();
-		if(data.length){this._processData(data);}
-
 		this._animate();
 	}
 
+	componentWillReceiveProps(nextProps){
+		if(nextProps.data.length !== this.props.data.length){
+			//TODO: minimize this
+			this.setState({instances: [...nextProps.data.map(this._setPerInstanceProperties)]}); //nextState, based on nextProps
+		}
+	}
 
-	componentDidUpdate(){
+	shouldComponentUpdate(nextProps, nextState){
+		return true;
+	}
+
+	componentDidUpdate(prevProps, prevState){
 		const {width,height,data} = this.props;
 
 		//Assume width and height are changed
@@ -84,9 +95,11 @@ class GLWrapper extends Component{
 		this.renderer.setSize(width,height);
 		this.pickingTexture.setSize(width,height);
 
-		//If data is injected, process mesh
-		//TODO: this will add another set of meshes every time component updates!!
-		if(data.length){this._processData(data);}
+		//If new data is injected, process mesh
+		if(this.state.instances.length !== prevState.instances.length){
+			//TODO: remove previously added dynamic meshes
+			this._processData(this.state.instances);
+		}
 	}
 
 	onMouseMove(e){
@@ -98,11 +111,17 @@ class GLWrapper extends Component{
 		this.renderer.readRenderTargetPixels(this.pickingTexture, x, this.pickingTexture.height - y, 1, 1, pixelBuffer);
 		//Reverse pixel value into id
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
-		if(this.instances && this.instances[id]){
+		if(this.state.instances && this.state.instances[id]){
 			//console.log(this.instances[id].offsetPosition);
-			const {offsetPosition} = this.instances[id];
-			console.log(offsetPosition[0],1,offsetPosition[2]);
-			this.meshes.target.position.set(offsetPosition[0],1,offsetPosition[2]);
+			const {offsetPosition, pctOffset} = this.state.instances[id];
+			this.targetOffsetPct = pctOffset;
+
+			let pct = this.targetOffsetPct + this.globalPct;
+			if(pct > 1){ pct = pct - 1; }
+			this.meshes.target.position.set(
+				offsetPosition[0],
+				3,
+				this.state.Z0*(1-pct)+this.state.Z1*pct);
 		}
 	}
 
@@ -153,18 +172,12 @@ class GLWrapper extends Component{
 	}
 
 	_processData(data){
-		//TODO: do this at some point in the life cycle
-
 		//Process data array
 		//Will be called every time component updates with props.data
-		const {X0,X1,Y_SPREAD,Z0,Z1} = this.state;
+		const {X0,X1,Y_SPREAD,Z0,Z1, instances} = this.state;
+		const COUNT = instances.length;
 
 		//SIGNS
-		//Randomize positions
-		const instances = data.map(this._setPerInstanceProperties);
-		const COUNT = instances.length;
-		this.instances = instances; //TODO: instances should probably be component state
-
 		//ATTRIBUTES...
 		//...set up attributes
 		//per vertex BufferAttribute
@@ -284,16 +297,19 @@ class GLWrapper extends Component{
 	}
 
 	_animate(delta){
-		const globalPct = (delta%this.state.speed)/this.state.speed;
-		// this.setState({globalPct});
+		this.globalPct = (delta%this.state.speed)/this.state.speed;
 
 		//Each animation frame, update uniforms
 		if(this.meshes.signs){
-			this.meshes.signs.material.uniforms.uGlobalPct.value = globalPct;
-			this.meshes.arrows.material.uniforms.uGlobalPct.value = globalPct;
-			this.meshes.signsPicking.material.uniforms.uGlobalPct.value = globalPct;
+			this.meshes.signs.material.uniforms.uGlobalPct.value = this.globalPct;
+			this.meshes.arrows.material.uniforms.uGlobalPct.value = this.globalPct;
+			this.meshes.signsPicking.material.uniforms.uGlobalPct.value = this.globalPct;
 		}
 
+		//Reposition target
+		let pct = this.globalPct + this.targetOffsetPct;
+		if(pct > 1){ pct -= 1; }
+		this.meshes.target.position.z = this.state.Z0*(1-pct) + this.state.Z1*pct;
 		this.meshes.target.rotation.y += .03;
 
 		this.renderer.render(this.scene, this.camera);
@@ -313,5 +329,9 @@ class GLWrapper extends Component{
 		);
 	}
 }
+
+GLWrapper.defaultProps = {
+	data:[]
+};
 
 export default GLWrapper;
