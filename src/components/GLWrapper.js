@@ -61,7 +61,7 @@ class GLWrapper extends Component{
 			rendererClearcolor:0xeeeeee
 		};
 
-		//Shared 3D assets
+		//Shared GL assets
 		this.meshes = {
 			signs:null,
 			signsPicking:null,
@@ -70,7 +70,7 @@ class GLWrapper extends Component{
 			target:null
 		}
 		this.material = null;
-
+		this.texture = new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg');
 	}
 
 	componentDidMount(){
@@ -106,7 +106,7 @@ class GLWrapper extends Component{
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
-				map:{value:new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg')}
+				map:{value:null}
 			},
 			vertexShader:vertexShader,
 			fragmentShader:fragmentShader,
@@ -173,21 +173,9 @@ class GLWrapper extends Component{
 	_initStaticMeshes(){
 		const {R, R_WIGGLE} = this.state;
 
-		//Target
-		const vertices = new THREE.BufferAttribute(new Float32Array(6*3),3);
-		vertices.setXYZ(0, -1.0, 1.0, 0);
-		vertices.setXYZ(1, 1.0, 1.0, .05);
-		vertices.setXYZ(2, 1.0, -1.0, 0);
-		vertices.setXYZ(3, 1.0, -1.0, 0);
-		vertices.setXYZ(4, -1.0, -1.0, .05);
-		vertices.setXYZ(5, -1.0, 1.0, 0);
-		const uv = new THREE.BufferAttribute(new Float32Array(6*2),2);
-		uv.setXY(0,0,0);
-		uv.setXY(1,1,0);
-		uv.setXY(2,1,1);
-		uv.setXY(3,1,1);
-		uv.setXY(4,0,1);
-		uv.setXY(5,0,0);
+		//TARGET
+		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
+		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 
 		const targetTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
 			targetTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
@@ -205,37 +193,24 @@ class GLWrapper extends Component{
 		targetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0,0.0,0.0,1.0);
 		targetMaterial.uniforms.uFogFactor.value = 0;
 		targetMaterial.uniforms.uUseTexture.value = true;
+		targetMaterial.uniforms.map.value = this.texture;
 
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
 	}
 
 	_processData(data){
-		//Process data array
-		//Will be called every time component updates with props.data
+		//Process data array; called when props.data changes
 		const {instances} = this.state;
 		const COUNT = instances.length;
 
 		//SIGNS
-		//ATTRIBUTES...
-		//...set up attributes
-		//per vertex BufferAttribute
-		const vertices = new THREE.BufferAttribute(new Float32Array(3*6),3);
-		vertices.setXYZ(0, -1.0, 1.0, 0);
-		vertices.setXYZ(1, 1.0, 1.0, .05);
-		vertices.setXYZ(2, 1.0, -1.0, 0);
-		vertices.setXYZ(3, 1.0, -1.0, 0);
-		vertices.setXYZ(4, -1.0, -1.0, .05);
-		vertices.setXYZ(5, -1.0, 1.0, 0);
-		const uv = new THREE.BufferAttribute(new Float32Array(6*2),2);
-		uv.setXY(0,0,0);
-		uv.setXY(1,1,0);
-		uv.setXY(2,1,1);
-		uv.setXY(3,1,1);
-		uv.setXY(4,0,1);
-		uv.setXY(5,0,0);
-		const arrowVertices = new THREE.BufferAttribute(new Float32Array([-.2,0,.2,0,0,-.5,.2,0,.2]),3);
-		//per instance InstancedBufferAttribute...
+		//Attributes...
+		//...per vertex BufferAttribute
+		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
+		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
+		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
+		//...per instance InstancedBufferAttribute...
 		const instanceTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
 			instanceTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
 			instanceTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
@@ -244,10 +219,10 @@ class GLWrapper extends Component{
 			instanceArrowTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
 			instanceArrowTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
 			instanceArrowTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		// ...shared
+		// ...shared between sign and arrow
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		
-		//...populate attributes with data
+		//Populate attribute with data
 		for(let i=0; i<COUNT; i++){
 			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
 
@@ -280,7 +255,7 @@ class GLWrapper extends Component{
 		//RawShaderMaterial
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
-		material.uniforms.map.value = new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg');
+		material.uniforms.map.value = this.texture;
 		//Geometry + Material -> Mesh
 		this.meshes.signs = new THREE.Mesh(geometry,material);
 
@@ -301,8 +276,6 @@ class GLWrapper extends Component{
 
 		this.scene.add(this.meshes.signs);
 		this.scene.add(this.meshes.arrows);
-		//this.meshes.signs.position.y = 58;
-		//this.meshes.arrows.position.y = 58;
 		
 		//SIGN FOR PICKING
 		material = this.material.clone();
@@ -310,7 +283,6 @@ class GLWrapper extends Component{
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
 
 		this.pickingScene.add(this.meshes.signsPicking);
-		//this.meshes.signsPicking.position.y = 58;
 	}
 
 	_setPerInstanceProperties(data){
