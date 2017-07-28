@@ -1,8 +1,7 @@
 const vertexShaderText = `
 	attribute vec3 position;
-	attribute vec3 instanceOffset;
+	attribute vec2 uv;
 	attribute vec4 instanceColor;
-	attribute vec4 instanceOrientation;
 
 	attribute vec4 instanceTransformCol0;
 	attribute vec4 instanceTransformCol1;
@@ -15,9 +14,11 @@ const vertexShaderText = `
 	uniform vec4 uColor;
 	uniform bool uUsePickingColor;
 	uniform bool uUseInstanceTransform;
+	uniform bool uUseTexture;
 
 	varying vec4 vColor;
 	varying vec4 vVertexPosition;
+	varying vec2 vUv;
 
 	void main(){
 		//Calculate per instance transform matrix from its 4 columns
@@ -28,7 +29,7 @@ const vertexShaderText = `
 			instanceTransformCol3
 		);
 
-		//Transform (scale) vertex position
+		//Transform vertex position
 		vec4 transformedPosition;
 		if(uUseInstanceTransform){
 			transformedPosition = instanceTransformMatrix * vec4(position, 1.0);
@@ -37,26 +38,26 @@ const vertexShaderText = `
 		}
 		
 		//Re-orient in model coordinates
-		vec3 vcV = cross(instanceOrientation.xyz, transformedPosition.xyz);
-		vec3 orientedPosition = vcV * (2.0 * instanceOrientation.w) + (cross(instanceOrientation.xyz,vcV)*2.0+transformedPosition.xyz);
-
-		//Offset position per instance in model coordinates
-		vec3 offsetPosition = instanceOffset + orientedPosition;
+		//vec3 vcV = cross(instanceOrientation.xyz, transformedPosition.xyz);
+		//vec3 orientedPosition = vcV * (2.0 * instanceOrientation.w) + (cross(instanceOrientation.xyz,vcV)*2.0+transformedPosition.xyz);
 
 		//Vertex in view coordinates
-		vec4 mvPosition = modelViewMatrix * vec4(offsetPosition, 1.0);
+		vec4 mvPosition = modelViewMatrix * vec4(transformedPosition.xyz, 1.0);
 		gl_Position = projectionMatrix * mvPosition;
 
-		//Varying color based on per instanceOrientation
-		float colorWeighting = max(dot(vec3(0.0,0.0,1.0),instanceOrientation.xyz),0.0);
+		//Varying color based on per instance attribute
+		float colorWeighting = 1.0; 
 		
-
 		if(uUsePickingColor){
 			vColor = instanceColor;
 		}else{
 			vColor = vec4(uColor.rgb * colorWeighting,1.0);		
 		}
+		
 		vVertexPosition = mvPosition;
+		
+		vUv = uv;
+
 	}
 `;
 

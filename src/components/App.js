@@ -13,6 +13,8 @@ class App extends Component{
 			width:0,
 			height:0
 		};
+
+		this._handleSelect = this._handleSelect.bind(this);
 	}
 
 	componentDidMount(){
@@ -42,6 +44,10 @@ class App extends Component{
 		});
 	}
 
+	_handleSelect(id){
+		console.log(id);
+	}
+
 	componentWillUnmount(){
 		window.removeEventListener('resize');
 	}
@@ -51,7 +57,12 @@ class App extends Component{
 
 		return (
 			<div className='app' ref={(node)=>{this.appNode = node}}>
-				{width&&height&&<GLWrapper width={width} height={height} data={images}/>}
+				{width&&height&&<GLWrapper 
+					width={width} 
+					height={height} 
+					data={images}
+					handleSelect={this._handleSelect}
+				/>}
 			</div>
 		);
 	}
