@@ -1,9 +1,11 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
-import {randomNormal} from 'd3';
-//TODO: implement trackball control
-const TrackballControls = require('three-trackballcontrols');
+import {randomNormal, scaleLinear} from 'd3';
 const TWEEN = require('tween.js');
+
+//TODO
+//Temp
+const faker = require('faker');
 
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
@@ -40,7 +42,9 @@ const canvasStyle = {
 };
 
 class GLWrapper extends Component{
+
 	constructor(props){
+
 		super(props);
 
 		this._animate = this._animate.bind(this);
@@ -56,7 +60,7 @@ class GLWrapper extends Component{
 		this.state = {
 			//cameraPosition:[0,-58,100],
 			//cameraPosition:[550,0,550],
-			cameraLookAt:[0,0,0],
+			cameraLookAt:new THREE.Vector3(0,0,0),
 			speed:.003, //300s for all signs to march through
 			//Distribution of signs
 			X0:-120,
@@ -79,9 +83,14 @@ class GLWrapper extends Component{
 		}
 		this.material = null;
 		this.texture = new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg');
+
+		//Utility
+		this.fontScale = scaleLinear().domain([400,1500]).range([18,4]).clamp(true);
+
 	}
 
 	componentDidMount(){
+
 		const {width,height,data,cameraPosition} = this.props;
 		const {cameraLookAt,rendererClearcolor} = this.state;
 
@@ -89,7 +98,7 @@ class GLWrapper extends Component{
 		//Init camera
 		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.01, 3000);
 		this.camera.position.set(...cameraPosition);
-		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
+		this.camera.lookAt(cameraLookAt);
 		this.camera.zoom = 1;
 
 		//Init renderer, and mount renderer dom element
@@ -97,7 +106,7 @@ class GLWrapper extends Component{
 		this.renderer.setClearColor(rendererClearcolor);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
-		this.wrapperNode.appendChild(this.renderer.domElement);
+		this.glNode.appendChild(this.renderer.domElement);
 
 		//Init scene
 		this.scene = new THREE.Scene();
@@ -125,21 +134,28 @@ class GLWrapper extends Component{
 
 		//Init <canvas> context
 		this.ctx = this.canvasNode.getContext('2d');
+		this.ctx.globalAlpha = .3;
+		this.ctx.globalCompositeOperation = 'multiply';
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
 		this._animate();		
+
 	}
 
 	componentWillReceiveProps(nextProps){
+
 		if(nextProps.data.length !== this.props.data.length){
 			//TODO: minimize this
 			this.setState({instances: [...this._setPerInstanceProperties(nextProps.data)]}); //nextState, based on nextProps
 		}
+
 	}
 
 	componentDidUpdate(prevProps, prevState){
+
 		const {width,height,data,cameraPosition} = this.props;
+		const {cameraLookAt} = this.state;
 
 		//Assume width and height are changed
 		this.camera.aspect = width/height;
@@ -153,20 +169,25 @@ class GLWrapper extends Component{
 			.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
-				this.camera.lookAt(new THREE.Vector3(...this.state.cameraLookAt));
+				this.camera.lookAt(cameraLookAt);
 			})
 			.start();
 
 		//If new data is injected, process mesh
 		if(this.state.instances.length !== prevState.instances.length){
 			
-			
 			//TODO: remove previously added dynamic meshes
 			this._processData(this.state.instances);
 		}
+
 	}
 
 	onMouseMove(e){
+
+		const {width,height,cameraPosition} = this.props;
+		const {cameraLookAt} = this.state;
+
+		//Picking
 		const x = e.clientX, y = e.clientY;
 		const id = this._pick(x,y);
 
@@ -183,20 +204,33 @@ class GLWrapper extends Component{
 			instanceTransformCol2.needsUpdate = true;
 			instanceTransformCol3.needsUpdate = true;
 		}
+
+		//Shift camera slightly
+		//To clip space
+		const clipX = x/width*2-1;
+		const clipY = 1-y/height*2;
+
+		this.camera.position.x = cameraPosition[0] + clipX*50;
+		this.camera.position.y = cameraPosition[1] + clipY*20;
+		this.camera.lookAt(cameraLookAt);
 	}
 
 	onClick(e){
+
 		const x = e.clientX, y = e.clientY;
 		const id = this._pick(x,y);
 
 		if(this.state.instances && this.state.instances[id]){
 			this.props.handleSelect(id);
 
+			//TODO
 			//Given instance, recalculate and reset its transform matrix
 		}
+
 	}
 
 	_initStaticMeshes(){
+
 		const {R, R_WIGGLE} = this.state;
 
 		//TARGET
@@ -223,9 +257,11 @@ class GLWrapper extends Component{
 
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
+
 	}
 
 	_processData(data){
+
 		//Process data array; called when props.data changes
 		const {instances} = this.state;
 		const COUNT = instances.length;
@@ -309,9 +345,11 @@ class GLWrapper extends Component{
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
 
 		this.pickingScene.add(this.meshes.signsPicking);
+
 	}
 
 	_setPerInstanceProperties(data){
+
 		const {X0,X1,R,R_WIGGLE} = this.state;
 
 		const position = new THREE.Vector3();
@@ -355,18 +393,22 @@ class GLWrapper extends Component{
 				pickingColor: color.clone().setHex(i),
 				x,y,z,
 				theta,
-				radius
+				radius,
+				text:faker.fake("{{lorem.sentence}}")
 			};
 		});
+
 	}
 
 	_pick(x,y){
+
 		this.renderer.render(this.pickingScene, this.camera, this.pickingTexture);
 		const pixelBuffer = new Uint8Array(4);
 		this.renderer.readRenderTargetPixels(this.pickingTexture,x,this.pickingTexture.height-y,1,1,pixelBuffer);
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 
 		return id;
+
 	}
 
 	_animate(delta){
@@ -396,10 +438,10 @@ class GLWrapper extends Component{
 		this.ctx.clearRect(0, 0, width, height);
 
 		if(this.meshes.signs){
-			const m = this.meshes.signs.modelViewMatrix.multiply(this.camera.projectionMatrix);
+			const m = this.meshes.signs.modelViewMatrix.premultiply(this.camera.projectionMatrix);
 
 			this.state.instances
-				.filter((v,i)=>(i%200===0))
+				.filter((v,i)=>(i%600==0))
 				.forEach((v,i)=>{
 					
 					const clipSpace = new THREE.Vector4(v.x, v.y, v.z, 1.0).applyMatrix4(m);
@@ -409,8 +451,8 @@ class GLWrapper extends Component{
 					const pixelX = (clipX * .5 + .5)*width;
 					const pixelY = (clipY * -.5 + .5)*height;
 
-					this.ctx.fillText(v.id, pixelX, pixelY);
-
+					this.ctx.font = `${this.fontScale(clipSpace.z)}px serif`;
+					this.ctx.fillText(`"${v.text}"`, pixelX, pixelY);
 				});
 		}
 
@@ -421,17 +463,19 @@ class GLWrapper extends Component{
 
 		return (
 			<div>
-				<canvas width={width} height={height}
+				<canvas 
+					width={width} 
+					height={height}
 					style={canvasStyle}
 					ref={(node)=>{this.canvasNode = node}}
 				/>
-				<div className='gl-wrapper'
+				<div 
+					className='gl-wrapper'
 					style={{width,height}}
-					ref={(node)=>{this.wrapperNode = node}}
+					ref={(node)=>{this.glNode = node}}
 					onMouseMove={this.onMouseMove}
 					onClick={this.onClick}
-				>
-				</div>
+				/>
 			</div>
 		);
 	}

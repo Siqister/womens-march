@@ -24,7 +24,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			camera:cameraSettings.wheel
+			camera:cameraSettings.far
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -69,7 +69,10 @@ class App extends Component{
 		const {images,width,height} = this.state;
 
 		return (
-			<div className='app' ref={(node)=>{this.appNode = node}} >
+			<div 
+				className='app' 
+				ref={(node)=>{this.appNode = node}} 
+			>
 				{width&&height&&<GLWrapper 
 					width={width} 
 					height={height} 
