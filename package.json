@@ -36,6 +36,7 @@
     "react-three-renderer": "^3.1.0",
     "three": "^0.86.0",
     "three-trackballcontrols": "0.0.5",
+    "tween.js": "^16.6.0",
     "uuid": "^3.1.0"
   }
 }

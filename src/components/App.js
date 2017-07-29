@@ -4,6 +4,18 @@ import {fetchData} from '../utils';
 
 import GLWrapper from './GLWrapper';
 
+const cameraSettings = {
+	march:{
+		position: [0, -58, 100]
+	},
+	wheel:{
+		position: [600, 0, 650]
+	},
+	far:{
+		position: [1500,0,800]
+	}
+}
+
 class App extends Component{
 	constructor(props){
 		super(props);
@@ -11,7 +23,8 @@ class App extends Component{
 		this.state = {
 			images:[],
 			width:0,
-			height:0
+			height:0,
+			camera:cameraSettings.wheel
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -56,11 +69,12 @@ class App extends Component{
 		const {images,width,height} = this.state;
 
 		return (
-			<div className='app' ref={(node)=>{this.appNode = node}}>
+			<div className='app' ref={(node)=>{this.appNode = node}} >
 				{width&&height&&<GLWrapper 
 					width={width} 
 					height={height} 
 					data={images}
+					cameraPosition={this.state.camera.position}
 					handleSelect={this._handleSelect}
 				/>}
 			</div>

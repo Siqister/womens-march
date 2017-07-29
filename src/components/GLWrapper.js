@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
 import {randomNormal} from 'd3';
-
 //TODO: implement trackball control
 const TrackballControls = require('three-trackballcontrols');
+const TWEEN = require('tween.js');
 
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
@@ -47,7 +47,7 @@ class GLWrapper extends Component{
 
 		this.state = {
 			//cameraPosition:[0,-58,100],
-			cameraPosition:[550,0,550],
+			//cameraPosition:[550,0,550],
 			cameraLookAt:[0,0,0],
 			speed:.003, //300s for all signs to march through
 			//Distribution of signs
@@ -74,14 +74,15 @@ class GLWrapper extends Component{
 	}
 
 	componentDidMount(){
-		const {width,height,data} = this.props;
-		const {cameraPosition,cameraLookAt,rendererClearcolor} = this.state;
+		const {width,height,data,cameraPosition} = this.props;
+		const {cameraLookAt,rendererClearcolor} = this.state;
 
 		//Component mounted, initialize camera, renderer, and scene
 		//Init camera
 		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.01, 3000);
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
+		this.camera.zoom = 1;
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer();
@@ -127,7 +128,7 @@ class GLWrapper extends Component{
 	}
 
 	componentDidUpdate(prevProps, prevState){
-		const {width,height,data} = this.props;
+		const {width,height,data,cameraPosition} = this.props;
 
 		//Assume width and height are changed
 		this.camera.aspect = width/height;
@@ -135,8 +136,20 @@ class GLWrapper extends Component{
 		this.renderer.setSize(width,height);
 		this.pickingTexture.setSize(width,height);
 
+		//Assume cameraPosition has been updated; tween camera position to props.cameraPosition
+		//TODO: compare props.cameraPosition and prevProps.cameraPosition before tweening
+		const cameraPositionTween = new TWEEN.Tween(this.camera.position)
+			.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
+			.easing(TWEEN.Easing.Cubic.InOut)
+			.onUpdate(()=>{
+				this.camera.lookAt(new THREE.Vector3(...this.state.cameraLookAt));
+			})
+			.start();
+
 		//If new data is injected, process mesh
 		if(this.state.instances.length !== prevState.instances.length){
+			
+			
 			//TODO: remove previously added dynamic meshes
 			this._processData(this.state.instances);
 		}
@@ -167,6 +180,8 @@ class GLWrapper extends Component{
 
 		if(this.state.instances && this.state.instances[id]){
 			this.props.handleSelect(id);
+
+			//Given instance, recalculate and reset its transform matrix
 		}
 	}
 
@@ -326,7 +341,10 @@ class GLWrapper extends Component{
 				index:i,
 				transformMatrixSign:transformMatrixSign.clone(),
 				transformMatrixArrow:transformMatrixArrow.clone(),
-				pickingColor: color.clone().setHex(i)
+				pickingColor: color.clone().setHex(i),
+				x,
+				theta,
+				radius
 			};
 		});
 	}
@@ -347,6 +365,8 @@ class GLWrapper extends Component{
 			this.meshes.arrows.rotation.x -= this.state.speed;
 			this.meshes.target.rotation.x -= this.state.speed;
 		}
+
+		TWEEN.update();
 
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._animate);
