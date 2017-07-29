@@ -32,6 +32,13 @@ const arrowVerticesArray = [
 	0.2, 0, 0.2
 ];
 
+const canvasStyle = {
+	position:'absolute',
+	top:0,
+	left:0,
+	pointerEvents:'none'
+};
+
 class GLWrapper extends Component{
 	constructor(props){
 		super(props);
@@ -41,6 +48,7 @@ class GLWrapper extends Component{
 		this._initStaticMeshes = this._initStaticMeshes.bind(this);
 		this._setPerInstanceProperties = this._setPerInstanceProperties.bind(this);
 		this._pick = this._pick.bind(this);
+		this._updateCanvas = this._updateCanvas.bind(this);
 
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onClick = this.onClick.bind(this);
@@ -114,6 +122,9 @@ class GLWrapper extends Component{
 			side: THREE.DoubleSide,
 			transparent:true
 		});
+
+		//Init <canvas> context
+		this.ctx = this.canvasNode.getContext('2d');
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -342,7 +353,7 @@ class GLWrapper extends Component{
 				transformMatrixSign:transformMatrixSign.clone(),
 				transformMatrixArrow:transformMatrixArrow.clone(),
 				pickingColor: color.clone().setHex(i),
-				x,
+				x,y,z,
 				theta,
 				radius
 			};
@@ -359,6 +370,7 @@ class GLWrapper extends Component{
 	}
 
 	_animate(delta){
+
 		if(this.meshes.signs){
 			this.meshes.signs.rotation.x -= this.state.speed;
 			this.meshes.signsPicking.rotation.x -= this.state.speed;
@@ -368,20 +380,58 @@ class GLWrapper extends Component{
 
 		TWEEN.update();
 
+		//Render 3D
 		this.renderer.render(this.scene, this.camera);
+		//Render <canvas>
+		this._updateCanvas();
+
 		requestAnimationFrame(this._animate);
+
+	}
+
+	_updateCanvas(){
+
+		const {width, height} = this.props;
+
+		this.ctx.clearRect(0, 0, width, height);
+
+		if(this.meshes.signs){
+			const m = this.meshes.signs.modelViewMatrix.multiply(this.camera.projectionMatrix);
+
+			this.state.instances
+				.filter((v,i)=>(i%200===0))
+				.forEach((v,i)=>{
+					
+					const clipSpace = new THREE.Vector4(v.x, v.y, v.z, 1.0).applyMatrix4(m);
+					const clipX = clipSpace.x / clipSpace.w;
+					const clipY = clipSpace.y / clipSpace.w;
+
+					const pixelX = (clipX * .5 + .5)*width;
+					const pixelY = (clipY * -.5 + .5)*height;
+
+					this.ctx.fillText(v.id, pixelX, pixelY);
+
+				});
+		}
+
 	}
 
 	render(){
 		const {width,height} = this.props;
 
 		return (
-			<div className='gl-wrapper'
-				style={{width,height}}
-				ref={(node)=>{this.wrapperNode=node}}
-				onMouseMove={this.onMouseMove}
-				onClick={this.onClick}
-			>
+			<div>
+				<canvas width={width} height={height}
+					style={canvasStyle}
+					ref={(node)=>{this.canvasNode = node}}
+				/>
+				<div className='gl-wrapper'
+					style={{width,height}}
+					ref={(node)=>{this.wrapperNode = node}}
+					onMouseMove={this.onMouseMove}
+					onClick={this.onClick}
+				>
+				</div>
 			</div>
 		);
 	}
