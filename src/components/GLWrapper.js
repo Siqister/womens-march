@@ -149,7 +149,6 @@ class GLWrapper extends Component{
 		//If new data is injected, process mesh
 		if(this.state.instances.length !== prevState.instances.length){
 			
-			
 			//TODO: remove previously added dynamic meshes
 			this._processData(this.state.instances);
 		}
