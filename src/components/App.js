@@ -24,7 +24,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			camera:cameraSettings.march
+			camera:cameraSettings.wheel
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
