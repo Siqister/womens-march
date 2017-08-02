@@ -2,12 +2,11 @@ import React, {Component} from 'react';
 import * as THREE from 'three';
 import {randomNormal} from 'd3';
 //TODO: implement trackball control
-const TrackballControls = require('three-trackballcontrols');
+const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
-import gridVertexShader from '../shaders/gridVertexShader';
 
 //Vertices data
 const signVerticesArray = [
@@ -114,6 +113,13 @@ class GLWrapper extends Component{
 			side: THREE.DoubleSide,
 			transparent:true
 		});
+
+		//Init orbitControls
+		this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.orbitControls.enableDamping = true;
+		this.orbitControls.dampingFactor = 0.5;
+		this.orbitControls.enableZoom = false;
+
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -365,6 +371,7 @@ class GLWrapper extends Component{
 			this.meshes.target.rotation.x -= this.state.speed;
 		}
 
+		this.orbitControls.update();
 		TWEEN.update();
 
 		this.renderer.render(this.scene, this.camera);
@@ -376,7 +383,10 @@ class GLWrapper extends Component{
 
 		return (
 			<div className='gl-wrapper'
-				style={{width,height}}
+				style={{
+					position:'fixed',
+					width, height
+				}}
 				ref={(node)=>{this.wrapperNode=node}}
 				onMouseMove={this.onMouseMove}
 				onClick={this.onClick}

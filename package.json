@@ -34,8 +34,9 @@
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-three-renderer": "^3.1.0",
+    "react-waypoint": "^7.0.4",
     "three": "^0.86.0",
-    "three-trackballcontrols": "0.0.5",
+    "three-orbitcontrols": "^1.2.1",
     "tween.js": "^16.6.0",
     "uuid": "^3.1.0"
   }

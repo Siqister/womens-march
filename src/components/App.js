@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import Waypoint from 'react-waypoint';
 
 import {fetchData} from '../utils';
 
@@ -9,7 +10,7 @@ const cameraSettings = {
 		position: [0, -58, 100]
 	},
 	wheel:{
-		position: [600, 0, 650]
+		position: [650, 0, 700]
 	},
 	far:{
 		position: [1500,0,800]
