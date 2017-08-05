@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
-import {randomNormal} from 'd3';
+import {randomNormal, interpolate} from 'd3';
 //TODO: implement trackball control
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
@@ -212,9 +212,14 @@ class GLWrapper extends Component{
 			m1.premultiply(this.camera.matrixWorld);
 			m1.premultiply(_translate);
 
-			const transformMatrixElements = m1.elements;
+			const matrixInterpolater = interpolate(m0.elements, m1.elements);
 
+			
 
+			const pickedSignTween = new TWEEN.Tween({x:0})
+				.to({x:1},500)
+				.onUpdate(v=>{
+					const transformMatrixElements = matrixInterpolater(v);
 			const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.pickedTarget.geometry.attributes;
 			instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
 			instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
@@ -224,6 +229,12 @@ class GLWrapper extends Component{
 			instanceTransformCol1.needsUpdate = true;
 			instanceTransformCol2.needsUpdate = true;
 			instanceTransformCol3.needsUpdate = true;
+				})
+							.easing(TWEEN.Easing.Cubic.InOut)
+
+				.start();
+
+
 		}
 
 	}
@@ -271,7 +282,7 @@ class GLWrapper extends Component{
 		pickedTargetGeometry.addAttribute('instanceTransformCol3', pickedTargetTransformCol3);
 
 		const pickedTargetMaterial = targetMaterial.clone();
-		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(0.0, 1.0, 0.0, 1.0);
+		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
 		pickedTargetMaterial.uniforms.map.value = this.texture;
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
