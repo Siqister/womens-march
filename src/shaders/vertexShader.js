@@ -8,6 +8,11 @@ const vertexShaderText = `
 	attribute vec4 instanceTransformCol2;
 	attribute vec4 instanceTransformCol3;
 
+	attribute vec4 m1Col0;
+	attribute vec4 m1Col1;
+	attribute vec4 m1Col2;
+	attribute vec4 m1Col3;
+
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
 
@@ -15,19 +20,27 @@ const vertexShaderText = `
 	uniform bool uUsePickingColor;
 	uniform bool uUseInstanceTransform;
 	uniform bool uUseTexture;
+	uniform float uInterpolateTransform;
 
 	varying vec4 vColor;
 	varying vec4 vVertexPosition;
 	varying vec2 vUv;
 
 	void main(){
-		//Calculate per instance transform matrix from its 4 columns
+		//Calculate per instance transform matrix from m0 and m1
 		mat4 instanceTransformMatrix = mat4(
 			instanceTransformCol0,
 			instanceTransformCol1,
 			instanceTransformCol2,
 			instanceTransformCol3
 		);
+		mat4 m1 = mat4(
+			m1Col0,
+			m1Col1,
+			m1Col2,
+			m1Col3
+		);
+
 
 		//Transform vertex position
 		vec4 transformedPosition;

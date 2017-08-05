@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
 import {randomNormal, interpolate} from 'd3';
-//TODO: implement trackball control
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
@@ -104,7 +103,8 @@ class GLWrapper extends Component{
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
-				map:{value:null}
+				map:{value:null},
+				uInterpolateTransform:{value:0.0}
 			},
 			vertexShader:vertexShader,
 			fragmentShader:fragmentShader,
@@ -117,6 +117,16 @@ class GLWrapper extends Component{
 		this.orbitControls.enableDamping = true;
 		this.orbitControls.dampingFactor = 0.5;
 		this.orbitControls.enableZoom = false;
+
+		//Init tweens
+		this.tween = {};
+		this.tween.camera = new TWEEN.Tween(this.camera.position)
+			.easing(TWEEN.Easing.Cubic.InOut);
+		this.tween.transform = new TWEEN.Tween({x:0})
+			.to({x:1}, 500)
+			.easing(TWEEN.Easing.Cubic.InOut)
+			.onUpdate(v=>{console.log(v)});
+
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -143,9 +153,8 @@ class GLWrapper extends Component{
 		//Assume cameraPosition has been updated; tween camera position to props.cameraPosition
 		//TODO: compare props.cameraPosition and prevProps.cameraPosition before tweening
 		const cameraLookAt = new THREE.Vector3(...this.state.cameraLookAt);
-		const cameraPositionTween = new TWEEN.Tween(this.camera.position)
+		this.tween.camera
 			.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
-			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
 				this.camera.lookAt(cameraLookAt);
 			})
@@ -165,18 +174,9 @@ class GLWrapper extends Component{
 		const x = e.clientX, y = e.clientY;
 		const id = this._pick(x,y);
 
+		//Set transform matrix for this.meshes.target
 		if(this.state.instances && this.state.instances[id]){
-			const transformMatrixElements = this.state.instances[id].transformMatrixSign.elements;
-
-			const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.target.geometry.attributes;
-			instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
-			instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
-			instanceTransformCol2.setXYZW(0, ...transformMatrixElements.slice(8,12));
-			instanceTransformCol3.setXYZW(0, ...transformMatrixElements.slice(12));
-			instanceTransformCol0.needsUpdate = true;
-			instanceTransformCol1.needsUpdate = true;
-			instanceTransformCol2.needsUpdate = true;
-			instanceTransformCol3.needsUpdate = true;
+			this._updateTransformMatrices(this.meshes.target, this.state.instances[id].transformMatrixSign, null, 0);
 		}
 
 	}
@@ -190,11 +190,11 @@ class GLWrapper extends Component{
 			this.props.handleSelect(id);
 
 			//Given instance, recalculate and reset its transform matrix
-			//Start transform matrix
+			//Transform matrix m0
 			const m0 = this.state.instances[id].transformMatrixSign.clone();
 			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
-			//End transform matrix
+			//Transform matrix m1
 			const p = new THREE.Vector3(0, 0, -50),
 				r = new THREE.Quaternion(),
 				s = new THREE.Vector3(); //Store decomposed matrix4
@@ -203,26 +203,21 @@ class GLWrapper extends Component{
 			this.camera.localToWorld(p);
 			const m1 = new THREE.Matrix4().compose(p, r, s);
 
-			//Interpolate
-			const transformMatrixElements = m1.elements;
-			const matrixInterpolater = interpolate(m0.elements, m1.elements);
+			this._updateTransformMatrices(this.meshes.pickedTarget, m1, m1, 0);
 
-			const pickedSignTween = new TWEEN.Tween({x:0})
-				.to({x:1},500)
-				.onUpdate(v=>{
-					const transformMatrixElements = matrixInterpolater(v);
-					const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.pickedTarget.geometry.attributes;
-					instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
-					instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
-					instanceTransformCol2.setXYZW(0, ...transformMatrixElements.slice(8,12));
-					instanceTransformCol3.setXYZW(0, ...transformMatrixElements.slice(12));
-					instanceTransformCol0.needsUpdate = true;
-					instanceTransformCol1.needsUpdate = true;
-					instanceTransformCol2.needsUpdate = true;
-					instanceTransformCol3.needsUpdate = true;
-				})
-				.easing(TWEEN.Easing.Cubic.InOut)
-				.start();
+			this.tween.transform.start();
+
+			// //Interpolate
+			// const transformMatrixElements = m1.elements;
+			// const matrixInterpolater = interpolate(m0.elements, m1.elements);
+
+			// const pickedSignTween = new TWEEN.Tween({x:0})
+			// 	.to({x:1},500)
+			// 	.onUpdate(v=>{
+			// 		this._updateTransformMatrices(this.meshes.pickedTarget, m1, m1, 0); //TODO: fix this
+			// 	})
+			// 	.easing(TWEEN.Easing.Cubic.InOut)
+			// 	.start();
 		}
 
 	}
@@ -235,17 +230,10 @@ class GLWrapper extends Component{
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 
-		const targetTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			targetTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			targetTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			targetTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1);
 		const targetGeometry = new THREE.InstancedBufferGeometry();
 		targetGeometry.addAttribute('position',vertices);
 		targetGeometry.addAttribute('uv',uv);
-		targetGeometry.addAttribute('instanceTransformCol0', targetTransformCol0);
-		targetGeometry.addAttribute('instanceTransformCol1', targetTransformCol1);
-		targetGeometry.addAttribute('instanceTransformCol2', targetTransformCol2);
-		targetGeometry.addAttribute('instanceTransformCol3', targetTransformCol3);
+		this._initTransformMatrixAttrib(targetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const targetMaterial = this.material.clone();
 		targetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0,0.0,0.0,1.0);
@@ -256,18 +244,13 @@ class GLWrapper extends Component{
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
 
+
+
 		//PICKED TARGET
-		const pickedTargetTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			pickedTargetTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			pickedTargetTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
-			pickedTargetTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1);
 		const pickedTargetGeometry = new THREE.InstancedBufferGeometry();
 		pickedTargetGeometry.addAttribute('position',vertices);
 		pickedTargetGeometry.addAttribute('uv',uv);
-		pickedTargetGeometry.addAttribute('instanceTransformCol0', pickedTargetTransformCol0);
-		pickedTargetGeometry.addAttribute('instanceTransformCol1', pickedTargetTransformCol1);
-		pickedTargetGeometry.addAttribute('instanceTransformCol2', pickedTargetTransformCol2);
-		pickedTargetGeometry.addAttribute('instanceTransformCol3', pickedTargetTransformCol3);
+		this._initTransformMatrixAttrib(pickedTargetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const pickedTargetMaterial = targetMaterial.clone();
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
@@ -284,85 +267,63 @@ class GLWrapper extends Component{
 		const {instances} = this.state;
 		const COUNT = instances.length;
 
-		//SIGNS
-		//Attributes...
-		//...per vertex BufferAttribute
+		//Initialize per vertex BufferAttribute
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
-		//...per instance InstancedBufferAttribute...
-		const instanceTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		const instanceArrowTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceArrowTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceArrowTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1),
-			instanceArrowTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		// ...shared between sign and arrow
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		
-		//Populate attribute with data
-		for(let i=0; i<COUNT; i++){
-			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
 
-			const transformMatrixElements = transformMatrixSign.elements; //in column major format
-			instanceTransformCol0.setXYZW(i, ...transformMatrixElements.slice(0,4));
-			instanceTransformCol1.setXYZW(i, ...transformMatrixElements.slice(4,8));
-			instanceTransformCol2.setXYZW(i, ...transformMatrixElements.slice(8,12));
-			instanceTransformCol3.setXYZW(i, ...transformMatrixElements.slice(12));
-
-			const arrowTransformMatrixElements = transformMatrixArrow.elements;
-			instanceArrowTransformCol0.setXYZW(i, ...arrowTransformMatrixElements.slice(0,4));
-			instanceArrowTransformCol1.setXYZW(i, ...arrowTransformMatrixElements.slice(4,8));
-			instanceArrowTransformCol2.setXYZW(i, ...arrowTransformMatrixElements.slice(8,12));
-			instanceArrowTransformCol3.setXYZW(i, ...arrowTransformMatrixElements.slice(12));
-
-			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
-		}
-
-		//GEOMETRY & MESH
-		//SIGNS
+		//GEOMETRY, MATERIAL & MESH: SIGNS
 		//Construct InstancedBufferGeometry
 		let geometry = new THREE.InstancedBufferGeometry();
 		geometry.addAttribute('position', vertices);
 		geometry.addAttribute('uv',uv);
 		geometry.addAttribute('instanceColor', instanceColors);
-		geometry.addAttribute('instanceTransformCol0',instanceTransformCol0);
-		geometry.addAttribute('instanceTransformCol1',instanceTransformCol1);
-		geometry.addAttribute('instanceTransformCol2',instanceTransformCol2);
-		geometry.addAttribute('instanceTransformCol3',instanceTransformCol3);
+		this._initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
 		material.uniforms.map.value = this.texture;
-		//Geometry + Material -> Mesh
+		//Mesh
 		this.meshes.signs = new THREE.Mesh(geometry,material);
 
-		//ARROWS
+
+		//GEOMETRY, MATERIAL & MESH: ARROWS
 		const arrowsGeometry = new THREE.InstancedBufferGeometry();
 		arrowsGeometry.addAttribute('position', arrowVertices);
 		arrowsGeometry.addAttribute('instanceColor', instanceColors);
-		arrowsGeometry.addAttribute('instanceTransformCol0',instanceArrowTransformCol0);
-		arrowsGeometry.addAttribute('instanceTransformCol1',instanceArrowTransformCol1);
-		arrowsGeometry.addAttribute('instanceTransformCol2',instanceArrowTransformCol2);
-		arrowsGeometry.addAttribute('instanceTransformCol3',instanceArrowTransformCol3);
-
+		this._initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
+		//RawShaderMaterial
 		material = this.material.clone();
 		material.uniforms.uColor.value = new THREE.Vector4(.9,.3,.3,1.0);
 		material.uniforms.uFogFactor.value = 0.00001;
-
+		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
-
-		this.scene.add(this.meshes.signs);
-		this.scene.add(this.meshes.arrows);
 		
+
 		//SIGN FOR PICKING
 		material = this.material.clone();
 		material.uniforms.uUsePickingColor.value = true;
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
 
+
+		//Add meshes to scenes
+		this.scene.add(this.meshes.signs);
+		this.scene.add(this.meshes.arrows);
 		this.pickingScene.add(this.meshes.signsPicking);
+
+
+		//Populate attributes with value
+		for(let i=0; i<COUNT; i++){
+			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
+
+			this._updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
+			this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
+			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
+		}
+		instanceColors.needsUpdate = true;
+
 
 	}
 
@@ -417,13 +378,49 @@ class GLWrapper extends Component{
 
 	}
 
+	_updateTransformMatrices(mesh,m0,m1,index){
+
+		//Given mesh containing (instanced) buffer geometry, update its starting and/or ending transform mat4 attribute at index i
+		const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = mesh.geometry.attributes;
+
+		if(m0){
+			const transformMatrixElements = m0.elements;
+			instanceTransformCol0.setXYZW(index, ...transformMatrixElements.slice(0,4));
+			instanceTransformCol1.setXYZW(index, ...transformMatrixElements.slice(4,8));
+			instanceTransformCol2.setXYZW(index, ...transformMatrixElements.slice(8,12));
+			instanceTransformCol3.setXYZW(index, ...transformMatrixElements.slice(12));
+			instanceTransformCol0.needsUpdate = true;
+			instanceTransformCol1.needsUpdate = true;
+			instanceTransformCol2.needsUpdate = true;
+			instanceTransformCol3.needsUpdate = true;
+		}
+
+	}
+
+	_initTransformMatrixAttrib(instancedBufferGeometry,instanceCount){
+
+		//Given instancedBufferGeometry and instanceCount, init correct attributes for two mat4 transform matrices
+		const instanceTransform0Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform0Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform0Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform0Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
+		const instanceTransform1Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform1Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform1Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			instanceTransform1Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
+
+		instancedBufferGeometry.addAttribute('instanceTransformCol0', instanceTransform0Col0);
+		instancedBufferGeometry.addAttribute('instanceTransformCol1', instanceTransform0Col1);
+		instancedBufferGeometry.addAttribute('instanceTransformCol2', instanceTransform0Col2);
+		instancedBufferGeometry.addAttribute('instanceTransformCol3', instanceTransform0Col3);
+	}
+
 	_pick(x,y){
 
 		this.renderer.render(this.pickingScene, this.camera, this.pickingTexture);
 		const pixelBuffer = new Uint8Array(4);
 		this.renderer.readRenderTargetPixels(this.pickingTexture,x,this.pickingTexture.height-y,1,1,pixelBuffer);
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
-
 		return id;
 
 	}
