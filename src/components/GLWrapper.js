@@ -65,7 +65,6 @@ class GLWrapper extends Component{
 			signs:null,
 			signsPicking:null,
 			arrows:null,
-			grid:null,
 			target:null
 		}
 		this.material = null;
@@ -120,10 +119,10 @@ class GLWrapper extends Component{
 		this.orbitControls.dampingFactor = 0.5;
 		this.orbitControls.enableZoom = false;
 
-
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
 		this._animate();		
+
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -144,11 +143,12 @@ class GLWrapper extends Component{
 
 		//Assume cameraPosition has been updated; tween camera position to props.cameraPosition
 		//TODO: compare props.cameraPosition and prevProps.cameraPosition before tweening
+		const cameraLookAt = new THREE.Vector3(...this.state.cameraLookAt);
 		const cameraPositionTween = new TWEEN.Tween(this.camera.position)
 			.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
-				this.camera.lookAt(new THREE.Vector3(...this.state.cameraLookAt));
+				this.camera.lookAt(cameraLookAt);
 			})
 			.start();
 
@@ -158,9 +158,11 @@ class GLWrapper extends Component{
 			//TODO: remove previously added dynamic meshes
 			this._processData(this.state.instances);
 		}
+
 	}
 
 	onMouseMove(e){
+
 		const x = e.clientX, y = e.clientY;
 		const id = this._pick(x,y);
 
@@ -177,9 +179,11 @@ class GLWrapper extends Component{
 			instanceTransformCol2.needsUpdate = true;
 			instanceTransformCol3.needsUpdate = true;
 		}
+
 	}
 
 	onClick(e){
+
 		const x = e.clientX, y = e.clientY;
 		const id = this._pick(x,y);
 
@@ -188,9 +192,11 @@ class GLWrapper extends Component{
 
 			//Given instance, recalculate and reset its transform matrix
 		}
+
 	}
 
 	_initStaticMeshes(){
+
 		const {R, R_WIGGLE} = this.state;
 
 		//TARGET
@@ -217,9 +223,11 @@ class GLWrapper extends Component{
 
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
+
 	}
 
 	_processData(data){
+
 		//Process data array; called when props.data changes
 		const {instances} = this.state;
 		const COUNT = instances.length;
@@ -303,9 +311,11 @@ class GLWrapper extends Component{
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
 
 		this.pickingScene.add(this.meshes.signsPicking);
+
 	}
 
 	_setPerInstanceProperties(data){
+
 		const {X0,X1,R,R_WIGGLE} = this.state;
 
 		const position = new THREE.Vector3();
@@ -352,18 +362,22 @@ class GLWrapper extends Component{
 				radius
 			};
 		});
+
 	}
 
 	_pick(x,y){
+
 		this.renderer.render(this.pickingScene, this.camera, this.pickingTexture);
 		const pixelBuffer = new Uint8Array(4);
 		this.renderer.readRenderTargetPixels(this.pickingTexture,x,this.pickingTexture.height-y,1,1,pixelBuffer);
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 
 		return id;
+
 	}
 
 	_animate(delta){
+
 		if(this.meshes.signs){
 			this.meshes.signs.rotation.x -= this.state.speed;
 			this.meshes.signsPicking.rotation.x -= this.state.speed;
@@ -376,6 +390,7 @@ class GLWrapper extends Component{
 
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._animate);
+		
 	}
 
 	render(){
