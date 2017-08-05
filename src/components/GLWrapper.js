@@ -191,6 +191,14 @@ class GLWrapper extends Component{
 			this.props.handleSelect(id);
 
 			//Given instance, recalculate and reset its transform matrix
+			//TODO: determining position, rotation and scale of target at any given moment
+			const position = new THREE.Vector3();
+			const rotation = new THREE.Quaternion();
+			const scale = new THREE.Vector3();
+			this.meshes.target.matrixWorld.decompose(position, rotation, scale);
+			console.log(position);
+			console.log(rotation);
+			console.log(scale);
 		}
 
 	}
@@ -390,7 +398,7 @@ class GLWrapper extends Component{
 
 		this.renderer.render(this.scene, this.camera);
 		requestAnimationFrame(this._animate);
-		
+
 	}
 
 	render(){

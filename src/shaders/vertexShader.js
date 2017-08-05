@@ -55,7 +55,6 @@ const vertexShaderText = `
 		}
 		
 		vVertexPosition = mvPosition;
-		
 		vUv = uv;
 
 	}
