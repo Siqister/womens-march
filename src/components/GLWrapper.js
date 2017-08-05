@@ -124,9 +124,7 @@ class GLWrapper extends Component{
 			.easing(TWEEN.Easing.Cubic.InOut);
 		this.tween.transform = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
-			.easing(TWEEN.Easing.Cubic.InOut)
-			.onUpdate(v=>{console.log(v)});
-
+			.easing(TWEEN.Easing.Cubic.InOut);
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -176,7 +174,7 @@ class GLWrapper extends Component{
 
 		//Set transform matrix for this.meshes.target
 		if(this.state.instances && this.state.instances[id]){
-			this._updateTransformMatrices(this.meshes.target, this.state.instances[id].transformMatrixSign, null, 0);
+			this._updateTransformMatrices(this.meshes.target, this.state.instances[id].transformMatrixSign, this.state.instances[id].transformMatrixSign, 0);
 		}
 
 	}
@@ -203,28 +201,18 @@ class GLWrapper extends Component{
 			this.camera.localToWorld(p);
 			const m1 = new THREE.Matrix4().compose(p, r, s);
 
-			this._updateTransformMatrices(this.meshes.pickedTarget, m1, m1, 0);
+			this._updateTransformMatrices(this.meshes.pickedTarget, m0, m1, 0);
 
-			this.tween.transform.start();
-
-			// //Interpolate
-			// const transformMatrixElements = m1.elements;
-			// const matrixInterpolater = interpolate(m0.elements, m1.elements);
-
-			// const pickedSignTween = new TWEEN.Tween({x:0})
-			// 	.to({x:1},500)
-			// 	.onUpdate(v=>{
-			// 		this._updateTransformMatrices(this.meshes.pickedTarget, m1, m1, 0); //TODO: fix this
-			// 	})
-			// 	.easing(TWEEN.Easing.Cubic.InOut)
-			// 	.start();
+			this.tween.transform
+				.onUpdate(v=>{
+					this.meshes.pickedTarget.material.uniforms.uInterpolateTransform.value = v;
+				})
+				.start();
 		}
 
 	}
 
 	_initStaticMeshes(){
-
-		const {R, R_WIGGLE} = this.state;
 
 		//TARGET
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
@@ -243,7 +231,6 @@ class GLWrapper extends Component{
 
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
-
 
 
 		//PICKED TARGET
@@ -381,18 +368,30 @@ class GLWrapper extends Component{
 	_updateTransformMatrices(mesh,m0,m1,index){
 
 		//Given mesh containing (instanced) buffer geometry, update its starting and/or ending transform mat4 attribute at index i
-		const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = mesh.geometry.attributes;
+		const {instanceTransformCol0, 
+			instanceTransformCol1, 
+			instanceTransformCol2, 
+			instanceTransformCol3,
+			m1Col0,
+			m1Col1,
+			m1Col2,
+			m1Col3
+		} = mesh.geometry.attributes;
+		let transformMatrixElements;
 
 		if(m0){
-			const transformMatrixElements = m0.elements;
-			instanceTransformCol0.setXYZW(index, ...transformMatrixElements.slice(0,4));
-			instanceTransformCol1.setXYZW(index, ...transformMatrixElements.slice(4,8));
-			instanceTransformCol2.setXYZW(index, ...transformMatrixElements.slice(8,12));
-			instanceTransformCol3.setXYZW(index, ...transformMatrixElements.slice(12));
-			instanceTransformCol0.needsUpdate = true;
-			instanceTransformCol1.needsUpdate = true;
-			instanceTransformCol2.needsUpdate = true;
-			instanceTransformCol3.needsUpdate = true;
+			transformMatrixElements = m0.elements;
+			instanceTransformCol0.setXYZW(index, ...transformMatrixElements.slice(0,4)); instanceTransformCol0.needsUpdate = true;
+			instanceTransformCol1.setXYZW(index, ...transformMatrixElements.slice(4,8)); instanceTransformCol1.needsUpdate = true;
+			instanceTransformCol2.setXYZW(index, ...transformMatrixElements.slice(8,12)); instanceTransformCol2.needsUpdate = true;
+			instanceTransformCol3.setXYZW(index, ...transformMatrixElements.slice(12)); instanceTransformCol3.needsUpdate = true;
+		}
+		if(m1){
+			transformMatrixElements = m1.elements;
+			m1Col0.setXYZW(index, ...transformMatrixElements.slice(0,4)); m1Col0.needsUpdate = true;
+			m1Col1.setXYZW(index, ...transformMatrixElements.slice(4,8)); m1Col1.needsUpdate = true;
+			m1Col2.setXYZW(index, ...transformMatrixElements.slice(8,12)); m1Col2.needsUpdate = true;
+			m1Col3.setXYZW(index, ...transformMatrixElements.slice(12)); m1Col3.needsUpdate = true;
 		}
 
 	}
@@ -404,15 +403,21 @@ class GLWrapper extends Component{
 			instanceTransform0Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
 			instanceTransform0Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
 			instanceTransform0Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
-		const instanceTransform1Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform1Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform1Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform1Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
+		const m1Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			m1Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			m1Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
+			m1Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
 
 		instancedBufferGeometry.addAttribute('instanceTransformCol0', instanceTransform0Col0);
 		instancedBufferGeometry.addAttribute('instanceTransformCol1', instanceTransform0Col1);
 		instancedBufferGeometry.addAttribute('instanceTransformCol2', instanceTransform0Col2);
 		instancedBufferGeometry.addAttribute('instanceTransformCol3', instanceTransform0Col3);
+
+		instancedBufferGeometry.addAttribute('m1Col0', m1Col0);
+		instancedBufferGeometry.addAttribute('m1Col1', m1Col1);
+		instancedBufferGeometry.addAttribute('m1Col2', m1Col2);
+		instancedBufferGeometry.addAttribute('m1Col3', m1Col3);
+
 	}
 
 	_pick(x,y){

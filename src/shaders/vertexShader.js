@@ -28,7 +28,7 @@ const vertexShaderText = `
 
 	void main(){
 		//Calculate per instance transform matrix from m0 and m1
-		mat4 instanceTransformMatrix = mat4(
+		mat4 m0 = mat4(
 			instanceTransformCol0,
 			instanceTransformCol1,
 			instanceTransformCol2,
@@ -40,7 +40,7 @@ const vertexShaderText = `
 			m1Col2,
 			m1Col3
 		);
-
+		mat4 instanceTransformMatrix = m0 * (1.0 - uInterpolateTransform) + m1 * uInterpolateTransform;
 
 		//Transform vertex position
 		vec4 transformedPosition;
