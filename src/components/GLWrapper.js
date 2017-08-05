@@ -46,7 +46,7 @@ class GLWrapper extends Component{
 
 		this.state = {
 			cameraLookAt:[0,0,0],
-			speed:.003, //300s for all signs to march through
+			speed:.003, //Rotational speed
 			//Distribution of signs
 			X0:-120,
 			X1:120, 
@@ -206,11 +206,12 @@ class GLWrapper extends Component{
 			const _translate = new THREE.Matrix4().makeTranslation(0,0,-50);
 			m0.decompose(_position, _rotation, _scale);
 			console.log(_scale);
-			console.log(_translate);
+			console.log(this.camera.matrixWorld);
 			const m1 = new THREE.Matrix4();
 			m1.makeScale(_scale.x, _scale.y, _scale.z);
-			m1.premultiply(this.camera.matrixWorld);
+			_translate.multiply(this.camera.matrixWorld);
 			m1.premultiply(_translate);
+			//m1.premultiply(_translate);
 
 			const matrixInterpolater = interpolate(m0.elements, m1.elements);
 
@@ -220,18 +221,17 @@ class GLWrapper extends Component{
 				.to({x:1},500)
 				.onUpdate(v=>{
 					const transformMatrixElements = matrixInterpolater(v);
-			const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.pickedTarget.geometry.attributes;
-			instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
-			instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
-			instanceTransformCol2.setXYZW(0, ...transformMatrixElements.slice(8,12));
-			instanceTransformCol3.setXYZW(0, ...transformMatrixElements.slice(12));
-			instanceTransformCol0.needsUpdate = true;
-			instanceTransformCol1.needsUpdate = true;
-			instanceTransformCol2.needsUpdate = true;
-			instanceTransformCol3.needsUpdate = true;
+					const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.pickedTarget.geometry.attributes;
+					instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
+					instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
+					instanceTransformCol2.setXYZW(0, ...transformMatrixElements.slice(8,12));
+					instanceTransformCol3.setXYZW(0, ...transformMatrixElements.slice(12));
+					instanceTransformCol0.needsUpdate = true;
+					instanceTransformCol1.needsUpdate = true;
+					instanceTransformCol2.needsUpdate = true;
+					instanceTransformCol3.needsUpdate = true;
 				})
-							.easing(TWEEN.Easing.Cubic.InOut)
-
+				.easing(TWEEN.Easing.Cubic.InOut)
 				.start();
 
 
