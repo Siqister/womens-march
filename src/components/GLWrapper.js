@@ -326,16 +326,17 @@ class GLWrapper extends Component{
 		const normalMatrix = new THREE.Matrix3();
 		const X_AXIS = new THREE.Vector3(1,0,0);
 		const color = new THREE.Color();
-		const random = randomNormal(0,(X1-X0)/2);
+		const randomX = randomNormal(0,(X1-X0)/2);
+		const randomR = randomNormal(R,R_WIGGLE*2);
 
 		return data.map((v,i)=>{
 			const theta = Math.random()*Math.PI*2; 
-			const radius = R + R_WIGGLE*(Math.random()-.5);
+			const radius = randomR();
 
 			//For signs: per instance position, rotation, and scale
 			let z = Math.cos(theta)*radius;
 			let y = Math.sin(theta)*radius;
-			const x = random();
+			const x = randomX();
 
 			position.set(x,y,z);
 			rotation.setFromAxisAngle(X_AXIS, Math.PI/2-theta-Math.PI/8*(Math.random()*.5+1));
