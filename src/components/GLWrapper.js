@@ -190,32 +190,22 @@ class GLWrapper extends Component{
 			this.props.handleSelect(id);
 
 			//Given instance, recalculate and reset its transform matrix
-			//TODO: determining position, rotation and scale of target at any given moment
-			//Start mat4: instance transform x target.matrixWorld
-			//End mat4: instance scale x camera.matrixWorld x z offset
-
-			//Before: this works
+			//Start transform matrix
 			const m0 = this.state.instances[id].transformMatrixSign.clone();
-			const rotation = new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation);
-			m0.premultiply(rotation);
+			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
-			//After
-			const _scale = new THREE.Vector3();
-			const _position = new THREE.Vector3();
-			const _rotation = new THREE.Quaternion();
-			const _translate = new THREE.Matrix4().makeTranslation(0,0,-50);
-			m0.decompose(_position, _rotation, _scale);
-			console.log(_scale);
-			console.log(this.camera.matrixWorld);
-			const m1 = new THREE.Matrix4();
-			m1.makeScale(_scale.x, _scale.y, _scale.z);
-			_translate.multiply(this.camera.matrixWorld);
-			m1.premultiply(_translate);
-			//m1.premultiply(_translate);
+			//End transform matrix
+			const p = new THREE.Vector3(0, 0, -50),
+				r = new THREE.Quaternion(),
+				s = new THREE.Vector3(); //Store decomposed matrix4
+			this.state.instances[id].transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
+			this.camera.matrixWorld.decompose(new THREE.Vector3(), r, new THREE.Vector3());
+			this.camera.localToWorld(p);
+			const m1 = new THREE.Matrix4().compose(p, r, s);
 
+			//Interpolate
+			const transformMatrixElements = m1.elements;
 			const matrixInterpolater = interpolate(m0.elements, m1.elements);
-
-			
 
 			const pickedSignTween = new TWEEN.Tween({x:0})
 				.to({x:1},500)
@@ -233,8 +223,6 @@ class GLWrapper extends Component{
 				})
 				.easing(TWEEN.Easing.Cubic.InOut)
 				.start();
-
-
 		}
 
 	}
