@@ -45,8 +45,6 @@ class GLWrapper extends Component{
 		this.onClick = this.onClick.bind(this);
 
 		this.state = {
-			//cameraPosition:[0,-58,100],
-			//cameraPosition:[550,0,550],
 			cameraLookAt:[0,0,0],
 			speed:.003, //300s for all signs to march through
 			//Distribution of signs
@@ -65,7 +63,8 @@ class GLWrapper extends Component{
 			signs:null,
 			signsPicking:null,
 			arrows:null,
-			target:null
+			target:null,
+			pickedTarget:null
 		}
 		this.material = null;
 		this.texture = new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg');
@@ -192,13 +191,39 @@ class GLWrapper extends Component{
 
 			//Given instance, recalculate and reset its transform matrix
 			//TODO: determining position, rotation and scale of target at any given moment
-			const position = new THREE.Vector3();
-			const rotation = new THREE.Quaternion();
-			const scale = new THREE.Vector3();
-			this.meshes.target.matrixWorld.decompose(position, rotation, scale);
-			console.log(position);
-			console.log(rotation);
-			console.log(scale);
+			//Start mat4: instance transform x target.matrixWorld
+			//End mat4: instance scale x camera.matrixWorld x z offset
+
+			//Before: this works
+			const m0 = this.state.instances[id].transformMatrixSign.clone();
+			const rotation = new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation);
+			m0.premultiply(rotation);
+
+			//After
+			const _scale = new THREE.Vector3();
+			const _position = new THREE.Vector3();
+			const _rotation = new THREE.Quaternion();
+			const _translate = new THREE.Matrix4().makeTranslation(0,0,-50);
+			m0.decompose(_position, _rotation, _scale);
+			console.log(_scale);
+			console.log(_translate);
+			const m1 = new THREE.Matrix4();
+			m1.makeScale(_scale.x, _scale.y, _scale.z);
+			m1.premultiply(this.camera.matrixWorld);
+			m1.premultiply(_translate);
+
+			const transformMatrixElements = m1.elements;
+
+
+			const {instanceTransformCol0, instanceTransformCol1, instanceTransformCol2, instanceTransformCol3} = this.meshes.pickedTarget.geometry.attributes;
+			instanceTransformCol0.setXYZW(0, ...transformMatrixElements.slice(0,4));
+			instanceTransformCol1.setXYZW(0, ...transformMatrixElements.slice(4,8));
+			instanceTransformCol2.setXYZW(0, ...transformMatrixElements.slice(8,12));
+			instanceTransformCol3.setXYZW(0, ...transformMatrixElements.slice(12));
+			instanceTransformCol0.needsUpdate = true;
+			instanceTransformCol1.needsUpdate = true;
+			instanceTransformCol2.needsUpdate = true;
+			instanceTransformCol3.needsUpdate = true;
 		}
 
 	}
@@ -231,6 +256,26 @@ class GLWrapper extends Component{
 
 		this.meshes.target = new THREE.Mesh(targetGeometry,targetMaterial);
 		this.scene.add(this.meshes.target);
+
+		//PICKED TARGET
+		const pickedTargetTransformCol0 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
+			pickedTargetTransformCol1 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
+			pickedTargetTransformCol2 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1),
+			pickedTargetTransformCol3 = new THREE.InstancedBufferAttribute(new Float32Array(1*4),4,1);
+		const pickedTargetGeometry = new THREE.InstancedBufferGeometry();
+		pickedTargetGeometry.addAttribute('position',vertices);
+		pickedTargetGeometry.addAttribute('uv',uv);
+		pickedTargetGeometry.addAttribute('instanceTransformCol0', pickedTargetTransformCol0);
+		pickedTargetGeometry.addAttribute('instanceTransformCol1', pickedTargetTransformCol1);
+		pickedTargetGeometry.addAttribute('instanceTransformCol2', pickedTargetTransformCol2);
+		pickedTargetGeometry.addAttribute('instanceTransformCol3', pickedTargetTransformCol3);
+
+		const pickedTargetMaterial = targetMaterial.clone();
+		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(0.0, 1.0, 0.0, 1.0);
+		pickedTargetMaterial.uniforms.map.value = this.texture;
+
+		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
+		this.scene.add(this.meshes.pickedTarget);
 
 	}
 
