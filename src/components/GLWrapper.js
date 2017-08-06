@@ -4,6 +4,7 @@ import {randomNormal, interpolate} from 'd3';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
+import {WheelLayout} from '../utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
 
@@ -47,8 +48,8 @@ class GLWrapper extends Component{
 			cameraLookAt:[0,0,0],
 			speed:.003, //Rotational speed
 			//Distribution of signs
-			X0:-120,
-			X1:120, 
+			X:0,
+			X_WIGGLE:120, 
 			R:400,
 			R_WIGGLE:30,
 			//Instance data for signs
@@ -123,8 +124,8 @@ class GLWrapper extends Component{
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
 			.easing(TWEEN.Easing.Cubic.InOut);
 		this.tween.transform = new TWEEN.Tween({x:0})
-			.to({x:1}, 500)
-			.easing(TWEEN.Easing.Cubic.InOut);
+			.to({x:1}, 300)
+			.easing(TWEEN.Easing.Cubic.Out);
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -316,53 +317,12 @@ class GLWrapper extends Component{
 
 	_setPerInstanceProperties(data){
 
-		const {X0,X1,R,R_WIGGLE} = this.state;
+		const wheelLayout = WheelLayout()
+			.x(this.state.X, this.state.X_WIGGLE)
+			.r(this.state.R, this.state.R_WIGGLE)
+			.groupBy((v,i)=>i%2);
 
-		const position = new THREE.Vector3();
-		const rotation = new THREE.Quaternion();
-		const scale = new THREE.Vector3();
-		const transformMatrixSign = new THREE.Matrix4();
-		const transformMatrixArrow = new THREE.Matrix4();
-		const normalMatrix = new THREE.Matrix3();
-		const X_AXIS = new THREE.Vector3(1,0,0);
-		const color = new THREE.Color();
-		const randomX = randomNormal(0,(X1-X0)/2);
-		const randomR = randomNormal(R,R_WIGGLE*2);
-
-		return data.map((v,i)=>{
-			const theta = Math.random()*Math.PI*2; 
-			const radius = randomR();
-
-			//For signs: per instance position, rotation, and scale
-			let z = Math.cos(theta)*radius;
-			let y = Math.sin(theta)*radius;
-			const x = randomX();
-
-			position.set(x,y,z);
-			rotation.setFromAxisAngle(X_AXIS, Math.PI/2-theta-Math.PI/8*(Math.random()*.5+1));
-			scale.set(Math.random()*5+8, Math.random()*5+8, 10);
-			transformMatrixSign.compose(position,rotation,scale);
-
-			//For arrows
-			z = Math.cos(theta)*(radius+R_WIGGLE);
-			y = Math.sin(theta)*(radius+R_WIGGLE);
-
-			position.set(x,y,z);
-			rotation.setFromAxisAngle(X_AXIS, Math.PI/2-theta);
-			scale.set(10,10,10);
-			transformMatrixArrow.compose(position,rotation,scale);
-
-			return {
-				id:v.id,
-				index:i,
-				transformMatrixSign:transformMatrixSign.clone(),
-				transformMatrixArrow:transformMatrixArrow.clone(),
-				pickingColor: color.clone().setHex(i),
-				x,
-				theta,
-				radius
-			};
-		});
+		return wheelLayout(data);
 
 	}
 
