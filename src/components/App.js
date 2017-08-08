@@ -5,15 +5,18 @@ import {fetchData} from '../utils';
 
 import GLWrapper from './GLWrapper';
 
-const cameraSettings = {
+const scenes = {
 	march:{
-		position: [0, -58, 100]
+		position: [0, -58, 100],
+		layout: 'march'
 	},
 	wheel:{
-		position: [650, 0, 700]
+		position: [650, 0, 700],
+		layout: 'wheel'
 	},
 	far:{
-		position: [1500,0,800]
+		position: [1500,0,800],
+		layout: 'wheel'
 	}
 }
 
@@ -25,7 +28,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			camera:cameraSettings.wheel
+			sceneSetting:scenes.wheel
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -67,7 +70,7 @@ class App extends Component{
 	}
 
 	render(){
-		const {images,width,height} = this.state;
+		const {images,width,height,sceneSetting} = this.state;
 
 		return (
 			<div className='app' ref={(node)=>{this.appNode = node}} >
@@ -75,7 +78,9 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
-					cameraPosition={this.state.camera.position}
+					cameraPosition={sceneSetting.position}
+					layout={sceneSetting.layout}
+					layoutGroupBy={null}
 					handleSelect={this._handleSelect}
 				/>}
 			</div>
