@@ -36,9 +36,9 @@ class GLWrapper extends Component{
 		super(props);
 
 		this._animate = this._animate.bind(this);
-		this._processData = this._processData.bind(this);
+		this._initMeshes = this._initMeshes.bind(this);
 		this._initStaticMeshes = this._initStaticMeshes.bind(this);
-		this._setPerInstanceProperties = this._setPerInstanceProperties.bind(this);
+		this._updateMeshes = this._updateMeshes.bind(this);
 		this._pick = this._pick.bind(this);
 
 		this.onMouseMove = this.onMouseMove.bind(this);
@@ -53,7 +53,7 @@ class GLWrapper extends Component{
 			R:400,
 			R_WIGGLE:30,
 			//Instance data for signs
-			instances:[],
+			instances:[], //contains final/target per instance transform
 			//Renderer settings
 			rendererClearcolor:0xeeeeee
 		};
@@ -126,6 +126,9 @@ class GLWrapper extends Component{
 		this.tween.transform = new TWEEN.Tween({x:0})
 			.to({x:1}, 300)
 			.easing(TWEEN.Easing.Cubic.Out);
+		this.tween.updateMeshes = new TWEEN.Tween({x:0})
+			.to({x:1}, 1000)
+			.easing(TWEEN.Easing.Cubic.InOut);
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -134,10 +137,36 @@ class GLWrapper extends Component{
 	}
 
 	componentWillReceiveProps(nextProps){
-		if(nextProps.data.length !== this.props.data.length){
-			//TODO: minimize this
-			this.setState({instances: [...this._setPerInstanceProperties(nextProps.data)]}); //nextState, based on nextProps
+
+		//Given the layout settings in nextProps, re-layout data and setState
+		const {layout, layoutGroupBy} = nextProps;
+		let setPerInstanceProperties;
+
+		switch(layout){
+			case 'wheel':
+				setPerInstanceProperties = WheelLayout();
+			case 'march':
+				setPerInstanceProperties = null;
+			default:
+				setPerInstanceProperties = WheelLayout();
 		}
+
+		setPerInstanceProperties
+			.x(this.state.X, this.state.X_WIGGLE)
+			.r(this.state.R, this.state.R_WIGGLE)
+			.groupBy(layoutGroupBy);
+
+		this.setState({
+			instances: [...setPerInstanceProperties(nextProps.data)]
+		});
+
+/*		if(nextProps.data.length !== this.props.data.length){
+			//TODO: minimize this
+			console.log('GL:set state instances');
+			this.setState({
+					instances: [...setPerInstanceProperties(nextProps.data)]
+				});
+		}*/
 	}
 
 	componentDidUpdate(prevProps, prevState){
@@ -159,11 +188,12 @@ class GLWrapper extends Component{
 			})
 			.start();
 
-		//If new data is injected, process mesh
+		//If new data is injected, initialize meshes
 		if(this.state.instances.length !== prevState.instances.length){
-			
 			//TODO: remove previously added dynamic meshes
-			this._processData(this.state.instances);
+			this._initMeshes();
+		}else{
+			this._updateMeshes();
 		}
 
 	}
@@ -249,9 +279,9 @@ class GLWrapper extends Component{
 
 	}
 
-	_processData(data){
+	_initMeshes(){
 
-		//Process data array; called when props.data changes
+		//Process data array; called when this.state.instances is initially populated
 		const {instances} = this.state;
 		const COUNT = instances.length;
 
@@ -312,17 +342,29 @@ class GLWrapper extends Component{
 		}
 		instanceColors.needsUpdate = true;
 
-
 	}
 
-	_setPerInstanceProperties(data){
+	_updateMeshes(){
 
-		const wheelLayout = WheelLayout()
-			.x(this.state.X, this.state.X_WIGGLE)
-			.r(this.state.R, this.state.R_WIGGLE)
-			.groupBy((v,i)=>i%2);
+		//Called when this.state.instances is updated, 
+		const {instances} = this.state;
+		const COUNT = instances.length;
 
-		return wheelLayout(data);
+		//Populate attributes with value
+		for(let i=0; i<COUNT; i++){
+			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
+
+			this._updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
+			this._updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
+		}
+
+		this.tween.updateMeshes
+			.onUpdate(v=>{
+				this.meshes.signs.material.uniforms.uInterpolateTransform.value = v;
+				this.meshes.arrows.material.uniforms.uInterpolateTransform.value = v;
+				this.meshes.signsPicking.material.uniforms.uInterpolateTransform.value = v;
+			})
+			.start();
 
 	}
 

@@ -80,7 +80,7 @@ class App extends Component{
 					data={images}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}
-					layoutGroupBy={null}
+					layoutGroupBy={(v,i)=>(i%2)}
 					handleSelect={this._handleSelect}
 				/>}
 			</div>
