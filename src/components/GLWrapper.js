@@ -84,7 +84,7 @@ class GLWrapper extends Component{
 		this.camera.up = new THREE.Vector3(.5,1,0).normalize();
 
 		//Init renderer, and mount renderer dom element
-		this.renderer = new THREE.WebGLRenderer({alpha:true});
+		this.renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
 		this.renderer.setClearColor(rendererClearcolor,0.0);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
@@ -101,7 +101,7 @@ class GLWrapper extends Component{
 		//Shader material
 		this.material = new THREE.RawShaderMaterial({
 			uniforms:{
-				uFogFactor:{value:0.000002},
+				uFogFactor:{value:0.000004},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
@@ -329,7 +329,7 @@ class GLWrapper extends Component{
 		this._initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		material = this.material.clone();
-		material.uniforms.uColor.value = new THREE.Vector4(.3,.3,.3,1.0);
+		material.uniforms.uColor.value = new THREE.Vector4(237/255,12/255,110/255,1.0);
 		material.uniforms.uFogFactor.value = 0.000005;
 		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);

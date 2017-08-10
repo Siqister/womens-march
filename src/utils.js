@@ -89,7 +89,7 @@ function WheelLayout(){
 
 			position.set(x,y,z);
 			rotation.setFromAxisAngle(X_AXIS, Math.PI/2-theta);
-			scale.set(10,10,10);
+			scale.set(7,7,7);
 			transformMatrixArrow.compose(position,rotation,scale);
 
 			//Per instance datum
