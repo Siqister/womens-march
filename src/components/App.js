@@ -4,6 +4,7 @@ import Waypoint from 'react-waypoint';
 import {fetchData} from '../utils';
 
 import GLWrapper from './GLWrapper';
+import GLBackground from './GLBackground';
 
 const scenes = {
 	march:{
@@ -82,6 +83,10 @@ class App extends Component{
 					layout={sceneSetting.layout}
 					layoutGroupBy={(v,i)=>(i%2)}
 					handleSelect={this._handleSelect}
+				/>}
+				{width&&height&&<GLBackground 
+					width={width}
+					height={height}
 				/>}
 			</div>
 		);

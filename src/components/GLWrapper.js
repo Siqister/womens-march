@@ -46,11 +46,11 @@ class GLWrapper extends Component{
 
 		this.state = {
 			cameraLookAt:[0,0,0],
-			speed:.003, //Rotational speed
+			speed:.002, //Rotational speed
 			//Distribution of signs
 			X:0,
-			X_WIGGLE:120, 
-			R:400,
+			X_WIGGLE:100, 
+			R:450,
 			R_WIGGLE:30,
 			//Instance data for signs
 			instances:[], //contains final/target per instance transform
@@ -81,10 +81,11 @@ class GLWrapper extends Component{
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
+		this.camera.up = new THREE.Vector3(.5,1,0).normalize();
 
 		//Init renderer, and mount renderer dom element
-		this.renderer = new THREE.WebGLRenderer();
-		this.renderer.setClearColor(rendererClearcolor);
+		this.renderer = new THREE.WebGLRenderer({alpha:true});
+		this.renderer.setClearColor(rendererClearcolor,0.0);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
 		this.wrapperNode.appendChild(this.renderer.domElement);
@@ -100,7 +101,7 @@ class GLWrapper extends Component{
 		//Shader material
 		this.material = new THREE.RawShaderMaterial({
 			uniforms:{
-				uFogFactor:{value:0.000003},
+				uFogFactor:{value:0.000002},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
@@ -282,7 +283,7 @@ class GLWrapper extends Component{
 		const pickedTargetMaterial = targetMaterial.clone();
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
 		pickedTargetMaterial.uniforms.map.value = this.texture;
-		pickedTargetMaterial.blending = THREE.MultiplyBlending;
+		//pickedTargetMaterial.blending = THREE.MultiplyBlending;
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
@@ -328,8 +329,8 @@ class GLWrapper extends Component{
 		this._initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		material = this.material.clone();
-		material.uniforms.uColor.value = new THREE.Vector4(.9,.3,.3,1.0);
-		material.uniforms.uFogFactor.value = 0.00001;
+		material.uniforms.uColor.value = new THREE.Vector4(.3,.3,.3,1.0);
+		material.uniforms.uFogFactor.value = 0.000005;
 		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
 		

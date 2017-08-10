@@ -99,8 +99,8 @@ function WheelLayout(){
 				transformMatrixSign:transformMatrixSign.clone(),
 				transformMatrixArrow:transformMatrixArrow.clone(),
 				pickingColor: color.clone().setHex(i),
-				textureUvOffset: [frame.x/2/4096, frame.y/2/4096], //FIXME: hardcoded
-				textureUvSize: [frame.w/2/4096, frame.h/2/4096], //FIXME: hardcoded
+				textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
+				textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096], //FIXME: hardcoded
 				x,
 				theta,
 				radius
