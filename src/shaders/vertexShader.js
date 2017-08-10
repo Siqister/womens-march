@@ -13,6 +13,9 @@ const vertexShaderText = `
 	attribute vec4 m1Col2;
 	attribute vec4 m1Col3;
 
+	attribute vec2 instanceTexUvOffset;
+	attribute vec2 instanceTexUvSize;
+
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
 
@@ -68,7 +71,8 @@ const vertexShaderText = `
 		}
 		
 		vVertexPosition = mvPosition;
-		vUv = uv;
+		//vUv = uv;
+		vUv = instanceTexUvOffset + vec2(instanceTexUvSize.x * uv.x, instanceTexUvSize.y * uv.y);
 
 	}
 `;

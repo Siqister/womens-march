@@ -67,7 +67,8 @@ class GLWrapper extends Component{
 			pickedTarget:null
 		}
 		this.material = null;
-		this.texture = new THREE.TextureLoader().load('./assets/f97b4d0e76df9855d7e3e0b2754c7f9a.jpg');
+		this.texture = new THREE.TextureLoader().load('./assets/all_images_sprite_4096.png');
+		this.texture.flipY = false;
 	}
 
 	componentDidMount(){
@@ -99,7 +100,7 @@ class GLWrapper extends Component{
 		//Shader material
 		this.material = new THREE.RawShaderMaterial({
 			uniforms:{
-				uFogFactor:{value:0.000008},
+				uFogFactor:{value:0.000003},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
@@ -159,14 +160,6 @@ class GLWrapper extends Component{
 		this.setState({
 			instances: [...setPerInstanceProperties(nextProps.data)]
 		});
-
-/*		if(nextProps.data.length !== this.props.data.length){
-			//TODO: minimize this
-			console.log('GL:set state instances');
-			this.setState({
-					instances: [...setPerInstanceProperties(nextProps.data)]
-				});
-		}*/
 	}
 
 	componentDidUpdate(prevProps, prevState){
@@ -201,11 +194,17 @@ class GLWrapper extends Component{
 	onMouseMove(e){
 
 		const x = e.clientX, y = e.clientY;
-		const id = this._pick(x,y);
+		const index = this._pick(x,y);
 
-		//Set transform matrix for this.meshes.target
-		if(this.state.instances && this.state.instances[id]){
-			this._updateTransformMatrices(this.meshes.target, this.state.instances[id].transformMatrixSign, this.state.instances[id].transformMatrixSign, 0);
+		//Set transform matrix and texture-related attribute values for this.meshes.target
+		if(this.state.instances && this.state.instances[index]){
+			this._updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
+			
+			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
+			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
+			instanceTexUvSize.setXY(0, ...this.state.instances[index].textureUvSize);
+			instanceTexUvOffset.needsUpdate = true;
+			instanceTexUvSize.needsUpdate = true;
 		}
 
 	}
@@ -213,26 +212,32 @@ class GLWrapper extends Component{
 	onClick(e){
 
 		const x = e.clientX, y = e.clientY;
-		const id = this._pick(x,y);
+		const index = this._pick(x,y);
 
-		if(this.state.instances && this.state.instances[id]){
-			this.props.handleSelect(id);
+		if(this.state.instances && this.state.instances[index]){
+			this.props.handleSelect(this.state.instances[index].id);
 
 			//Given instance, recalculate and reset its transform matrix
 			//Transform matrix m0
-			const m0 = this.state.instances[id].transformMatrixSign.clone();
+			const m0 = this.state.instances[index].transformMatrixSign.clone();
 			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
 			//Transform matrix m1
 			const p = new THREE.Vector3(0, 0, -50),
 				r = new THREE.Quaternion(),
 				s = new THREE.Vector3(); //Store decomposed matrix4
-			this.state.instances[id].transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
+			this.state.instances[index].transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
 			this.camera.matrixWorld.decompose(new THREE.Vector3(), r, new THREE.Vector3());
 			this.camera.localToWorld(p);
 			const m1 = new THREE.Matrix4().compose(p, r, s);
 
+			//Update attribute for this.meshes.pickedTarget
 			this._updateTransformMatrices(this.meshes.pickedTarget, m0, m1, 0);
+			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.pickedTarget.geometry.attributes;
+			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
+			instanceTexUvSize.setXY(0, ...this.state.instances[index].textureUvSize);
+			instanceTexUvOffset.needsUpdate = true;
+			instanceTexUvSize.needsUpdate = true;
 
 			this.tween.transform
 				.onUpdate(v=>{
@@ -252,6 +257,8 @@ class GLWrapper extends Component{
 		const targetGeometry = new THREE.InstancedBufferGeometry();
 		targetGeometry.addAttribute('position',vertices);
 		targetGeometry.addAttribute('uv',uv);
+		targetGeometry.addAttribute('instanceTexUvOffset', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
+		targetGeometry.addAttribute('instanceTexUvSize', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		this._initTransformMatrixAttrib(targetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const targetMaterial = this.material.clone();
@@ -268,11 +275,14 @@ class GLWrapper extends Component{
 		const pickedTargetGeometry = new THREE.InstancedBufferGeometry();
 		pickedTargetGeometry.addAttribute('position',vertices);
 		pickedTargetGeometry.addAttribute('uv',uv);
+		pickedTargetGeometry.addAttribute('instanceTexUvOffset', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
+		pickedTargetGeometry.addAttribute('instanceTexUvSize', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		this._initTransformMatrixAttrib(pickedTargetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const pickedTargetMaterial = targetMaterial.clone();
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
 		pickedTargetMaterial.uniforms.map.value = this.texture;
+		pickedTargetMaterial.blending = THREE.MultiplyBlending;
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
@@ -290,6 +300,8 @@ class GLWrapper extends Component{
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
+		const instanceTexUvOffset = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
+		const instanceTexUvSize = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
 		
 
 		//GEOMETRY, MATERIAL & MESH: SIGNS
@@ -298,6 +310,8 @@ class GLWrapper extends Component{
 		geometry.addAttribute('position', vertices);
 		geometry.addAttribute('uv',uv);
 		geometry.addAttribute('instanceColor', instanceColors);
+		geometry.addAttribute('instanceTexUvOffset', instanceTexUvOffset);
+		geometry.addAttribute('instanceTexUvSize', instanceTexUvSize);
 		this._initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		let material = this.material.clone();
@@ -334,13 +348,17 @@ class GLWrapper extends Component{
 
 		//Populate attributes with value
 		for(let i=0; i<COUNT; i++){
-			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
+			const {pickingColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize} = instances[i];
 
 			this._updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
 			this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
 			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
+			instanceTexUvOffset.setXY(i, ...textureUvOffset);
+			instanceTexUvSize.setXY(i, ...textureUvSize);
 		}
 		instanceColors.needsUpdate = true;
+		instanceTexUvOffset.needsUpdate = true;
+		instanceTexUvSize.needsUpdate = true;
 
 	}
 

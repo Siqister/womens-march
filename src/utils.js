@@ -1,20 +1,20 @@
 import * as THREE from 'three';
-import {randomNormal,pie} from 'd3';
+import {randomNormal,pie,json} from 'd3';
 const uuidv4 = require('uuid/v4');
 
 //Fetch data
 export const fetchData = () => {
 	return new Promise((resolve, reject)=>{
-		//TODO: placeholder for importing data
-		//Generate 6000 random data points
-		const data = Array.from({length:6000}).map((v,i)=>{
-			return {
-				id:uuidv4(),
-				//pickingColor:[Math.random(),Math.random(),Math.random(),1]
+		json('./assets/all_images.json',(err,json)=>{
+			if(err){
+				reject(err);
+			}else{
+				resolve(json.frames.map(v=>{
+					v.id = v.filename;
+					return v;
+				}));
 			}
 		});
-
-		resolve(data);
 	});
 }
 
@@ -59,6 +59,11 @@ function WheelLayout(){
 		}
 
 		return data.map((v,i)=>{
+
+			//Texture mapping-related
+			const {frame} = v;
+
+			//Position-related
 			const radius = randomR();
 			let theta;
 			if(groupByAccessor){
@@ -75,7 +80,7 @@ function WheelLayout(){
 
 			position.set(x,y,z);
 			rotation.setFromAxisAngle(X_AXIS, Math.PI/2-theta-Math.PI/8*(Math.random()*.5+1));
-			scale.set(Math.random()*5+8, Math.random()*5+8, 10);
+			scale.set(frame.w/10, frame.h/10, 10);
 			transformMatrixSign.compose(position,rotation,scale);
 
 			//For arrows
@@ -87,12 +92,15 @@ function WheelLayout(){
 			scale.set(10,10,10);
 			transformMatrixArrow.compose(position,rotation,scale);
 
+			//Per instance datum
 			return {
 				id:v.id,
 				index:i,
 				transformMatrixSign:transformMatrixSign.clone(),
 				transformMatrixArrow:transformMatrixArrow.clone(),
 				pickingColor: color.clone().setHex(i),
+				textureUvOffset: [frame.x/2/4096, frame.y/2/4096], //FIXME: hardcoded
+				textureUvSize: [frame.w/2/4096, frame.h/2/4096], //FIXME: hardcoded
 				x,
 				theta,
 				radius
