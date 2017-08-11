@@ -2,6 +2,9 @@ const vertexShaderText = `
 	attribute vec3 position;
 	attribute vec2 uv;
 	attribute vec4 instanceColor;
+	attribute vec2 instanceTexUvOffset;
+	attribute vec2 instanceTexUvSize;
+	attribute vec3 instanceOrientation;
 
 	attribute vec4 instanceTransformCol0;
 	attribute vec4 instanceTransformCol1;
@@ -13,16 +16,15 @@ const vertexShaderText = `
 	attribute vec4 m1Col2;
 	attribute vec4 m1Col3;
 
-	attribute vec2 instanceTexUvOffset;
-	attribute vec2 instanceTexUvSize;
-
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
 
 	uniform vec4 uColor;
+	uniform vec4 uOrientation;
 	uniform bool uUsePickingColor;
 	uniform bool uUseInstanceTransform;
 	uniform bool uUseTexture;
+	uniform bool uUseOrientation;
 	uniform float uInterpolateTransform;
 
 	varying vec4 vColor;
@@ -45,19 +47,24 @@ const vertexShaderText = `
 		);
 		mat4 instanceTransformMatrix = m0 * (1.0 - uInterpolateTransform) + m1 * uInterpolateTransform;
 
+		//Re-orient vertex position
+		vec3 orientedPosition;
+		if(uUseOrientation){
+			vec3 vcV = cross(uOrientation.xyz, position.xyz);
+			orientedPosition = vcV * (2.0 * uOrientation.w) + (cross(uOrientation.xyz,vcV)*2.0+position.xyz);
+		}else{
+			orientedPosition = position;
+		}
+
 		//Transform vertex position
 		vec4 transformedPosition;
 		if(uUseInstanceTransform){
-			transformedPosition = instanceTransformMatrix * vec4(position, 1.0);
+			transformedPosition = instanceTransformMatrix * vec4(orientedPosition, 1.0);
 		}else{
-			transformedPosition = vec4(position, 1.0);
+			transformedPosition = vec4(orientedPosition, 1.0);
 		}
 		
-		//Re-orient in model coordinates
-		//vec3 vcV = cross(instanceOrientation.xyz, transformedPosition.xyz);
-		//vec3 orientedPosition = vcV * (2.0 * instanceOrientation.w) + (cross(instanceOrientation.xyz,vcV)*2.0+transformedPosition.xyz);
-
-		//Vertex in view coordinates
+		//Vertex in world coordinates
 		vec4 mvPosition = modelViewMatrix * vec4(transformedPosition.xyz, 1.0);
 		gl_Position = projectionMatrix * mvPosition;
 
@@ -71,7 +78,6 @@ const vertexShaderText = `
 		}
 		
 		vVertexPosition = mvPosition;
-		//vUv = uv;
 		vUv = instanceTexUvOffset + vec2(instanceTexUvSize.x * uv.x, instanceTexUvSize.y * uv.y);
 
 	}

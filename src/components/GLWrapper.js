@@ -46,7 +46,7 @@ class GLWrapper extends Component{
 
 		this.state = {
 			cameraLookAt:[0,0,0],
-			speed:.002, //Rotational speed
+			speed:.001, //Rotational speed
 			//Distribution of signs
 			X:0,
 			X_WIGGLE:100, 
@@ -106,6 +106,8 @@ class GLWrapper extends Component{
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
+				uUseOrientation:{value:false},
+				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
 				map:{value:null},
 				uInterpolateTransform:{value:0.0}
 			},
@@ -208,6 +210,12 @@ class GLWrapper extends Component{
 			instanceTexUvSize.needsUpdate = true;
 		}
 
+		//Slightly re-orient this.meshes.pickedTarget
+		const {width,height} = this.props;
+		const offsetX = x/width*2-1,
+			offsetY = 1-y/height*2;
+		this.meshes.pickedTarget.material.uniforms.uOrientation.value = new THREE.Vector4(offsetX/5, offsetY/5, 1.0, 0.0).normalize();
+
 	}
 
 	onClick(e){
@@ -283,6 +291,7 @@ class GLWrapper extends Component{
 		const pickedTargetMaterial = targetMaterial.clone();
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
 		pickedTargetMaterial.uniforms.map.value = this.texture;
+		pickedTargetMaterial.uniforms.uUseOrientation.value = true;
 		//pickedTargetMaterial.blending = THREE.MultiplyBlending;
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
@@ -318,6 +327,8 @@ class GLWrapper extends Component{
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
 		material.uniforms.map.value = this.texture;
+		material.uniforms.uFogFactor.value = .000003;
+		//material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.signs = new THREE.Mesh(geometry,material);
 

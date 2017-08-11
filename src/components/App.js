@@ -12,7 +12,7 @@ const scenes = {
 		layout: 'march'
 	},
 	wheel:{
-		position: [650, 0, 700],
+		position: [450, 0, 500],
 		layout: 'wheel'
 	},
 	far:{
