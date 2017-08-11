@@ -132,4 +132,75 @@ function WheelLayout(){
 	return exports;
 }
 
-export {WheelLayout};
+function TileLayout(){
+
+	let x = 0, xStdDev = 0;
+	let r = 0, rStdDev = 0;
+	let randomX, randomR;
+	let groupByAccessor = null;
+
+	const position = new THREE.Vector3();
+	const rotation = new THREE.Quaternion();
+	const scale = new THREE.Vector3();
+	const transformMatrixSign = new THREE.Matrix4();
+	const transformMatrixArrow = new THREE.Matrix4();
+	const color = new THREE.Color();
+
+	function exports(data){
+
+		return data.map((v,i)=>{
+
+			//Texture mapping-related
+			const {frame} = v;
+
+			position.set(frame.x/10, frame.y/10, 0);
+			scale.set(frame.w/10, frame.h/10, 10);
+			transformMatrixSign.compose(position, rotation, scale);
+
+			position.set(frame.x/10, frame.y/10, 10);
+			scale.set(7,7,7);
+			transformMatrixArrow.compose(position, rotation, scale);
+
+			return {
+				id:v.id,
+				index:i,
+				transformMatrixSign:transformMatrixSign.clone(),
+				transformMatrixArrow:transformMatrixArrow.clone(),
+				pickingColor: color.clone().setHex(i),
+				textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
+				textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
+			};
+
+		});
+
+	}
+
+	return exports;
+}
+
+export {WheelLayout, TileLayout};
+
+//Vertices data
+const signVerticesArray = [
+	-1.0, 1.0, 0,
+	1.0, 1.0, .05,
+	1.0, -1.0, 0,
+	1.0, -1.0, 0,
+	-1.0, -1.0, .05,
+	-1.0, 1.0, 0
+];
+const signUvArray = [
+	0,0,
+	1,0,
+	1,1,
+	1,1,
+	0,1,
+	0,0
+];
+const arrowVerticesArray = [
+	-0.2, 0, 0.2,
+	0, 0, -0.5,
+	0.2, 0, 0.2
+];
+
+export {signVerticesArray, signUvArray, arrowVerticesArray};

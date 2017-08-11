@@ -12,12 +12,16 @@ const scenes = {
 		layout: 'march'
 	},
 	wheel:{
-		position: [450, 0, 500],
+		position: [250, 0, 600],
 		layout: 'wheel'
 	},
 	far:{
 		position: [1500,0,800],
 		layout: 'wheel'
+	},
+	tile:{
+		position: [0,0,300],
+		layout: 'tile'
 	}
 }
 
@@ -29,7 +33,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			sceneSetting:scenes.wheel
+			sceneSetting:scenes.tile
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);

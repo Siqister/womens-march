@@ -4,32 +4,10 @@ import {randomNormal, interpolate} from 'd3';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout} from '../utils';
+import {WheelLayout, TileLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
 
-//Vertices data
-const signVerticesArray = [
-	-1.0, 1.0, 0,
-	1.0, 1.0, .05,
-	1.0, -1.0, 0,
-	1.0, -1.0, 0,
-	-1.0, -1.0, .05,
-	-1.0, 1.0, 0
-];
-const signUvArray = [
-	0,0,
-	1,0,
-	1,1,
-	1,1,
-	0,1,
-	0,0
-];
-const arrowVerticesArray = [
-	-0.2, 0, 0.2,
-	0, 0, -0.5,
-	0.2, 0, 0.2
-];
 
 class GLWrapper extends Component{
 	constructor(props){
@@ -81,7 +59,7 @@ class GLWrapper extends Component{
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
-		this.camera.up = new THREE.Vector3(.5,1,0).normalize();
+		this.camera.up = new THREE.Vector3(.5,1,0).normalize(); //FIXME
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
@@ -128,7 +106,7 @@ class GLWrapper extends Component{
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
 			.easing(TWEEN.Easing.Cubic.InOut);
 		this.tween.transform = new TWEEN.Tween({x:0})
-			.to({x:1}, 300)
+			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out);
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
 			.to({x:1}, 1000)
@@ -146,22 +124,25 @@ class GLWrapper extends Component{
 		const {layout, layoutGroupBy} = nextProps;
 		let setPerInstanceProperties;
 
-		switch(layout){
-			case 'wheel':
-				setPerInstanceProperties = WheelLayout();
-			case 'march':
-				setPerInstanceProperties = null;
-			default:
-				setPerInstanceProperties = WheelLayout();
-		}
-
-		setPerInstanceProperties
+		const wheelLayout = WheelLayout()
 			.x(this.state.X, this.state.X_WIGGLE)
 			.r(this.state.R, this.state.R_WIGGLE)
 			.groupBy(layoutGroupBy);
 
+		switch(layout){
+			case 'wheel':
+				setPerInstanceProperties = wheelLayout;
+				break;
+			case 'tile':
+				setPerInstanceProperties = TileLayout();
+				break;
+			default:
+				setPerInstanceProperties = wheelLayout;
+		}
+
 		this.setState({
-			instances: [...setPerInstanceProperties(nextProps.data)]
+			instances: [...setPerInstanceProperties(nextProps.data)],
+			speed:0
 		});
 	}
 
@@ -186,7 +167,6 @@ class GLWrapper extends Component{
 
 		//If new data is injected, initialize meshes
 		if(this.state.instances.length !== prevState.instances.length){
-			//TODO: remove previously added dynamic meshes
 			this._initMeshes();
 		}else{
 			this._updateMeshes();
@@ -249,9 +229,6 @@ class GLWrapper extends Component{
 			instanceTexUvSize.needsUpdate = true;
 
 			this.tween.transform
-				.onUpdate(v=>{
-					this.meshes.pickedTarget.material.uniforms.uInterpolateTransform.value = v;
-				})
 				.start();
 		}
 
@@ -296,6 +273,12 @@ class GLWrapper extends Component{
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
+
+		//Set up tweening of picked signs
+		this.tween.transform
+			.onUpdate(v=>{
+				this.meshes.pickedTarget.material.uniforms.uInterpolateTransform.value = v;
+			});
 
 	}
 
@@ -372,6 +355,15 @@ class GLWrapper extends Component{
 		instanceTexUvOffset.needsUpdate = true;
 		instanceTexUvSize.needsUpdate = true;
 
+
+		//Set up tween
+		this.tween.updateMeshes
+			.onUpdate(v=>{
+				this.meshes.signs.material.uniforms.uInterpolateTransform.value = v;
+				this.meshes.arrows.material.uniforms.uInterpolateTransform.value = v;
+				this.meshes.signsPicking.material.uniforms.uInterpolateTransform.value = v;
+			});
+
 	}
 
 	_updateMeshes(){
@@ -389,11 +381,6 @@ class GLWrapper extends Component{
 		}
 
 		this.tween.updateMeshes
-			.onUpdate(v=>{
-				this.meshes.signs.material.uniforms.uInterpolateTransform.value = v;
-				this.meshes.arrows.material.uniforms.uInterpolateTransform.value = v;
-				this.meshes.signsPicking.material.uniforms.uInterpolateTransform.value = v;
-			})
 			.start();
 
 	}
