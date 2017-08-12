@@ -17,6 +17,11 @@ const scenes = {
 		layout: 'wheel',
 		layoutGroupBy: (v,i)=>v%3
 	},
+	bigWheel:{
+		position: [500, 0, 600],
+		layout: 'wheel',
+		layoutGroupBy: null
+	},
 	sphere:{
 		position: [0,0,20],
 		layout: 'sphere'
@@ -31,7 +36,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			sceneSetting:scenes.sphere
+			sceneSetting:scenes.bigWheel
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
