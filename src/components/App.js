@@ -23,6 +23,10 @@ const scenes = {
 	tile:{
 		position: [0,0,100],
 		layout: 'tile'
+	},
+	sphere:{
+		position: [0,10,0],
+		layout: 'sphere'
 	}
 }
 
@@ -34,7 +38,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			sceneSetting:scenes.wheel
+			sceneSetting:scenes.sphere
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);

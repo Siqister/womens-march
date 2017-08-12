@@ -21,6 +21,9 @@ export const fetchData = () => {
 //Data layout functions
 function WheelLayout(){
 
+/*	WheelLayout:
+	Constructs a layout that, given an array, returns a new array of instances, with positions at polor coordinate (x,r), randomized by standard deviation
+*/
 	let x = 0, xStdDev = 0;
 	let r = 0, rStdDev = 0;
 	let randomX, randomR;
@@ -132,6 +135,8 @@ function WheelLayout(){
 	return exports;
 }
 
+
+//FIXME: math is off
 function TileLayout(){
 
 	let x = 0, xStdDev = 0;
@@ -178,7 +183,85 @@ function TileLayout(){
 	return exports;
 }
 
-export {WheelLayout, TileLayout};
+function SphereLayout(){
+
+/*	SphereLayout:
+	Constructs a layout that, given array, returns new array of instances arranged as a sphere with radius r, oriented towards center
+*/
+	let r = 0;
+
+	const position = new THREE.Vector3();
+	const rotation = new THREE.Quaternion();
+	const scale = new THREE.Vector3();
+	const transformMatrixSign = new THREE.Matrix4();
+	const transformMatrixArrow = new THREE.Matrix4();
+	const color = new THREE.Color();
+
+	function exports(data){
+		const LNG_BANDS = Math.ceil(Math.sqrt(data.length));
+		const LAT_BANDS = Math.ceil(data.length/LNG_BANDS);
+
+		console.log(LAT_BANDS, LNG_BANDS);
+
+		//Compute position based on theta (lat) and phi (lng)
+		const sphericalNormals = []; //array of possible spherical normals in (x,y,z)
+
+		for(let lat=0; lat<=LAT_BANDS; lat++){
+			const theta = lat*Math.PI/LAT_BANDS; //TODO: range may be <180deg
+			const sinTheta = Math.sin(theta);
+			const cosTheta = Math.cos(theta);
+
+			for(let lng=0; lng<=LNG_BANDS; lng++){
+				const phi = lng*Math.PI*2/LNG_BANDS; //TODO: range may be < 360deg
+				const sinPhi = Math.sin(phi);
+				const cosPhi = Math.cos(phi);
+
+				const sphericalNormal = [cosPhi*sinTheta, cosTheta, sinPhi*sinTheta];
+				sphericalNormals.push(sphericalNormal);
+			}
+		} 
+
+		return data.map((v,i)=>{
+
+			//Texture-mapping related
+			const {frame} = v;
+
+			//Construct per instance transform matrices 
+			const instanceNormal = sphericalNormals[i];
+			let instancePosition = instanceNormal.map(v=>v*r);
+
+			position.set(...instancePosition);
+			scale.set(frame.w/10, frame.h/10, 10);
+			transformMatrixSign.compose(position, rotation, scale);
+
+			instancePosition = instanceNormal.map(v=>v*(r-10));
+			position.set(...instancePosition);
+			scale.set(7,7,7);
+			transformMatrixArrow.compose(position, rotation, scale);
+
+			return {
+				id:v.id,
+				index:i,
+				transformMatrixSign:transformMatrixSign.clone(),
+				transformMatrixArrow:transformMatrixArrow.clone(),
+				pickingColor: color.clone().setHex(i),
+				textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
+				textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
+			};
+
+		});
+
+	}
+
+	exports.r = function(value){
+		r = value;
+		return this;
+	}
+
+	return exports;
+}
+
+export {WheelLayout, TileLayout, SphereLayout};
 
 //Vertices data
 const signVerticesArray = [

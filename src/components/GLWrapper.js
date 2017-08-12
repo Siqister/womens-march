@@ -4,7 +4,7 @@ import {randomNormal, interpolate} from 'd3';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, TileLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
+import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
 
@@ -127,13 +127,15 @@ class GLWrapper extends Component{
 			.x(this.state.X, this.state.X_WIGGLE)
 			.r(this.state.R, this.state.R_WIGGLE)
 			.groupBy(layoutGroupBy);
+		const sphereLayout = SphereLayout()
+			.r(this.state.R);
 
 		switch(layout){
 			case 'wheel':
 				setPerInstanceProperties = wheelLayout;
 				break;
-			case 'tile':
-				setPerInstanceProperties = TileLayout();
+			case 'sphere':
+				setPerInstanceProperties = sphereLayout;
 				break;
 			default:
 				setPerInstanceProperties = wheelLayout;
