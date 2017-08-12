@@ -24,8 +24,8 @@ class GLBackground extends Component{
 
 		//Create a gradient
 		const gradient = this.ctx.createLinearGradient(0,0,0,height);
-		gradient.addColorStop(0,'rgb(200,215,218)');
-		gradient.addColorStop(.8,'rgb(245,245,245)');
+		gradient.addColorStop(0,'rgb(205,215,215)');
+		gradient.addColorStop(.8,'rgb(245,245,250)');
 
 		this.ctx.fillStyle = gradient;
 		this.ctx.fillRect(0,0,width,height);

@@ -18,7 +18,6 @@ class GLWrapper extends Component{
 		this._initStaticMeshes = this._initStaticMeshes.bind(this);
 		this._updateMeshes = this._updateMeshes.bind(this);
 		this._pick = this._pick.bind(this);
-
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onClick = this.onClick.bind(this);
 
@@ -59,7 +58,7 @@ class GLWrapper extends Component{
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
-		this.camera.up = new THREE.Vector3(.5,1,0).normalize(); //FIXME
+		this.camera.up = new THREE.Vector3(.5,1,0).normalize(); //TODO: turn into a prop
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
@@ -142,7 +141,7 @@ class GLWrapper extends Component{
 
 		this.setState({
 			instances: [...setPerInstanceProperties(nextProps.data)],
-			speed:0
+			//speed:0
 		});
 	}
 

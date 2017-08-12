@@ -6,6 +6,7 @@ import {fetchData} from '../utils';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 
+//TODO: remove scene settings from App.js
 const scenes = {
 	march:{
 		position: [0, -58, 100],
@@ -20,7 +21,7 @@ const scenes = {
 		layout: 'wheel'
 	},
 	tile:{
-		position: [0,0,300],
+		position: [0,0,100],
 		layout: 'tile'
 	}
 }
@@ -33,7 +34,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			sceneSetting:scenes.tile
+			sceneSetting:scenes.wheel
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -85,7 +86,7 @@ class App extends Component{
 					data={images}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}
-					layoutGroupBy={(v,i)=>(i%2)}
+					layoutGroupBy={null}
 					handleSelect={this._handleSelect}
 				/>}
 				{width&&height&&<GLBackground 
