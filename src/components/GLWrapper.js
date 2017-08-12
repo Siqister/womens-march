@@ -23,6 +23,7 @@ class GLWrapper extends Component{
 
 		this.state = {
 			cameraLookAt:[0,0,0],
+			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
 			//Distribution of signs
 			X:0,
@@ -58,7 +59,7 @@ class GLWrapper extends Component{
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
-		this.camera.up = new THREE.Vector3(.5,1,0).normalize(); //TODO: turn into a prop
+		this.camera.up = new THREE.Vector3(...this.state.cameraUp).normalize(); //TODO: turn into a prop
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
@@ -213,7 +214,7 @@ class GLWrapper extends Component{
 			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
 			//Transform matrix m1
-			const p = new THREE.Vector3(0, 0, -50),
+			const p = new THREE.Vector3(0, 0, -40),
 				r = new THREE.Quaternion(),
 				s = new THREE.Vector3(); //Store decomposed matrix4
 			this.state.instances[index].transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);

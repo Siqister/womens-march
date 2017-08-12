@@ -197,11 +197,13 @@ function SphereLayout(){
 	const transformMatrixArrow = new THREE.Matrix4();
 	const color = new THREE.Color();
 
-	function exports(data){
-		const LNG_BANDS = Math.ceil(Math.sqrt(data.length));
-		const LAT_BANDS = Math.ceil(data.length/LNG_BANDS);
+	const center = new THREE.Vector3(0,0,0);
+	const up = new THREE.Vector3();
+	const X_AXIS = new THREE.Vector3(1,0,0);
 
-		console.log(LAT_BANDS, LNG_BANDS);
+	function exports(data){
+		const LNG_BANDS = Math.ceil(Math.sqrt(data.length)); 
+		const LAT_BANDS = Math.ceil(data.length/LNG_BANDS);
 
 		//Compute position based on theta (lat) and phi (lng)
 		const sphericalNormals = []; //array of possible spherical normals in (x,y,z)
@@ -211,8 +213,8 @@ function SphereLayout(){
 			const sinTheta = Math.sin(theta);
 			const cosTheta = Math.cos(theta);
 
-			for(let lng=0; lng<=LNG_BANDS; lng++){
-				const phi = lng*Math.PI*2/LNG_BANDS; //TODO: range may be < 360deg
+			for(let lng=0; lng<=LNG_BANDS*(sinTheta*1.57); lng++){
+				const phi = lng*Math.PI*2/(LNG_BANDS*(sinTheta*1.57)); //TODO: range may be < 360deg FIXME: hardcoded fudge constant
 				const sinPhi = Math.sin(phi);
 				const cosPhi = Math.cos(phi);
 
@@ -228,16 +230,25 @@ function SphereLayout(){
 
 			//Construct per instance transform matrices 
 			const instanceNormal = sphericalNormals[i];
-			let instancePosition = instanceNormal.map(v=>v*r);
+			const instanceR = r + Math.random()*20;
+			let instancePosition = instanceNormal.map(v=>v*instanceR);
+			const rotationMat4 = new THREE.Matrix4();
 
 			position.set(...instancePosition);
-			scale.set(frame.w/10, frame.h/10, 10);
+
+			up.set(Math.random()*.6-.3, 1, 0).normalize();
+			rotationMat4.lookAt(position, center, up);
+			
+			scale.set(frame.w/8, frame.h/8, 10);
 			transformMatrixSign.compose(position, rotation, scale);
+			transformMatrixSign.multiply(rotationMat4);
 
-			instancePosition = instanceNormal.map(v=>v*(r-10));
+			instancePosition = instanceNormal.map(v=>v*(instanceR-10));
 			position.set(...instancePosition);
+			rotation.setFromAxisAngle(X_AXIS, Math.PI*2);
 			scale.set(7,7,7);
 			transformMatrixArrow.compose(position, rotation, scale);
+			transformMatrixArrow.multiply(rotationMat4);
 
 			return {
 				id:v.id,

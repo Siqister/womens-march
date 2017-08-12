@@ -14,18 +14,11 @@ const scenes = {
 	},
 	wheel:{
 		position: [250, 0, 600],
-		layout: 'wheel'
-	},
-	far:{
-		position: [1500,0,800],
-		layout: 'wheel'
-	},
-	tile:{
-		position: [0,0,100],
-		layout: 'tile'
+		layout: 'wheel',
+		layoutGroupBy: (v,i)=>v%3
 	},
 	sphere:{
-		position: [0,10,0],
+		position: [0,0,20],
 		layout: 'sphere'
 	}
 }
@@ -90,7 +83,7 @@ class App extends Component{
 					data={images}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}
-					layoutGroupBy={null}
+					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
 					handleSelect={this._handleSelect}
 				/>}
 				{width&&height&&<GLBackground 
