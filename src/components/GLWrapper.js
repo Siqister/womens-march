@@ -206,9 +206,11 @@ class GLWrapper extends Component{
 		const index = this._pick(x,y);
 
 		if(this.state.instances && this.state.instances[index]){
+
+			//Callback
 			this.props.handleSelect(this.state.instances[index].id);
 
-			//Given instance, recalculate and reset its transform matrix
+			//Given instance, calculate its current (world) transform matrix and target transform matrix
 			//Transform matrix m0
 			const m0 = this.state.instances[index].transformMatrixSign.clone();
 			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
@@ -383,8 +385,15 @@ class GLWrapper extends Component{
 		}
 
 		this.tween.updateMeshes
-			.start();
+			.start()
+			.onComplete(()=>{
+				for(let i=0; i<COUNT; i++){
+					const {transformMatrixSign, transformMatrixArrow} = instances[i];
 
+					this._updateTransformMatrices(this.meshes.signs, transformMatrixSign, null, i);
+					this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
+				}
+			});
 	}
 
 	_updateTransformMatrices(mesh,m0,m1,index){

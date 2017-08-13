@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
-import Waypoint from 'react-waypoint';
 
 import {fetchData} from '../utils';
 
+import Scene from './Scene';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 
@@ -40,6 +40,7 @@ class App extends Component{
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
+		this._onScenePositionChange = this._onScenePositionChange.bind(this);
 	}
 
 	componentDidMount(){
@@ -73,6 +74,23 @@ class App extends Component{
 		console.log(id);
 	}
 
+	_onSceneEnter(scene){
+		switch(scene){
+			case 'scene-1':
+				this.setState({sceneSetting:scenes.bigWheel});
+				break;
+			case 'scene-2':
+				this.setState({sceneSetting:scenes.sphere});
+				break;
+			default:
+				this.setState({sceneSetting:scenes.bigWheel});
+		}
+	}
+
+	_onScenePositionChange(v){
+		console.log(v);
+	}
+
 	componentWillUnmount(){
 		window.removeEventListener('resize');
 	}
@@ -95,6 +113,18 @@ class App extends Component{
 					width={width}
 					height={height}
 				/>}
+				<Scene
+					onSceneEnter={this._onSceneEnter.bind(this,'scene-1')}
+				>
+					<h1>Scene one</h1>
+				</Scene>
+				<Scene
+					onSceneEnter={this._onSceneEnter.bind(this,'scene-2')}
+				>
+					<h1>Scene two</h1>
+				</Scene>
+
+
 			</div>
 		);
 	}
