@@ -1,32 +1,36 @@
 import React, {Component} from 'react';
 
 import {fetchData} from '../utils';
-
+import Toolbar from './Toolbar';
 import Scene from './Scene';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 
 //TODO: remove scene settings from App.js
-const scenes = {
-	march:{
+const scenes = [
+	{
 		position: [0, -58, 100],
 		layout: 'march'
 	},
-	wheel:{
+	{
 		position: [250, 0, 600],
 		layout: 'wheel',
 		layoutGroupBy: (v,i)=>v%3
 	},
-	bigWheel:{
+	{
 		position: [500, 0, 600],
 		layout: 'wheel',
 		layoutGroupBy: null
 	},
-	sphere:{
+	{
 		position: [0,0,20],
 		layout: 'sphere'
+	},
+	{
+		position: [0,0,750],
+		layout: 'sphere'
 	}
-}
+];
 
 class App extends Component{
 	constructor(props){
@@ -36,7 +40,7 @@ class App extends Component{
 			images:[],
 			width:0,
 			height:0,
-			sceneSetting:scenes.bigWheel
+			currentScene:0
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -96,10 +100,12 @@ class App extends Component{
 	}
 
 	render(){
-		const {images,width,height,sceneSetting} = this.state;
+		const {images,width,height,currentScene} = this.state;
+		const sceneSetting = this.props.scenes[currentScene];
 
 		return (
-			<div className='app' ref={(node)=>{this.appNode = node}} >
+			<div className='app' ref={(node)=>{this.appNode = node}} 
+			>
 				{width&&height&&<GLWrapper 
 					width={width} 
 					height={height} 
@@ -113,7 +119,7 @@ class App extends Component{
 					width={width}
 					height={height}
 				/>}
-				<Scene
+{/*				<Scene
 					onSceneEnter={this._onSceneEnter.bind(this,'scene-1')}
 				>
 					<h1>Scene one</h1>
@@ -123,11 +129,19 @@ class App extends Component{
 				>
 					<h1>Scene two</h1>
 				</Scene>
-
-
+*/}				
+				<Toolbar 
+					scenes={this.props.scenes}
+					currentScene={currentScene}
+					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
+				/>
 			</div>
 		);
 	}
 }
+
+App.defaultProps = {
+	scenes:scenes
+};
 
 export default App;

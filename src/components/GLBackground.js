@@ -41,7 +41,7 @@ class GLBackground extends Component{
 					position:'fixed',
 					width:width,
 					height:height,
-					zIndex:-1
+					zIndex:-999
 				}}
 				width={width}
 				height={height}
