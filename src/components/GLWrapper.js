@@ -1,12 +1,13 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
-import {randomNormal, interpolate} from 'd3';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
 import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
+import hemisphereVs from '../shaders/hemisphereVertexShader';
+import hemisphereFs from '../shaders/hemisphereFragmentShader';
 
 
 class GLWrapper extends Component{
@@ -42,7 +43,8 @@ class GLWrapper extends Component{
 			signsPicking:null,
 			arrows:null,
 			target:null,
-			pickedTarget:null
+			pickedTarget:null,
+			hemisphere:null
 		}
 		this.material = null;
 		this.texture = new THREE.TextureLoader().load('./assets/all_images_sprite_4096.png');
@@ -277,6 +279,19 @@ class GLWrapper extends Component{
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
+
+
+		//HEMISPHERE LIGHT
+		const hemisphereGeometry = new THREE.SphereBufferGeometry(this.state.R*5);
+		const hemisphereMaterial = new THREE.ShaderMaterial({
+			side:THREE.DoubleSide,
+			vertexShader:hemisphereVs,
+			fragmentShader:hemisphereFs,
+			blending: THREE.AdditiveBlending
+		});
+		this.meshes.hemisphere = new THREE.Mesh(hemisphereGeometry, hemisphereMaterial);
+		this.scene.add(this.meshes.hemisphere);
+
 
 		//Set up tweening of picked signs
 		this.tween.transform

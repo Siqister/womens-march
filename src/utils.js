@@ -213,8 +213,8 @@ function SphereLayout(){
 			const sinTheta = Math.sin(theta);
 			const cosTheta = Math.cos(theta);
 
-			for(let lng=0; lng<=LNG_BANDS*(sinTheta*1.57); lng++){
-				const phi = lng*Math.PI*2/(LNG_BANDS*(sinTheta*1.57)); //TODO: range may be < 360deg FIXME: hardcoded fudge constant
+			for(let lng=0; lng<=LNG_BANDS*(sinTheta*1.56); lng++){
+				const phi = lng*Math.PI*2/(LNG_BANDS*(sinTheta*1.56)); //TODO: range may be < 360deg FIXME: hardcoded fudge constant
 				const sinPhi = Math.sin(phi);
 				const cosPhi = Math.cos(phi);
 

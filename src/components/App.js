@@ -23,11 +23,11 @@ const scenes = [
 		layoutGroupBy: null
 	},
 	{
-		position: [0,0,20],
+		position: [0,0,800],
 		layout: 'sphere'
 	},
 	{
-		position: [0,0,750],
+		position: [0,0,20],
 		layout: 'sphere'
 	}
 ];
