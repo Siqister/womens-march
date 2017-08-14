@@ -230,7 +230,7 @@ function SphereLayout(){
 
 			//Construct per instance transform matrices 
 			const instanceNormal = sphericalNormals[i];
-			const instanceR = r + Math.random()*20;
+			const instanceR = r + Math.random()*40-20;
 			let instancePosition = instanceNormal.map(v=>v*instanceR);
 			const rotationMat4 = new THREE.Matrix4();
 
