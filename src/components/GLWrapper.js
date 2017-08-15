@@ -57,7 +57,7 @@ class GLWrapper extends Component{
 
 		//Component mounted, initialize camera, renderer, and scene
 		//Init camera
-		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.01, 3000);
+		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.5, 4000);
 		this.camera.position.set(...cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
@@ -218,7 +218,7 @@ class GLWrapper extends Component{
 			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
 			//Transform matrix m1
-			const p = new THREE.Vector3(0, 0, -40),
+			const p = new THREE.Vector3(0, 0, -45),
 				r = new THREE.Quaternion(),
 				s = new THREE.Vector3(); //Store decomposed matrix4
 			this.state.instances[index].transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
