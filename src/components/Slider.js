@@ -10,7 +10,7 @@ const defaultElementStyle = {
 	position:'absolute',
 	margin:0
 }
-const color = 'rgb(120,120,120)';
+const color = 'rgb(180,180,180)';
 
 class Slider extends Component{
 	constructor(props){

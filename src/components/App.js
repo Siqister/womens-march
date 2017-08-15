@@ -5,28 +5,34 @@ import Toolbar from './Toolbar';
 import Scene from './Scene';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
+import ImageDetail from './ImageDetail';
 
 //TODO: remove scene settings from App.js
 const scenes = [
 	{
+		id:1,
 		position: [0, -58, 100],
 		layout: 'march'
 	},
 	{
+		id:2,
 		position: [250, 0, 600],
 		layout: 'wheel',
 		layoutGroupBy: (v,i)=>v%3
 	},
 	{
+		id:3,
 		position: [500, 0, 600],
 		layout: 'wheel',
 		layoutGroupBy: null
 	},
 	{
+		id:4,
 		position: [0,0,800],
 		layout: 'sphere'
 	},
 	{
+		id:5,
 		position: [0,0,20],
 		layout: 'sphere'
 	}
@@ -38,13 +44,13 @@ class App extends Component{
 
 		this.state = {
 			images:[],
+			selectedImage:[],
 			width:0,
 			height:0,
 			currentScene:0
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
-		this._onScenePositionChange = this._onScenePositionChange.bind(this);
 	}
 
 	componentDidMount(){
@@ -75,7 +81,12 @@ class App extends Component{
 	}
 
 	_handleSelect(id){
-		console.log(id);
+		
+		const selectedImage = this.state.images.filter(v=>v.id===id);
+		this.setState({
+			selectedImage:[...selectedImage]
+		});
+
 	}
 
 	_onSceneEnter(scene){
@@ -91,16 +102,12 @@ class App extends Component{
 		}
 	}
 
-	_onScenePositionChange(v){
-		console.log(v);
-	}
-
 	componentWillUnmount(){
 		window.removeEventListener('resize');
 	}
 
 	render(){
-		const {images,width,height,currentScene} = this.state;
+		const {images,width,height,currentScene,selectedImage} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
 		return (
@@ -110,26 +117,15 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
+					sceneId={sceneSetting.id}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}
 					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
 					handleSelect={this._handleSelect}
 				/>}
-				{width&&height&&<GLBackground 
-					width={width}
-					height={height}
+				{selectedImage.length&&<ImageDetail
+					data={selectedImage[0]}
 				/>}
-{/*				<Scene
-					onSceneEnter={this._onSceneEnter.bind(this,'scene-1')}
-				>
-					<h1>Scene one</h1>
-				</Scene>
-				<Scene
-					onSceneEnter={this._onSceneEnter.bind(this,'scene-2')}
-				>
-					<h1>Scene two</h1>
-				</Scene>
-*/}				
 				<Toolbar 
 					scenes={this.props.scenes}
 					currentScene={currentScene}

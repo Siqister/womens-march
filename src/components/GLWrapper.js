@@ -123,7 +123,9 @@ class GLWrapper extends Component{
 	componentWillReceiveProps(nextProps){
 
 		//Given the layout settings in nextProps, re-layout data and setState
-		const {layout, layoutGroupBy} = nextProps;
+		const {layout, layoutGroupBy, sceneId} = nextProps;
+		if(this.props.sceneId === sceneId && nextProps.data.length === this.props.data.length) return; //FIXME: not elegant!
+
 		let setPerInstanceProperties;
 
 		const wheelLayout = WheelLayout()
@@ -146,7 +148,6 @@ class GLWrapper extends Component{
 
 		this.setState({
 			instances: [...setPerInstanceProperties(nextProps.data)],
-			//speed:0
 		});
 	}
 
@@ -512,7 +513,8 @@ class GLWrapper extends Component{
 }
 
 GLWrapper.defaultProps = {
-	data:[]
+	data:[],
+	sceneId:null
 };
 
 export default GLWrapper;
