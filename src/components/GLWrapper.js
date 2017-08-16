@@ -23,7 +23,7 @@ class GLWrapper extends Component{
 		this.onClick = this.onClick.bind(this);
 
 		this.state = {
-			cameraLookAt:[0,0,0],
+			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
 			//Distribution of signs
@@ -59,13 +59,13 @@ class GLWrapper extends Component{
 		//Init camera
 		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.5, 4000);
 		this.camera.position.set(...cameraPosition);
-		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
+		this.camera.lookAt(cameraLookAt);
 		this.camera.zoom = 1;
 		this.camera.up = new THREE.Vector3(...this.state.cameraUp).normalize(); //TODO: turn into a prop
 
 		//Init renderer, and mount renderer dom element
-		this.renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
-		this.renderer.setClearColor(rendererClearcolor,0.0);
+		this.renderer = new THREE.WebGLRenderer({antialias:true});
+		this.renderer.setClearColor(rendererClearcolor);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
 		this.wrapperNode.appendChild(this.renderer.domElement);
@@ -106,7 +106,10 @@ class GLWrapper extends Component{
 		//Init tweens
 		this.tween = {};
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
-			.easing(TWEEN.Easing.Cubic.InOut);
+			.easing(TWEEN.Easing.Cubic.InOut)
+			.onUpdate(()=>{
+				this.camera.lookAt(this.state.cameraLookAt);
+			});
 		this.tween.transform = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out);
@@ -124,6 +127,7 @@ class GLWrapper extends Component{
 
 		//Given the layout settings in nextProps, re-layout data and setState
 		const {layout, layoutGroupBy, sceneId} = nextProps;
+		//If neither scene nor data changed, do not re-layout
 		if(this.props.sceneId === sceneId && nextProps.data.length === this.props.data.length) return; //FIXME: not elegant!
 
 		let setPerInstanceProperties;
@@ -152,7 +156,7 @@ class GLWrapper extends Component{
 	}
 
 	componentDidUpdate(prevProps, prevState){
-		const {width,height,data,cameraPosition} = this.props;
+		const {width,height,data,cameraPosition,sceneId} = this.props;
 
 		//Assume width and height are changed
 		this.camera.aspect = width/height;
@@ -162,13 +166,11 @@ class GLWrapper extends Component{
 
 		//Assume cameraPosition has been updated; tween camera position to props.cameraPosition
 		//TODO: compare props.cameraPosition and prevProps.cameraPosition before tweening
-		const cameraLookAt = new THREE.Vector3(...this.state.cameraLookAt);
-		this.tween.camera
-			.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
-			.onUpdate(()=>{
-				this.camera.lookAt(cameraLookAt);
-			})
-			.start();
+		if(sceneId !== prevProps.sceneId){
+			this.tween.camera
+				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
+				.start();
+		}
 
 		//If new data is injected, initialize meshes
 		if(this.state.instances.length !== prevState.instances.length){
