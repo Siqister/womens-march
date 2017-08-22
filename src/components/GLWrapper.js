@@ -278,7 +278,7 @@ class GLWrapper extends Component{
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
 		pickedTargetMaterial.uniforms.map.value = this.texture;
 		pickedTargetMaterial.uniforms.uUseOrientation.value = true;
-		//pickedTargetMaterial.blending = THREE.MultiplyBlending;
+		//pickedTargetMaterial.blending = THREE.AdditiveBlending;
 
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
