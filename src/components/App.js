@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import {fetchData} from '../utils';
+import {fetchImageList, fetchMetadata, fetchSprite} from '../utils';
 import Toolbar from './Toolbar';
 import Scene from './Scene';
 import GLWrapper from './GLWrapper';
@@ -11,8 +11,9 @@ import ImageDetail from './ImageDetail';
 const scenes = [
 	{
 		id:1,
-		position: [0, -58, 100],
-		layout: 'march'
+		position: [1500, 0, 1500],
+		layout: 'wheel',
+		layoutGroupBy: null
 	},
 	{
 		id:2,
@@ -22,9 +23,8 @@ const scenes = [
 	},
 	{
 		id:3,
-		position: [500, 0, 600],
-		layout: 'wheel',
-		layoutGroupBy: null
+		position: [0, -58, 100],
+		layout: 'march'
 	},
 	{
 		id:4,
@@ -47,7 +47,8 @@ class App extends Component{
 			selectedImage:[],
 			width:0,
 			height:0,
-			currentScene:0
+			currentScene:0,
+			sprite:null
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -63,13 +64,20 @@ class App extends Component{
 
 		//Request data...
 		//...on data request complete, update state and trigger re-render
-		fetchData()
-			.then(data => {
+		Promise.all([fetchImageList(), fetchSprite()])
+			.then(([data,texture]) => {
 				const {images} = this.state;
 				this.setState({
-					images:[...images, ...data]
+					images:[...images, ...data],
+					sprite:texture,
+					currentScene:3
 				});
 			});
+
+		//FIXME
+		fetchMetadata()
+			.then(res=>res.json())
+			.then(res=>{console.log(res)});
 
 		//Window resize event
 		window.addEventListener('resize',()=>{
@@ -89,25 +97,12 @@ class App extends Component{
 
 	}
 
-	_onSceneEnter(scene){
-		switch(scene){
-			case 'scene-1':
-				this.setState({sceneSetting:scenes.bigWheel});
-				break;
-			case 'scene-2':
-				this.setState({sceneSetting:scenes.sphere});
-				break;
-			default:
-				this.setState({sceneSetting:scenes.bigWheel});
-		}
-	}
-
 	componentWillUnmount(){
 		window.removeEventListener('resize');
 	}
 
 	render(){
-		const {images,width,height,currentScene,selectedImage} = this.state;
+		const {images,sprite,width,height,currentScene,selectedImage} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
 		return (
@@ -117,6 +112,7 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
+					sprite={sprite}
 					sceneId={sceneSetting.id}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}

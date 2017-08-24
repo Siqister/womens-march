@@ -3,7 +3,7 @@ import {randomNormal,pie,json} from 'd3';
 const uuidv4 = require('uuid/v4');
 
 //Fetch data
-export const fetchData = () => {
+export const fetchImageList = () => {
 	return new Promise((resolve, reject)=>{
 		json('./assets/all_images.json',(err,json)=>{
 			if(err){
@@ -15,6 +15,25 @@ export const fetchData = () => {
 				}));
 			}
 		});
+	});
+}
+
+export const fetchMetadata = () => {
+	return fetch('https://mfw-data-interface.herokuapp.com/api/v1/images?limit=1000');
+}
+
+export const fetchSprite = () => {
+	return new Promise((resolve, reject)=>{
+		const t = new THREE.TextureLoader()
+			.load('./assets/all_images_sprite_4096.png', 
+				texture => {
+					resolve(texture);
+				},
+				xhr => {},
+				xhr => {
+					reject(new Error('Error loading sprite image'));
+				}
+			);
 	});
 }
 
