@@ -125,42 +125,75 @@ class GLWrapper extends Component{
 
 	componentWillReceiveProps(nextProps){
 
-		const {layout, layoutGroupBy, sceneId, sprite} = nextProps;
-		//If neither scene nor data changed, do not re-layout
-		if(this.props.sceneId === sceneId && nextProps.data.length === this.props.data.length) return; //FIXME: not elegant!
+		const {data,
+			sprite,
+			sceneId,
+			cameraPosition,
+			layout, 
+			layoutGroupBy} = nextProps;
 
-		//Before using props.sprite, set its .flipY property
-		//FIXME: shouldn't mutate incoming props
-		sprite.flipY = false;
-
-		//If scene changes or new data is injected, layout data again
-		let setPerInstanceProperties;
-
-		const wheelLayout = WheelLayout()
-			.x(this.state.X, this.state.X_WIGGLE)
-			.r(this.state.R, this.state.R_WIGGLE)
-			.groupBy(layoutGroupBy);
-		const sphereLayout = SphereLayout()
-			.r(this.state.R);
-
-		switch(layout){
-			case 'wheel':
-				setPerInstanceProperties = wheelLayout;
-				break;
-			case 'sphere':
-				setPerInstanceProperties = sphereLayout;
-				break;
-			default:
-				setPerInstanceProperties = wheelLayout;
+		if(sprite){
+			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
 		}
 
-		this.setState({
-			instances: [...setPerInstanceProperties(nextProps.data)],
-		});
+		//If props.sceneId changes
+		//Reorient camera
+		if(this.props.sceneId !== sceneId){
+			this.tween.camera
+				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
+				.start();
+		}
+
+		//If props.sceneId changes (which implies layout change), or
+		//if props.data.length changes (e.g. initial data injection)
+		//Layout data again
+		if(this.props.sceneId !== sceneId || nextProps.data.length !== this.props.data.length){
+
+			console.log('GLWrapper:layout');
+			let setPerInstanceProperties;
+
+			const wheelLayout = WheelLayout()
+				.x(this.state.X, this.state.X_WIGGLE)
+				.r(this.state.R, this.state.R_WIGGLE)
+				.groupBy(layoutGroupBy);
+			const sphereLayout = SphereLayout()
+				.r(this.state.R);
+
+			switch(layout){
+				case 'wheel':
+					setPerInstanceProperties = wheelLayout;
+					break;
+				case 'sphere':
+					setPerInstanceProperties = sphereLayout;
+					break;
+				default:
+					setPerInstanceProperties = wheelLayout;
+			}
+
+			this.setState({
+				instances: [...setPerInstanceProperties(nextProps.data)]
+			}); 
+		}
+
+	}
+
+	shouldComponentUpdate(nextProps, nextState){
+
+		//Only update if props.width or props.height change, or this.state.instances changes
+		//Otherwise, skip re-render, and handle prop changes in the Three.js environment (via componentWillReceiveProps)
+		if(this.props.width !== nextProps.width 
+			|| this.props.height !== nextProps.height
+			|| this.state.instances !== nextState.instances){
+			return true;
+		}else{
+			return false;
+		}
+
 	}
 
 	componentDidUpdate(prevProps, prevState){
 
+		console.log('GLWrapper:componentDidUpdate');
 		const {width,height,data,cameraPosition,sceneId} = this.props;
 
 		//Assume width and height are changed
@@ -169,15 +202,7 @@ class GLWrapper extends Component{
 		this.renderer.setSize(width,height);
 		this.pickingTexture.setSize(width,height);
 
-		//Assume cameraPosition has been updated; tween camera position to props.cameraPosition
-		//TODO: compare props.cameraPosition and prevProps.cameraPosition before tweening
-		if(sceneId !== prevProps.sceneId){
-			this.tween.camera
-				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
-				.start();
-		}
-
-		//If new data is injected, initialize meshes
+		//Assume this.state.instances changed (re-layout or data injection)
 		if(this.state.instances.length !== prevState.instances.length){
 			this._initMeshes();
 		}else{
