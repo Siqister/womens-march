@@ -160,6 +160,7 @@ class GLWrapper extends Component{
 	}
 
 	componentDidUpdate(prevProps, prevState){
+
 		const {width,height,data,cameraPosition,sceneId} = this.props;
 
 		//Assume width and height are changed
@@ -266,7 +267,7 @@ class GLWrapper extends Component{
 					instanceTexUvSize.needsUpdate = true;
 					pickedTarget.material.uniforms.map.value = texture;
 				}})(Date.now()), xhr => {
-
+					//Progress callback, no op
 				}, xhr => {
 					console.log(`Texture for image ${_instance.id} not loaded`);	
 				});
@@ -530,6 +531,8 @@ class GLWrapper extends Component{
 	}
 
 	render(){
+
+		console.log('GLWrapper:render');
 		const {width,height} = this.props;
 
 		return (

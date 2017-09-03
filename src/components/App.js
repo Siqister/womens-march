@@ -40,6 +40,7 @@ const scenes = [
 
 class App extends Component{
 	constructor(props){
+
 		super(props);
 
 		this.state = {
@@ -52,9 +53,11 @@ class App extends Component{
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
+		
 	}
 
 	componentDidMount(){
+
 		//Compute width and height from .app
 		//Updatte state and trigger re-render
 		this.setState({
@@ -86,6 +89,7 @@ class App extends Component{
 				height: this.appNode.clientHeight
 			});
 		});
+
 	}
 
 	_handleSelect(id){
@@ -98,10 +102,13 @@ class App extends Component{
 	}
 
 	componentWillUnmount(){
+
 		window.removeEventListener('resize');
+
 	}
 
 	render(){
+
 		const {images,sprite,width,height,currentScene,selectedImage} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
@@ -129,6 +136,7 @@ class App extends Component{
 				/>
 			</div>
 		);
+
 	}
 }
 
