@@ -11,13 +11,17 @@ import hemisphereFs from '../shaders/hemisphereFragmentShader';
 
 
 class GLWrapper extends Component{
+
 	constructor(props){
+
 		super(props);
 
 		this._animate = this._animate.bind(this);
 		this._initMeshes = this._initMeshes.bind(this);
 		this._initStaticMeshes = this._initStaticMeshes.bind(this);
 		this._updateMeshes = this._updateMeshes.bind(this);
+		this._showSelectedImage = this._showSelectedImage.bind(this);
+		this._hideSelectedImage = this._hideSelectedImage.bind(this);
 		this._pick = this._pick.bind(this);
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onClick = this.onClick.bind(this);
@@ -49,6 +53,7 @@ class GLWrapper extends Component{
 		this.material = null;
 		this.pickedTargetTexture = new THREE.TextureLoader();
 		this.pickedTargetTexture.crossOrigin = '';
+
 	}
 
 	componentDidMount(){
@@ -130,7 +135,8 @@ class GLWrapper extends Component{
 			sceneId,
 			cameraPosition,
 			layout, 
-			layoutGroupBy} = nextProps;
+			layoutGroupBy,
+			selectedImageIndex} = nextProps;
 
 		if(sprite){
 			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
@@ -175,6 +181,15 @@ class GLWrapper extends Component{
 			}); 
 		}
 
+		//Given props.selectedImageIndex, call this._showSelectedImage()
+		//FIXME: this will be a problem if props.selectedImageIndex is set at the same time as, or before, props.data
+		//because state.instances is set asynchromously
+		if(selectedImageIndex){
+			this._showSelectedImage(selectedImageIndex);
+		}else if(this.props.selectedImageIndex){
+			this._hideSelectedImage(this.props.selectedImageIndex);
+		}
+
 	}
 
 	shouldComponentUpdate(nextProps, nextState){
@@ -193,7 +208,7 @@ class GLWrapper extends Component{
 
 	componentDidUpdate(prevProps, prevState){
 
-		console.log('GLWrapper:componentDidUpdate');
+		//Component is updated only after changes to props.width, props.height, or state.instances (re-layout)
 		const {width,height,data,cameraPosition,sceneId} = this.props;
 
 		//Assume width and height are changed
@@ -239,66 +254,8 @@ class GLWrapper extends Component{
 
 		const x = e.clientX, y = e.clientY;
 		const index = this._pick(x,y);
-
 		if(this.state.instances && this.state.instances[index]){
-
-			//Callback
-			const _instance = this.state.instances[index];
-			this.props.handleSelect(_instance.id);
-
-			//Given instance, calculate its current (world) transform matrix and target transform matrix
-			//Transform matrix m0
-			const m0 = _instance.transformMatrixSign.clone();
-			m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
-
-			//Transform matrix m1
-			const p = new THREE.Vector3(0, 0, -45),
-				r = new THREE.Quaternion(),
-				s = new THREE.Vector3(); //Store decomposed matrix4
-			_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
-			this.camera.matrixWorld.decompose(new THREE.Vector3(), r, new THREE.Vector3());
-			this.camera.localToWorld(p);
-			const m1 = new THREE.Matrix4().compose(p, r, s);
-			//Flip along x axis
-			m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0)));
-
-			const pickedTarget = this.meshes.pickedTarget;
-			pickedTarget.material.uniforms.map.value = this.props.sprite;
-
-			//Update attribute for this.meshes.pickedTarget, move it in front of the camera
-			this._updateTransformMatrices(pickedTarget, m0, m1, 0);
-			const {instanceTexUvOffset, instanceTexUvSize} = pickedTarget.geometry.attributes;
-			instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
-			instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
-			instanceTexUvOffset.needsUpdate = true;
-			instanceTexUvSize.needsUpdate = true;
-
-			//Load high-res texture for pickedTarget
-			this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.id}`, (timestamp => {
-
-				pickedTarget.timestamp = timestamp; //timestamp of the last request
-
-				return texture => {
-					//Loaded texture is from an outdated request...
-					if(timestamp < pickedTarget.timestamp) return;
-
-					//Texture fully loaded
-					texture.generateMipmaps = false;
-					texture.minFilter = THREE.LinearFilter;
-
-					instanceTexUvOffset.setXY(0, 0, 0);
-					instanceTexUvSize.setXY(0, 1, 1);
-					instanceTexUvOffset.needsUpdate = true;
-					instanceTexUvSize.needsUpdate = true;
-					pickedTarget.material.uniforms.map.value = texture;
-				}})(Date.now()), xhr => {
-					//Progress callback, no op
-				}, xhr => {
-					console.log(`Texture for image ${_instance.id} not loaded`);	
-				});
-
-			this.tween.transform
-				.start();
+			this.props.handleSelect(index);
 		}
 
 	}
@@ -471,6 +428,85 @@ class GLWrapper extends Component{
 					this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
 				}
 			});
+	}
+
+	_showSelectedImage(index){
+		
+		if(!this.state.instances[index]) return;
+
+		const _instance = this.state.instances[index];
+
+		//Given instance, calculate its current (world) transform matrix and target transform matrix
+		//Transform matrix m0
+		const m0 = _instance.transformMatrixSign.clone();
+		m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
+
+		//Transform matrix m1
+		const p = new THREE.Vector3(0, 0, -45),
+			r = new THREE.Quaternion(),
+			s = new THREE.Vector3(); //Store decomposed matrix4
+		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
+		this.camera.matrixWorld.decompose(new THREE.Vector3(), r, new THREE.Vector3());
+		this.camera.localToWorld(p);
+		const m1 = new THREE.Matrix4().compose(p, r, s);
+		//Flip along x axis
+		m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0)));
+
+		const pickedTarget = this.meshes.pickedTarget;
+		pickedTarget.material.uniforms.map.value = this.props.sprite;
+
+		//Update attribute for this.meshes.pickedTarget, move it in front of the camera
+		this._updateTransformMatrices(pickedTarget, m0, m1, 0);
+		const {instanceTexUvOffset, instanceTexUvSize} = pickedTarget.geometry.attributes;
+		instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
+		instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
+		instanceTexUvOffset.needsUpdate = true;
+		instanceTexUvSize.needsUpdate = true;
+
+		//Load high-res texture for pickedTarget
+		this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.id}`, (timestamp => {
+
+			pickedTarget.timestamp = timestamp; //timestamp of the last request
+
+			return texture => {
+				//Loaded texture is from an outdated request...
+				if(timestamp < pickedTarget.timestamp) return;
+
+				//Texture fully loaded
+				texture.generateMipmaps = false;
+				texture.minFilter = THREE.LinearFilter;
+
+				instanceTexUvOffset.setXY(0, 0, 0);
+				instanceTexUvSize.setXY(0, 1, 1);
+				instanceTexUvOffset.needsUpdate = true;
+				instanceTexUvSize.needsUpdate = true;
+				pickedTarget.material.uniforms.map.value = texture;
+			}})(Date.now()), xhr => {
+				//Progress callback, no op
+			}, xhr => {
+				console.log(`Texture for image ${_instance.id} not loaded`); //FIXME: remove in production
+			});
+
+		this.tween.transform
+			.onComplete(()=>{
+				this._updateTransformMatrices(pickedTarget, m1, null, 0);
+			})
+			.start()
+	}
+
+	_hideSelectedImage(index){
+
+		//Hide this.meshes.pickedTarget		
+		const _instance = this.state.instances[index];
+		const s = new THREE.Vector3();
+		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
+		const m1 = new THREE.Matrix4().compose(new THREE.Vector3(0,0,4000), new THREE.Quaternion(), s);
+
+		const pickedTarget = this.meshes.pickedTarget;
+		this._updateTransformMatrices(pickedTarget, null, m1, 0);
+
+		this.tween.transform.start();
+
 	}
 
 	_updateTransformMatrices(mesh,m0,m1,index){

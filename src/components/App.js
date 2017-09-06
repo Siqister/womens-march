@@ -45,7 +45,7 @@ class App extends Component{
 
 		this.state = {
 			images:[],
-			selectedImage:[],
+			selectedImage:null,
 			width:0,
 			height:0,
 			currentScene:0,
@@ -53,7 +53,7 @@ class App extends Component{
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
-		
+
 	}
 
 	componentDidMount(){
@@ -92,11 +92,10 @@ class App extends Component{
 
 	}
 
-	_handleSelect(id){
+	_handleSelect(index){
 		
-		const selectedImage = this.state.images.filter(v=>v.id===id);
 		this.setState({
-			selectedImage:[...selectedImage]
+			selectedImage:index
 		});
 
 	}
@@ -119,6 +118,7 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
+					selectedImageIndex={selectedImage}
 					sprite={sprite}
 					sceneId={sceneSetting.id}
 					cameraPosition={sceneSetting.position}
@@ -126,13 +126,13 @@ class App extends Component{
 					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
 					handleSelect={this._handleSelect}
 				/>}
-				{selectedImage.length&&<ImageDetail
-					data={selectedImage[0]}
+				{(selectedImage!==null)&&<ImageDetail
+					data={images[selectedImage]}
 				/>}
 				<Toolbar 
 					scenes={this.props.scenes}
 					currentScene={currentScene}
-					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
+					onSceneSettingChange={(i)=>{this.setState({currentScene:i, selectedImage:null})}}
 				/>
 			</div>
 		);

@@ -4,11 +4,9 @@ const color = 'rgb(80,80,80)';
 
 const imageDetailStyle = {
 	position:'absolute',
-	width:256,
-	bottom:'50%',
-	left:'50%',
-	padding:'10px 10px',
-	marginLeft:'50px',
+	width:'100%',
+	bottom:'25%',
+	top:'25%',
 	pointerEvents:'none'
 }
 
@@ -16,6 +14,17 @@ const imageDetailListItemStyle = {
 	color:`${color}`,
 	background:'rgb(255,255,255)',
 	display:'inline'
+}
+
+const buttonContainerStyle = {
+	position:'absolute',
+	width:160,
+	height:60,
+	top:'100%',
+	left:'50%',
+	transform:'translate(-50%,-20px)',
+	background:'red',
+	pointerEvents:'auto'
 }
 
 const ImageDetailListItem = props => {
@@ -27,9 +36,7 @@ const ImageDetailListItem = props => {
 	</li>
 }
 
-const ImageDetail = (props) => {
-
-	console.log(props.data);
+const ImageDetail = props => {
 
 	return (
 		<div className='image-detail'
@@ -43,6 +50,10 @@ const ImageDetail = (props) => {
 				<ImageDetailListItem data={props.data} id='id'/>
 				<ImageDetailListItem data={props.data} id='rotated'/>
 			</ul>
+			<div className='button-container'
+				style={buttonContainerStyle}>
+
+			</div>
 		</div>
 	);
 }

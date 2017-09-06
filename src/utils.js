@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {randomNormal,pie,json} from 'd3';
-const uuidv4 = require('uuid/v4');
 
 //Fetch data
 export const fetchImageList = () => {
