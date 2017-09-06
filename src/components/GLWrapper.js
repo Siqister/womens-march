@@ -507,11 +507,11 @@ class GLWrapper extends Component{
 			})
 			.start();
 
-		//Fade the background
+		//Increase uFogFactor (fade background)
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
 		this.tween.fog
 			.onUpdate(v=>{
-				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00002 + (1-v)*currentFogFactor;
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00003 + (1-v)*currentFogFactor;
 			})
 			.start();
 	}
@@ -529,6 +529,7 @@ class GLWrapper extends Component{
 
 		this.tween.transform.start();
 
+		//Decrease uFogFactor 
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
 		this.tween.fog
 			.onUpdate(v=>{

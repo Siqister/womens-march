@@ -24,6 +24,11 @@ html,body{
 }
 
 /* Animation */
+@keyframes spinning{
+	0% {stroke-dashoffset:0;}
+	100% {stroke-dashoffset:119.4px;}
+}
+
 .image-detail-list-appear{
 	transform: rotateX(90deg);
 }
@@ -45,4 +50,6 @@ html,body{
 	opacity:0.01;
 	transition:opacity 200ms ease-in;
 }
+
+
 
