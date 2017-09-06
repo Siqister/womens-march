@@ -5,7 +5,7 @@ import Toolbar from './Toolbar';
 import Scene from './Scene';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
-import ImageDetail from './ImageDetail';
+import Image from './Image';
 
 //TODO: remove scene settings from App.js
 const scenes = [
@@ -49,10 +49,13 @@ class App extends Component{
 			width:0,
 			height:0,
 			currentScene:0,
-			sprite:null
+			sprite:null,
+			loading:false
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
+		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
+		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
 
 	}
 
@@ -100,6 +103,22 @@ class App extends Component{
 
 	}
 
+	_handleTextureLoadStart(){
+
+		this.setState({
+			loading:true
+		});
+
+	}
+
+	_handleTextureLoadEnd(){
+
+		this.setState({
+			loading:false
+		});
+
+	}
+
 	componentWillUnmount(){
 
 		window.removeEventListener('resize');
@@ -108,7 +127,7 @@ class App extends Component{
 
 	render(){
 
-		const {images,sprite,width,height,currentScene,selectedImage} = this.state;
+		const {images,sprite,width,height,currentScene,selectedImage,loading} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
 		return (
@@ -125,9 +144,12 @@ class App extends Component{
 					layout={sceneSetting.layout}
 					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
 					handleSelect={this._handleSelect}
+					onTextureLoadStart={this._handleTextureLoadStart}
+					onTextureLoadEnd={this._handleTextureLoadEnd}
 				/>}
-				{(selectedImage!==null)&&<ImageDetail
+				{(selectedImage!==null)&&<Image
 					data={images[selectedImage]}
+					loading={loading}
 				/>}
 				<Toolbar 
 					scenes={this.props.scenes}

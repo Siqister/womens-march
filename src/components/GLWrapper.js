@@ -184,7 +184,9 @@ class GLWrapper extends Component{
 		//Given props.selectedImageIndex, call this._showSelectedImage()
 		//FIXME: this will be a problem if props.selectedImageIndex is set at the same time as, or before, props.data
 		//because state.instances is set asynchromously
+		//FIXME: circular calling of this._showSelectedImage
 		if(selectedImageIndex){
+			if(selectedImageIndex === this.props.selectedImageIndex) return; //FIXME: not working
 			this._showSelectedImage(selectedImageIndex);
 		}else if(this.props.selectedImageIndex){
 			this._hideSelectedImage(this.props.selectedImageIndex);
@@ -464,6 +466,7 @@ class GLWrapper extends Component{
 		instanceTexUvSize.needsUpdate = true;
 
 		//Load high-res texture for pickedTarget
+		this.props.onTextureLoadStart();
 		this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.id}`, (timestamp => {
 
 			pickedTarget.timestamp = timestamp; //timestamp of the last request
@@ -481,9 +484,13 @@ class GLWrapper extends Component{
 				instanceTexUvOffset.needsUpdate = true;
 				instanceTexUvSize.needsUpdate = true;
 				pickedTarget.material.uniforms.map.value = texture;
+
+				this.props.onTextureLoadEnd();
+
 			}})(Date.now()), xhr => {
 				//Progress callback, no op
 			}, xhr => {
+				this.props.onTextureLoadEnd();
 				console.log(`Texture for image ${_instance.id} not loaded`); //FIXME: remove in production
 			});
 

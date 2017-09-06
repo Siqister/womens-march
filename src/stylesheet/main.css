@@ -1,6 +1,8 @@
-div,html,body,h1,h2,h3,p,ul,li{
+div,html,body,h1,h2,h3,p,ul,li,button{
 	margin:0;
 	padding:0;
+	background:none;
+	border:none;
 }
 
 html,body{
