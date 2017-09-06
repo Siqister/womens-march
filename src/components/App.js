@@ -1,32 +1,36 @@
 import React, {Component} from 'react';
 
-import {fetchData} from '../utils';
+import {fetchImageList, fetchMetadata, fetchSprite} from '../utils';
 import Toolbar from './Toolbar';
-import Scene from './Scene';
 import GLWrapper from './GLWrapper';
-import GLBackground from './GLBackground';
+import Image from './Image';
 
 //TODO: remove scene settings from App.js
 const scenes = [
 	{
-		position: [0, -58, 100],
-		layout: 'march'
+		id:1,
+		position: [1500, 0, 1500],
+		layout: 'wheel',
+		layoutGroupBy: null
 	},
 	{
+		id:2,
 		position: [250, 0, 600],
 		layout: 'wheel',
 		layoutGroupBy: (v,i)=>v%3
 	},
 	{
-		position: [500, 0, 600],
-		layout: 'wheel',
-		layoutGroupBy: null
+		id:3,
+		position: [0, -58, 100],
+		layout: 'march'
 	},
 	{
+		id:4,
 		position: [0,0,800],
 		layout: 'sphere'
 	},
 	{
+		id:5,
 		position: [0,0,20],
 		layout: 'sphere'
 	}
@@ -34,20 +38,28 @@ const scenes = [
 
 class App extends Component{
 	constructor(props){
+
 		super(props);
 
 		this.state = {
 			images:[],
+			selectedImage:null,
 			width:0,
 			height:0,
-			currentScene:0
+			currentScene:0,
+			sprite:null,
+			loading:false
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
-		this._onScenePositionChange = this._onScenePositionChange.bind(this);
+		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
+		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
+		this._handleExit = this._handleExit.bind(this);
+
 	}
 
 	componentDidMount(){
+
 		//Compute width and height from .app
 		//Updatte state and trigger re-render
 		this.setState({
@@ -57,14 +69,21 @@ class App extends Component{
 
 		//Request data...
 		//...on data request complete, update state and trigger re-render
-		fetchData()
-			.then(data => {
+		Promise.all([fetchImageList(), fetchSprite()])
+			.then(([data,texture]) => {
 				const {images} = this.state;
 				this.setState({
-					images:[...images, ...data]
+					images:[...images, ...data],
+					sprite:texture,
+					currentScene:3
 				});
 			});
 
+		//FIXME
+/*		fetchMetadata()
+			.then(res=>res.json())
+			.then(res=>{console.log(res)});
+*/
 		//Window resize event
 		window.addEventListener('resize',()=>{
 			this.setState({
@@ -72,35 +91,44 @@ class App extends Component{
 				height: this.appNode.clientHeight
 			});
 		});
+
 	}
 
-	_handleSelect(id){
-		console.log(id);
+	_handleSelect(index){
+		this.setState({
+			selectedImage:index
+		});
 	}
 
-	_onSceneEnter(scene){
-		switch(scene){
-			case 'scene-1':
-				this.setState({sceneSetting:scenes.bigWheel});
-				break;
-			case 'scene-2':
-				this.setState({sceneSetting:scenes.sphere});
-				break;
-			default:
-				this.setState({sceneSetting:scenes.bigWheel});
-		}
+	_handleExit(){
+		console.log('App:_handleExit');
+		this.setState({
+			selectedImage:null
+		});
 	}
 
-	_onScenePositionChange(v){
-		console.log(v);
+	_handleTextureLoadStart(){
+		this.setState({
+			loading:true
+		});
 	}
+
+	_handleTextureLoadEnd(){
+		this.setState({
+			loading:false
+		});
+	}
+
 
 	componentWillUnmount(){
+
 		window.removeEventListener('resize');
+
 	}
 
 	render(){
-		const {images,width,height,currentScene} = this.state;
+
+		const {images,sprite,width,height,currentScene,selectedImage,loading} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
 		return (
@@ -110,33 +138,29 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
+					selectedImageIndex={selectedImage}
+					sprite={sprite}
+					sceneId={sceneSetting.id}
 					cameraPosition={sceneSetting.position}
 					layout={sceneSetting.layout}
 					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
 					handleSelect={this._handleSelect}
+					onTextureLoadStart={this._handleTextureLoadStart}
+					onTextureLoadEnd={this._handleTextureLoadEnd}
 				/>}
-				{width&&height&&<GLBackground 
-					width={width}
-					height={height}
+				{(selectedImage!==null)&&<Image
+					data={images[selectedImage]}
+					loading={loading}
+					onExit={this._handleExit}
 				/>}
-{/*				<Scene
-					onSceneEnter={this._onSceneEnter.bind(this,'scene-1')}
-				>
-					<h1>Scene one</h1>
-				</Scene>
-				<Scene
-					onSceneEnter={this._onSceneEnter.bind(this,'scene-2')}
-				>
-					<h1>Scene two</h1>
-				</Scene>
-*/}				
 				<Toolbar 
 					scenes={this.props.scenes}
 					currentScene={currentScene}
-					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
+					onSceneSettingChange={(i)=>{this.setState({currentScene:i, selectedImage:null})}}
 				/>
 			</div>
 		);
+
 	}
 }
 

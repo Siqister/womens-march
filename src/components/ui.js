@@ -1,6 +1,95 @@
 import React, {Component} from 'react';
 import {mouse} from 'd3';
 
+//ANIMATED BUTTON HOC
+export const animatedButton = Component => class extends React.Component{
+
+	constructor(props){
+		super(props);
+
+		this.state = {
+			color:'rgb(120,120,120)'
+		}
+
+		this.handleMouseEnter = this.handleMouseEnter.bind(this);
+		this.handleMouseLeave = this.handleMouseLeave.bind(this);
+	}
+
+	handleMouseEnter(){
+		this.outerCircle.style.strokeDasharray = '100% 0';
+		this.setState({
+			color:'rgb(50,50,50)'
+		});
+	}
+
+	handleMouseLeave(){
+		this.outerCircle.style.strokeDasharray = '0 100%';
+		this.setState({
+			color:'rgb(120,120,120)'
+		});
+	}
+
+	render(){
+
+		const style = {};
+		if(this.props.centered){
+			style.left = '50%';
+			style.position = 'absolute';
+			style.transform = 'translate(-50%)';
+		} 
+		if(this.props.pullRight){
+			style.float = 'right';
+		}
+
+		const {disabled,onClick} = this.props;
+
+		return (<button 
+				style={style}
+				onMouseEnter={this.handleMouseEnter}
+				onMouseLeave={this.handleMouseLeave}
+				onClick={onClick}
+				disabled={disabled}
+			>
+			<svg width={40} height={40} style={{position:'absolute'}}>
+				<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(180,180,180)':'rgb(120,120,120)'} strokeWidth='2px'/>
+				<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(180,180,180)':'rgb(50,50,50)'} strokeWidth='2px' 
+					ref={node=>{this.outerCircle=node}}
+					style={{transition:'stroke-dasharray 500ms', strokeDasharray:'0 100%'}}
+				/>
+			</svg>
+			<Component style={{margin:8}} color={disabled?'rgb(180,180,180)':this.state.color}/>
+		</button>);
+
+	}
+
+}
+
+//LOADING INDICATOR
+const loadingIndicatorStyle = {
+	width:40,
+	height:40,
+	position:'absolute',
+	left:'50%',
+	transform:'translate(-50%)',
+	display:'inline-block'
+}
+
+export const LoadingIndicator = props => {
+
+	return (
+		<div style={Object.assign({},loadingIndicatorStyle,props.style)}>
+			<svg width={40} height={40}>
+				<circle cx={20} cy={20} r={19} fill='none' stroke='rgb(120,120,120)' strokeWidth='2px'/>
+				<circle cx={20} cy={20} r={19} fill='none' stroke='rgb(50,50,50)' strokeWidth='2px' 
+					style={{transition:'stroke-dasharray 200ms', strokeDasharray:'100% 0'}}
+				/>
+			</svg>
+		</div>
+	);
+}
+
+
+//SLIDER
 const defaultSliderStyle = {
 	display:'inline-block',
 	float:'right',
@@ -10,7 +99,7 @@ const defaultElementStyle = {
 	position:'absolute',
 	margin:0
 }
-const color = 'rgb(120,120,120)';
+const color = 'rgb(180,180,180)';
 
 class Slider extends Component{
 	constructor(props){
@@ -151,4 +240,5 @@ Slider.defaultProps = {
 	height:48
 }
 
-export default Slider;
+export {Slider};
+

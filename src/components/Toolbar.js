@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import AutoComplete from 'material-ui/AutoComplete';
-import Slider from './Slider';
+import {Slider} from './ui';
 
 const toolbarStyle = {
 	position:'absolute',
@@ -38,7 +38,7 @@ export default class MyToolbar extends Component{
 	render(){
 
 		return (
-			<div style={toolbarStyle}>
+			<div className='toolbar' style={toolbarStyle}>
 				<div className='container'>
 					<AutoComplete
 						hintText='Search by metadata value'
