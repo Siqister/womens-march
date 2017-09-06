@@ -3,6 +3,7 @@ div,html,body,h1,h2,h3,p,ul,li,button{
 	padding:0;
 	background:none;
 	border:none;
+	list-style:none;
 }
 
 html,body{
@@ -20,5 +21,28 @@ html,body{
 
 .gl-wrapper{
 	overflow:hidden;
+}
+
+/* Animation */
+.image-detail-list-appear{
+	transform: rotateX(90deg);
+}
+.image-detail-list-appear.image-detail-list-appear-active{
+	transform: rotateX(0deg);
+	transition:all 200ms ease-in;
+}
+.image-detail-list-enter{
+	opacity:0.01;
+}
+.image-detail-list-enter.image-detail-list-enter-active{
+	opacity:1;
+	transition:opacity 200ms ease-in;
+}
+.image-detail-list-leave{
+	opacity:1;
+}
+.image-detail-list-leave.image-detail-list-leave-active{
+	opacity:0.01;
+	transition:opacity 200ms ease-in;
 }
 

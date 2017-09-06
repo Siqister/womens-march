@@ -27,16 +27,20 @@ class GLWrapper extends Component{
 		this.onClick = this.onClick.bind(this);
 
 		this.state = {
+
 			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
-			//Distribution of signs
+
+			//Controls spatial distribution of the signs
 			X:0,
 			X_WIGGLE:100, 
 			R:450,
 			R_WIGGLE:30,
-			//Instance data for signs
-			instances:[], //contains final/target per instance transform
+
+			//Per instance data, initial transform mat4, target transform mat4
+			instances:[], 
+
 			//Renderer settings
 			rendererClearcolor:0xeeeeee
 		};
@@ -120,6 +124,9 @@ class GLWrapper extends Component{
 			.easing(TWEEN.Easing.Cubic.Out);
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
 			.to({x:1}, 1000)
+			.easing(TWEEN.Easing.Cubic.InOut);
+		this.tween.fog = new TWEEN.Tween({x:0})
+			.to({x:1},500)
 			.easing(TWEEN.Easing.Cubic.InOut);
 
 		//Init static meshes and start animation loop
@@ -433,7 +440,7 @@ class GLWrapper extends Component{
 	}
 
 	_showSelectedImage(index){
-		
+
 		if(!this.state.instances[index]) return;
 
 		const _instance = this.state.instances[index];
@@ -444,7 +451,7 @@ class GLWrapper extends Component{
 		m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
 
 		//Transform matrix m1
-		const p = new THREE.Vector3(0, 0, -45),
+		const p = new THREE.Vector3(0, 0, -35),
 			r = new THREE.Quaternion(),
 			s = new THREE.Vector3(); //Store decomposed matrix4
 		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
@@ -498,7 +505,15 @@ class GLWrapper extends Component{
 			.onComplete(()=>{
 				this._updateTransformMatrices(pickedTarget, m1, null, 0);
 			})
-			.start()
+			.start();
+
+		//Fade the background
+		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
+		this.tween.fog
+			.onUpdate(v=>{
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00002 + (1-v)*currentFogFactor;
+			})
+			.start();
 	}
 
 	_hideSelectedImage(index){
@@ -514,6 +529,12 @@ class GLWrapper extends Component{
 
 		this.tween.transform.start();
 
+		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
+		this.tween.fog
+			.onUpdate(v=>{
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.000003 + (1-v)*currentFogFactor;
+			})
+			.start();
 	}
 
 	_updateTransformMatrices(mesh,m0,m1,index){

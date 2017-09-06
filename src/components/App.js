@@ -2,9 +2,7 @@ import React, {Component} from 'react';
 
 import {fetchImageList, fetchMetadata, fetchSprite} from '../utils';
 import Toolbar from './Toolbar';
-import Scene from './Scene';
 import GLWrapper from './GLWrapper';
-import GLBackground from './GLBackground';
 import Image from './Image';
 
 //TODO: remove scene settings from App.js
@@ -56,6 +54,7 @@ class App extends Component{
 		this._handleSelect = this._handleSelect.bind(this);
 		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
 		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
+		this._handleExit = this._handleExit.bind(this);
 
 	}
 
@@ -81,10 +80,10 @@ class App extends Component{
 			});
 
 		//FIXME
-		fetchMetadata()
+/*		fetchMetadata()
 			.then(res=>res.json())
 			.then(res=>{console.log(res)});
-
+*/
 		//Window resize event
 		window.addEventListener('resize',()=>{
 			this.setState({
@@ -96,28 +95,30 @@ class App extends Component{
 	}
 
 	_handleSelect(index){
-		
 		this.setState({
 			selectedImage:index
 		});
+	}
 
+	_handleExit(){
+		console.log('App:_handleExit');
+		this.setState({
+			selectedImage:null
+		});
 	}
 
 	_handleTextureLoadStart(){
-
 		this.setState({
 			loading:true
 		});
-
 	}
 
 	_handleTextureLoadEnd(){
-
 		this.setState({
 			loading:false
 		});
-
 	}
+
 
 	componentWillUnmount(){
 
@@ -150,6 +151,7 @@ class App extends Component{
 				{(selectedImage!==null)&&<Image
 					data={images[selectedImage]}
 					loading={loading}
+					onExit={this._handleExit}
 				/>}
 				<Toolbar 
 					scenes={this.props.scenes}
