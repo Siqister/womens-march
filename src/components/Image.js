@@ -67,10 +67,10 @@ const Image = props => {
 			</div>
 			<div className='button-container'
 				style={buttonContainerStyle}>
-				<PrevButton disabled={props.loading}/>
+				<PrevButton disabled={props.loading} url={`/images/${props.prev}`}/>
 				{props.loading&&<LoadingIndicator />}
-				{!props.loading&&<ExitButton centered onClick={props.onExit}/>}
-				<NextButton disabled={props.loading} pullRight/>
+				{!props.loading&&<ExitButton centered url='/'/>}
+				<NextButton disabled={props.loading} pullRight url={`/images/${props.next}`}/>
 			</div>
 		</div>
 	);

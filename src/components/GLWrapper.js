@@ -264,7 +264,7 @@ class GLWrapper extends Component{
 		const x = e.clientX, y = e.clientY;
 		const index = this._pick(x,y);
 		if(this.state.instances && this.state.instances[index]){
-			this.props.handleSelect(index);
+			this.props.onSelect(index);
 		}
 
 	}
