@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
+import {Link} from 'react-router-dom';
 import {mouse} from 'd3';
 
 //ANIMATED BUTTON HOC
-export const animatedButton = Component => class extends React.Component{
+export const animatedButton = (Component) => class extends React.Component{
 
 	constructor(props){
 		super(props);
@@ -16,14 +17,14 @@ export const animatedButton = Component => class extends React.Component{
 	}
 
 	handleMouseEnter(){
-		this.outerCircle.style.strokeDasharray = '100% 0';
+		this.outerCircle.style.strokeDasharray = `${Math.PI*2*19}px ${Math.PI*2*19}px`;
 		this.setState({
 			color:'rgb(50,50,50)'
 		});
 	}
 
 	handleMouseLeave(){
-		this.outerCircle.style.strokeDasharray = '0 100%';
+		this.outerCircle.style.strokeDasharray = `0px ${Math.PI*2*19}px`;
 		this.setState({
 			color:'rgb(120,120,120)'
 		});
@@ -41,7 +42,7 @@ export const animatedButton = Component => class extends React.Component{
 			style.float = 'right';
 		}
 
-		const {disabled,onClick} = this.props;
+		const {disabled,onClick,url} = this.props;
 
 		return (<button 
 				style={style}
@@ -50,14 +51,16 @@ export const animatedButton = Component => class extends React.Component{
 				onClick={onClick}
 				disabled={disabled}
 			>
-			<svg width={40} height={40} style={{position:'absolute'}}>
-				<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(180,180,180)':'rgb(120,120,120)'} strokeWidth='2px'/>
-				<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(180,180,180)':'rgb(50,50,50)'} strokeWidth='2px' 
-					ref={node=>{this.outerCircle=node}}
-					style={{transition:'stroke-dasharray 500ms', strokeDasharray:'0 100%'}}
-				/>
-			</svg>
-			<Component style={{margin:8}} color={disabled?'rgb(180,180,180)':this.state.color}/>
+				<Link to={{pathname:url}}>
+				<svg width={40} height={40} style={{position:'absolute'}}>
+					<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(120,120,120)':'rgb(120,120,120)'} strokeWidth='2px'/>
+					<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(120,120,120)':'rgb(50,50,50)'} strokeWidth='2px' 
+						ref={node=>{this.outerCircle=node}}
+						style={{transition:'stroke-dasharray 500ms', strokeDasharray:`0px ${Math.PI*2*19}px`}}
+					/>
+				</svg>
+				<Component style={{margin:8}} color={disabled?'rgb(120,120,120)':this.state.color}/>
+				</Link>
 		</button>);
 
 	}
@@ -79,9 +82,9 @@ export const LoadingIndicator = props => {
 	return (
 		<div style={Object.assign({},loadingIndicatorStyle,props.style)}>
 			<svg width={40} height={40}>
-				<circle cx={20} cy={20} r={19} fill='none' stroke='rgb(120,120,120)' strokeWidth='2px'/>
+				<circle cx={20} cy={20} r={19} fill='none' stroke='rgb(180,180,180)' strokeWidth='2px'/>
 				<circle cx={20} cy={20} r={19} fill='none' stroke='rgb(50,50,50)' strokeWidth='2px' 
-					style={{transition:'stroke-dasharray 200ms', strokeDasharray:'100% 0'}}
+					style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
 				/>
 			</svg>
 		</div>
