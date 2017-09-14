@@ -53,7 +53,7 @@ export const animatedButton = (Component) => class extends React.Component{
 			>
 				<Link to={{pathname:url}}>
 				<svg width={40} height={40} style={{position:'absolute'}}>
-					<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(120,120,120)':'rgb(120,120,120)'} strokeWidth='2px'/>
+					<circle cx={20} cy={20} r={19} fill='rgba(255,255,255,.01)' stroke={disabled?'rgb(120,120,120)':'rgb(120,120,120)'} strokeWidth='2px'/>
 					<circle cx={20} cy={20} r={19} fill='none' stroke={disabled?'rgb(120,120,120)':'rgb(50,50,50)'} strokeWidth='2px' 
 						ref={node=>{this.outerCircle=node}}
 						style={{transition:'stroke-dasharray 500ms', strokeDasharray:`0px ${Math.PI*2*19}px`}}

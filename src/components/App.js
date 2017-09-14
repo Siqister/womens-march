@@ -54,7 +54,6 @@ class App extends Component{
 		this._handleSelect = this._handleSelect.bind(this);
 		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
 		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
-		this._handleExit = this._handleExit.bind(this);
 
 	}
 
