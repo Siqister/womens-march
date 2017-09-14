@@ -118,16 +118,17 @@ class GLWrapper extends Component{
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
 				this.camera.lookAt(this.state.cameraLookAt);
-			});
+			}); //Tweens fog 
 		this.tween.transform = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
-			.easing(TWEEN.Easing.Cubic.Out);
+			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
 			.to({x:1}, 1000)
-			.easing(TWEEN.Easing.Cubic.InOut);
+			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.sign
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
-			.easing(TWEEN.Easing.Cubic.InOut);
+			.easing(TWEEN.Easing.Cubic.InOut); //Tweens fog
+		this.tween.foo = new TWEEN.Tween(); //Placeholder tween
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -448,34 +449,18 @@ class GLWrapper extends Component{
 
 		const _instance = this.state.instances[index];
 
-		//Given instance, calculate its current (world) transform matrix and target transform matrix
-		//Transform matrix m0
-		const m0 = _instance.transformMatrixSign.clone();
-		m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
-
-		//Transform matrix m1
-		const p = new THREE.Vector3(0, 0, -35),
-			r = new THREE.Quaternion(),
-			s = new THREE.Vector3(); //Store decomposed matrix4
-		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
-		this.camera.matrixWorld.decompose(new THREE.Vector3(), r, new THREE.Vector3());
-		this.camera.localToWorld(p);
-		const m1 = new THREE.Matrix4().compose(p, r, s);
-		//Flip along x axis
-		m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0)));
-
+		//this.meshes.pickedTarget: texture
+		//Reset texture uniform of pickedTarget back to large sprite...
 		const pickedTarget = this.meshes.pickedTarget;
-		pickedTarget.material.uniforms.map.value = this.props.sprite;
+		pickedTarget.visible = false;
 
-		//Update attribute for this.meshes.pickedTarget, move it in front of the camera
-		this._updateTransformMatrices(pickedTarget, m0, m1, 0);
+		pickedTarget.material.uniforms.map.value = this.props.sprite;
 		const {instanceTexUvOffset, instanceTexUvSize} = pickedTarget.geometry.attributes;
 		instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
 		instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
 		instanceTexUvOffset.needsUpdate = true;
 		instanceTexUvSize.needsUpdate = true;
-
-		//Load high-res texture for pickedTarget
+		//...then immediately start requesting high-res texture
 		this.props.onTextureLoadStart();
 		this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.id}`, (timestamp => {
 
@@ -504,11 +489,62 @@ class GLWrapper extends Component{
 				console.log(`Texture for image ${_instance.id} not loaded`); //FIXME: remove in production
 			});
 
+
+		//Move camera in place, and move this.meshes.pickedSign in front of camera
+		//Step 1: determine location for camera
+		let m0, m1; //m0: original (world) transform matrix for pickedSign, m1: final world transform matrix for pickedSign
+		
+		m0 = _instance.transformMatrixSign.clone();
+		m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
+		const p0 = new THREE.Vector3();
+		m0.decompose(p0, new THREE.Quaternion(), new THREE.Vector3());
+
+		//Step 3: tween this.meshes.pickedTarget in place
 		this.tween.transform
 			.onComplete(()=>{
 				this._updateTransformMatrices(pickedTarget, m1, null, 0);
 			})
+			.stop();
+
+		//Step 2: tween camera
+		//At completion, set the initial and target transform matrices for this.meshes.pickedTarget
+		//and initiate tweening
+		this.tween.camera
+			.to({x:p0.x*2, y:p0.y*2, z:p0.z*2}, 1000)
+			.onComplete(()=>{
+
+				//Work out m0
+				m0 = _instance.transformMatrixSign.clone();
+				m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
+
+				//Work out m1
+				const p1 = new THREE.Vector3(0, 0, -35),
+					r1 = new THREE.Quaternion(),
+					s1 = new THREE.Vector3(); //Store decomposed matrix4
+				_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s1);
+				this.camera.matrixWorld.decompose(new THREE.Vector3(), r1, new THREE.Vector3());
+				this.camera.localToWorld(p1);
+				m1 = new THREE.Matrix4().compose(p1, r1, s1);
+				m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0))); //Flip along x
+
+				//Update m0 and m1 attribute for pickedTarget
+				this._updateTransformMatrices(pickedTarget, m0, m1, 0);
+				pickedTarget.visible = true;
+				//this.tween.transform.start();
+
+			})
+			.chain(this.tween.transform)
 			.start();
+
+
+		//Move this.meshes.target in place
+		const target = this.meshes.target;
+		this._updateTransformMatrices(target, _instance.transformMatrixSign, null, 0);
+		target.geometry.attributes.instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
+		target.geometry.attributes.instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
+		instanceTexUvOffset.needsUpdate = true;
+		instanceTexUvSize.needsUpdate = true;
+
 
 		//Increase uFogFactor (fade background)
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
@@ -517,20 +553,33 @@ class GLWrapper extends Component{
 				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00003 + (1-v)*currentFogFactor;
 			})
 			.start();
+
 	}
 
 	_hideSelectedImage(index){
 
 		//Hide this.meshes.pickedTarget		
 		const _instance = this.state.instances[index];
-		const s = new THREE.Vector3();
-		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
-		const m1 = new THREE.Matrix4().compose(new THREE.Vector3(0,0,4000), new THREE.Quaternion(), s);
+		const s1 = new THREE.Vector3();
+		const r1 = new THREE.Quaternion();
+		const p1 = new THREE.Vector3(20,20,5);
+		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s1);
+		this.camera.matrixWorld.decompose(new THREE.Vector3(), r1, new THREE.Vector3());
+		this.camera.localToWorld(p1);
+		const m1 = new THREE.Matrix4().compose(p1, r1, s1);
+		m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0))); //Flip along x
 
 		const pickedTarget = this.meshes.pickedTarget;
 		this._updateTransformMatrices(pickedTarget, null, m1, 0);
+		this.tween.transform.stop().start();
 
-		this.tween.transform.start();
+		//Transform camera back to where it started
+		const {cameraPosition} = this.props;
+		this.tween.camera
+			.to({x: cameraPosition[0], y: cameraPosition[1], z: cameraPosition[2]}, 2000)
+			.chain(this.tween.foo) //No op
+			.onComplete(()=>{ /* No op */})
+			.start();
 
 		//Decrease uFogFactor 
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
@@ -539,6 +588,7 @@ class GLWrapper extends Component{
 				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.000003 + (1-v)*currentFogFactor;
 			})
 			.start();
+
 	}
 
 	_updateTransformMatrices(mesh,m0,m1,index){

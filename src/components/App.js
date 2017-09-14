@@ -27,7 +27,7 @@ const scenes = [
 	},
 	{
 		id:4,
-		position: [0,0,800],
+		position: [0,0,700],
 		layout: 'sphere'
 	},
 	{
@@ -150,7 +150,7 @@ class App extends Component{
 					data={images[+selectedImage]}
 					loading={loading}
 					onExit={this._handleExit}
-					next={(+selectedImage+1)>=images.length?0:(+selectedImage+1)}
+					next={ Math.floor(Math.random()*(images.length-1)) }
 					prev={(+selectedImage-1)<0?(images.length-1):(+selectedImage-1)}
 				/>}
 				<Toolbar 
