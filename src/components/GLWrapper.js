@@ -283,7 +283,7 @@ class GLWrapper extends Component{
 		this._initTransformMatrixAttrib(targetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const targetMaterial = this.material.clone();
-		targetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0,0.0,0.0,1.0);
+		targetMaterial.uniforms.uColor.value = new THREE.Vector4(.6,.6,.6,1.0);
 		targetMaterial.uniforms.uFogFactor.value = 0;
 		targetMaterial.uniforms.uUseTexture.value = true;
 
@@ -329,11 +329,14 @@ class GLWrapper extends Component{
 
 	_initMeshes(){
 
+		//Called when this.state.instances is initially populated and this.props.sprite is initially available
+
 		const {instances} = this.state;
 		const COUNT = instances.length;
 
 		//Map this.props.sprite to this.meshes.pickedTarget
 		this.meshes.pickedTarget.material.uniforms.map.value = this.props.sprite;
+		this.meshes.target.material.uniforms.map.value = this.props.sprite;
 
 		//Initialize per vertex BufferAttribute
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
