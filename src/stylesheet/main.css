@@ -38,17 +38,21 @@ html,body{
 }
 .image-detail-list-enter{
 	opacity:0.01;
+	top:200px;
 }
 .image-detail-list-enter.image-detail-list-enter-active{
 	opacity:1;
-	transition:opacity 200ms ease-in;
+	top:0px;
+	transition:all 300ms ease-in;
 }
 .image-detail-list-leave{
 	opacity:1;
+	top:0px;
 }
 .image-detail-list-leave.image-detail-list-leave-active{
 	opacity:0.01;
-	transition:opacity 200ms ease-in;
+	top: -500px;
+	transition:all 300ms ease-in;
 }
 
 
