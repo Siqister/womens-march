@@ -16,10 +16,15 @@ const imageDetailStyle = {
 	pointerEvents:'none'
 }
 
+const imageDetailListStyle = {
+	width:256
+}
+
 const imageDetailListItemStyle = {
 	color:`${color}`,
-	background:'rgb(255,255,255)',
-	display:'inline'
+	borderBottom: `1px solid rgb(180,180,180)`,
+	width:'100%',
+	padding:'5px',
 }
 
 const buttonContainerStyle = {
@@ -37,11 +42,9 @@ const NextButton = animatedButton(NavigationAfter);
 const ExitButton = animatedButton(Close);
 
 const ImageDetailListItem = props => {
-	return <li>
-		<span style={imageDetailListItemStyle}>
-			<span style={{fontSize:'.6em', display:'block'}}>{props.id.toUpperCase()}</span>
-			<span style={{fontSize:'1.3em', padding:'10px', boxSizing:'border-box'}}>{JSON.stringify(props.data[props.id])}</span>
-		</span>
+	return <li style={imageDetailListItemStyle}>
+		<span style={{fontSize:'.7em', display:'block'}}>{props.id.toUpperCase()}</span>
+		<span style={{fontSize:'1.4em', display:'block'}}>{JSON.stringify(props.data[props.id])}</span>
 	</li>
 }
 
@@ -52,26 +55,26 @@ const Image = props => {
 			style={imageDetailStyle}
 		>
 			<div className='container'>
-				<ul className='image-detail-list'>
-					<CSSTransitionGroup
-						transitionName='image-detail-list'
-						transitionAppear={true}
-						transitionAppearTimeout={300}
-						transitionEnterTimeout={300}
-						transitionLeaveTimeout={300}
-					>
-						<ImageDetailListItem data={props.data} id='id' key='id'/>
-						<ImageDetailListItem data={props.data} id='rotated' key='rotated'/>
-					</CSSTransitionGroup>
-				</ul>
+				<CSSTransitionGroup
+					transitionName='image-detail-list'
+					transitionAppear={true}
+					transitionAppearTimeout={300}
+					transitionEnterTimeout={300}
+					transitionLeaveTimeout={300}
+				>
+					{props.data&&<ul className='image-detail-list' style={{width:256, position:'absolute'}} key={props.data.id}>
+						<ImageDetailListItem data={props.data} id='id'/>
+						<ImageDetailListItem data={props.data} id='rotated'/>
+					</ul>}
+				</CSSTransitionGroup>
 			</div>
-			<div className='button-container'
+			{props.data&&<div className='button-container'
 				style={buttonContainerStyle}>
 				<PrevButton disabled={props.loading} url={`/images/${props.prev}`}/>
 				{props.loading&&<LoadingIndicator />}
 				{!props.loading&&<ExitButton centered url='/'/>}
 				<NextButton disabled={props.loading} pullRight url={`/images/${props.next}`}/>
-			</div>
+			</div>}
 		</div>
 	);
 }

@@ -128,6 +128,7 @@ class App extends Component{
 		const selectedImage = this.props.match.params.index;
 
 		console.log(selectedImage);
+		console.log(images[+selectedImage]);
 
 		return (
 			<div className='app' ref={(node)=>{this.appNode = node}} 
@@ -146,13 +147,13 @@ class App extends Component{
 					onTextureLoadStart={this._handleTextureLoadStart}
 					onTextureLoadEnd={this._handleTextureLoadEnd}
 				/>}
-				{selectedImage&&<Image
+				<Image
 					data={images[+selectedImage]}
 					loading={loading}
 					onExit={this._handleExit}
 					next={ Math.floor(Math.random()*(images.length-1)) }
-					prev={(+selectedImage-1)<0?(images.length-1):(+selectedImage-1)}
-				/>}
+					prev={ Math.floor(Math.random()*(images.length-1)) }
+				/>
 				<Toolbar 
 					scenes={this.props.scenes}
 					currentScene={currentScene}

@@ -4,6 +4,7 @@ const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
 import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
+import * as glUtils from './gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
 import hemisphereVs from '../shaders/hemisphereVertexShader';
@@ -118,17 +119,17 @@ class GLWrapper extends Component{
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
 				this.camera.lookAt(this.state.cameraLookAt);
-			}); //Tweens fog 
-		this.tween.transform = new TWEEN.Tween({x:0})
+			}); //Tweens camera position 
+		this.tween.updatePickedTarget = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
 			.to({x:1}, 1000)
-			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.sign
+			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.signs, meshes.arrows, meshes.signsPicking
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens fog
-		this.tween.foo = new TWEEN.Tween(); //Placeholder tween
+		this.tween.foo = new TWEEN.Tween(); //Placeholder tween, no op
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -151,7 +152,7 @@ class GLWrapper extends Component{
 		}
 
 		//If props.sceneId changes
-		//Reorient camera
+		//Re-orient camera
 		if(this.props.sceneId !== sceneId){
 			this.tween.camera
 				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
@@ -194,7 +195,7 @@ class GLWrapper extends Component{
 		//because state.instances is set asynchromously
 		//FIXME: circular calling of this._showSelectedImage
 		if(selectedImageIndex){
-			if(selectedImageIndex === this.props.selectedImageIndex) return; //FIXME: not working
+			if(selectedImageIndex === this.props.selectedImageIndex) return; 
 			this._showSelectedImage(selectedImageIndex);
 		}else if(this.props.selectedImageIndex){
 			this._hideSelectedImage(this.props.selectedImageIndex);
@@ -227,10 +228,12 @@ class GLWrapper extends Component{
 		this.renderer.setSize(width,height);
 		this.pickingTexture.setSize(width,height);
 
-		//Assume this.state.instances changed (re-layout or data injection)
+		//Respond to changes to this.state.instances
 		if(this.state.instances.length !== prevState.instances.length){
+			//Initial data injection
 			this._initMeshes();
 		}else{
+			//Relayout
 			this._updateMeshes();
 		}
 
@@ -243,7 +246,8 @@ class GLWrapper extends Component{
 
 		//Set transform matrix and texture-related attribute values for this.meshes.target
 		if(this.state.instances && this.state.instances[index]){
-			this._updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
+			
+			glUtils.updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
 			
 			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
 			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
@@ -281,7 +285,7 @@ class GLWrapper extends Component{
 		targetGeometry.addAttribute('uv',uv);
 		targetGeometry.addAttribute('instanceTexUvOffset', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		targetGeometry.addAttribute('instanceTexUvSize', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
-		this._initTransformMatrixAttrib(targetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
+		glUtils.initTransformMatrixAttrib(targetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const targetMaterial = this.material.clone();
 		targetMaterial.uniforms.uColor.value = new THREE.Vector4(.6,.6,.6,1.0);
@@ -298,7 +302,7 @@ class GLWrapper extends Component{
 		pickedTargetGeometry.addAttribute('uv',uv);
 		pickedTargetGeometry.addAttribute('instanceTexUvOffset', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		pickedTargetGeometry.addAttribute('instanceTexUvSize', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
-		this._initTransformMatrixAttrib(pickedTargetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
+		glUtils.initTransformMatrixAttrib(pickedTargetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
 
 		const pickedTargetMaterial = targetMaterial.clone();
 		pickedTargetMaterial.uniforms.uColor.value = new THREE.Vector4(1.0, 1.0, 1.0, 1.0);
@@ -321,7 +325,7 @@ class GLWrapper extends Component{
 
 
 		//Set up tweening of picked signs
-		this.tween.transform
+		this.tween.updatePickedTarget
 			.onUpdate(v=>{
 				this.meshes.pickedTarget.material.uniforms.uInterpolateTransform.value = v;
 			});
@@ -356,7 +360,7 @@ class GLWrapper extends Component{
 		geometry.addAttribute('instanceColor', instanceColors);
 		geometry.addAttribute('instanceTexUvOffset', instanceTexUvOffset);
 		geometry.addAttribute('instanceTexUvSize', instanceTexUvSize);
-		this._initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
+		glUtils.initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
@@ -371,7 +375,7 @@ class GLWrapper extends Component{
 		const arrowsGeometry = new THREE.InstancedBufferGeometry();
 		arrowsGeometry.addAttribute('position', arrowVertices);
 		arrowsGeometry.addAttribute('instanceColor', instanceColors);
-		this._initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
+		glUtils.initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		material = this.material.clone();
 		material.uniforms.uColor.value = new THREE.Vector4(237/255,12/255,110/255,1.0);
@@ -396,8 +400,8 @@ class GLWrapper extends Component{
 		for(let i=0; i<COUNT; i++){
 			const {pickingColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize} = instances[i];
 
-			this._updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
-			this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
+			glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
+			glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
 			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
 			instanceTexUvOffset.setXY(i, ...textureUvOffset);
 			instanceTexUvSize.setXY(i, ...textureUvSize);
@@ -427,8 +431,8 @@ class GLWrapper extends Component{
 		for(let i=0; i<COUNT; i++){
 			const {pickingColor, transformMatrixSign, transformMatrixArrow} = instances[i];
 
-			this._updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
-			this._updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
+			glUtils.updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
+			glUtils.updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
 		}
 
 		this.tween.updateMeshes
@@ -437,8 +441,8 @@ class GLWrapper extends Component{
 				for(let i=0; i<COUNT; i++){
 					const {transformMatrixSign, transformMatrixArrow} = instances[i];
 
-					this._updateTransformMatrices(this.meshes.signs, transformMatrixSign, null, i);
-					this._updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
+					glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, null, i);
+					glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
 				}
 			});
 	}
@@ -500,9 +504,9 @@ class GLWrapper extends Component{
 		m0.decompose(p0, new THREE.Quaternion(), new THREE.Vector3());
 
 		//Step 3: tween this.meshes.pickedTarget in place
-		this.tween.transform
+		this.tween.updatePickedTarget
 			.onComplete(()=>{
-				this._updateTransformMatrices(pickedTarget, m1, null, 0);
+				glUtils.updateTransformMatrices(pickedTarget, m1, null, 0);
 			})
 			.stop();
 
@@ -528,18 +532,17 @@ class GLWrapper extends Component{
 				m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0))); //Flip along x
 
 				//Update m0 and m1 attribute for pickedTarget
-				this._updateTransformMatrices(pickedTarget, m0, m1, 0);
+				glUtils.updateTransformMatrices(pickedTarget, m0, m1, 0);
 				pickedTarget.visible = true;
-				//this.tween.transform.start();
 
 			})
-			.chain(this.tween.transform)
+			.chain(this.tween.updatePickedTarget)
 			.start();
 
 
 		//Move this.meshes.target in place
 		const target = this.meshes.target;
-		this._updateTransformMatrices(target, _instance.transformMatrixSign, null, 0);
+		glUtils.updateTransformMatrices(target, _instance.transformMatrixSign, null, 0);
 		target.geometry.attributes.instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
 		target.geometry.attributes.instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
 		instanceTexUvOffset.needsUpdate = true;
@@ -570,8 +573,8 @@ class GLWrapper extends Component{
 		m1.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,Math.PI,0))); //Flip along x
 
 		const pickedTarget = this.meshes.pickedTarget;
-		this._updateTransformMatrices(pickedTarget, null, m1, 0);
-		this.tween.transform.stop().start();
+		glUtils.updateTransformMatrices(pickedTarget, null, m1, 0);
+		this.tween.updatePickedTarget.stop().start();
 
 		//Transform camera back to where it started
 		const {cameraPosition} = this.props;
@@ -588,61 +591,6 @@ class GLWrapper extends Component{
 				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.000003 + (1-v)*currentFogFactor;
 			})
 			.start();
-
-	}
-
-	_updateTransformMatrices(mesh,m0,m1,index){
-
-		//Given mesh containing (instanced) buffer geometry, update its starting and/or ending transform mat4 attribute at index i
-		const {instanceTransformCol0, 
-			instanceTransformCol1, 
-			instanceTransformCol2, 
-			instanceTransformCol3,
-			m1Col0,
-			m1Col1,
-			m1Col2,
-			m1Col3
-		} = mesh.geometry.attributes;
-		let transformMatrixElements;
-
-		if(m0){
-			transformMatrixElements = m0.elements;
-			instanceTransformCol0.setXYZW(index, ...transformMatrixElements.slice(0,4)); instanceTransformCol0.needsUpdate = true;
-			instanceTransformCol1.setXYZW(index, ...transformMatrixElements.slice(4,8)); instanceTransformCol1.needsUpdate = true;
-			instanceTransformCol2.setXYZW(index, ...transformMatrixElements.slice(8,12)); instanceTransformCol2.needsUpdate = true;
-			instanceTransformCol3.setXYZW(index, ...transformMatrixElements.slice(12)); instanceTransformCol3.needsUpdate = true;
-		}
-		if(m1){
-			transformMatrixElements = m1.elements;
-			m1Col0.setXYZW(index, ...transformMatrixElements.slice(0,4)); m1Col0.needsUpdate = true;
-			m1Col1.setXYZW(index, ...transformMatrixElements.slice(4,8)); m1Col1.needsUpdate = true;
-			m1Col2.setXYZW(index, ...transformMatrixElements.slice(8,12)); m1Col2.needsUpdate = true;
-			m1Col3.setXYZW(index, ...transformMatrixElements.slice(12)); m1Col3.needsUpdate = true;
-		}
-
-	}
-
-	_initTransformMatrixAttrib(instancedBufferGeometry,instanceCount){
-
-		//Given instancedBufferGeometry and instanceCount, init correct attributes for two mat4 transform matrices
-		const instanceTransform0Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform0Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform0Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			instanceTransform0Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
-		const m1Col0 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			m1Col1 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			m1Col2 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1),
-			m1Col3 = new THREE.InstancedBufferAttribute(new Float32Array(instanceCount*4),4,1);
-
-		instancedBufferGeometry.addAttribute('instanceTransformCol0', instanceTransform0Col0);
-		instancedBufferGeometry.addAttribute('instanceTransformCol1', instanceTransform0Col1);
-		instancedBufferGeometry.addAttribute('instanceTransformCol2', instanceTransform0Col2);
-		instancedBufferGeometry.addAttribute('instanceTransformCol3', instanceTransform0Col3);
-
-		instancedBufferGeometry.addAttribute('m1Col0', m1Col0);
-		instancedBufferGeometry.addAttribute('m1Col1', m1Col1);
-		instancedBufferGeometry.addAttribute('m1Col2', m1Col2);
-		instancedBufferGeometry.addAttribute('m1Col3', m1Col3);
 
 	}
 
