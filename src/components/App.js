@@ -27,7 +27,7 @@ const scenes = [
 	},
 	{
 		id:4,
-		position: [0,0,700],
+		position: [0,0,800],
 		layout: 'sphere'
 	},
 	{

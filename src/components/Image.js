@@ -16,10 +16,6 @@ const imageDetailStyle = {
 	pointerEvents:'none'
 }
 
-const imageDetailListStyle = {
-	width:256
-}
-
 const imageDetailListItemStyle = {
 	color:`${color}`,
 	borderBottom: `1px solid rgb(180,180,180)`,
@@ -62,7 +58,7 @@ const Image = props => {
 					transitionEnterTimeout={300}
 					transitionLeaveTimeout={300}
 				>
-					{props.data&&<ul className='image-detail-list' style={{width:256, position:'absolute'}} key={props.data.id}>
+					{props.data&&<ul className='image-detail-list col-md-3' style={{position:'absolute'}} key={props.data.id}>
 						<ImageDetailListItem data={props.data} id='id'/>
 						<ImageDetailListItem data={props.data} id='rotated'/>
 					</ul>}

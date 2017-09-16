@@ -261,7 +261,7 @@ function SphereLayout(){
 			transformMatrixSign.compose(position, rotation, scale);
 			transformMatrixSign.multiply(rotationMat4);
 
-			instancePosition = instanceNormal.map(v=>v*(instanceR-10));
+			instancePosition = instanceNormal.map(v=>v*(instanceR+15));
 			position.set(...instancePosition);
 			rotation.setFromAxisAngle(X_AXIS, Math.PI*2);
 			scale.set(7,7,7);

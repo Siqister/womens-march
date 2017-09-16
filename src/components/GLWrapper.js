@@ -59,6 +59,10 @@ class GLWrapper extends Component{
 		this.pickedTargetTexture = new THREE.TextureLoader();
 		this.pickedTargetTexture.crossOrigin = '';
 
+		//Previous mouse client location
+		this.prevX = null;
+		this.prevY = null;
+
 	}
 
 	componentDidMount(){
@@ -74,7 +78,7 @@ class GLWrapper extends Component{
 		this.camera.up = new THREE.Vector3(...this.state.cameraUp).normalize(); //TODO: turn into a prop
 
 		//Init renderer, and mount renderer dom element
-		this.renderer = new THREE.WebGLRenderer({antialias:true});
+		this.renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 		this.renderer.setClearColor(rendererClearcolor);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
@@ -241,8 +245,9 @@ class GLWrapper extends Component{
 
 	onMouseMove(e){
 
+		const {width,height} = this.props;
 		const x = e.clientX, y = e.clientY;
-		const index = this._pick(x,y);
+		const index = this._pick(x,y); //use current e.clientX / e.clientY to select index of image
 
 		//Set transform matrix and texture-related attribute values for this.meshes.target
 		if(this.state.instances && this.state.instances[index]){
@@ -257,10 +262,17 @@ class GLWrapper extends Component{
 		}
 
 		//Slightly re-orient this.meshes.pickedTarget
-		const {width,height} = this.props;
-		const offsetX = x/width*2-1,
-			offsetY = 1-y/height*2;
-		this.meshes.pickedTarget.material.uniforms.uOrientation.value = new THREE.Vector4(offsetX/5, offsetY/5, 1.0, 0.0).normalize();
+		if(this.prevX && this.prevY){
+			const offsetX = (x-this.prevX)/width,
+				offsetY = -(y-this.prevY)/height;
+			this.meshes.pickedTarget.material.uniforms.uOrientation.value = new THREE.Vector4(offsetX, offsetY, 1.0, 0.0).normalize();
+		
+			this.prevX = x;
+			this.prevY = y;
+		}else{
+			this.prevX = x;
+			this.prevY = y;
+		}
 
 	}
 
@@ -321,7 +333,7 @@ class GLWrapper extends Component{
 			blending: THREE.AdditiveBlending
 		});
 		this.meshes.hemisphere = new THREE.Mesh(hemisphereGeometry, hemisphereMaterial);
-		this.scene.add(this.meshes.hemisphere);
+		//this.scene.add(this.meshes.hemisphere);
 
 
 		//Set up tweening of picked signs
