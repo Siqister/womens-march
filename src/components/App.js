@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
 
 import {fetchImageList, fetchMetadata, fetchSprite} from '../utils';
+import Navigation from './Navigation';
 import Toolbar from './Toolbar';
 import GLWrapper from './GLWrapper';
 import Image from './Image';
@@ -44,11 +45,14 @@ class App extends Component{
 
 		this.state = {
 			images:[],
+			selectedImageMetadata:null,
+			selectedImageIndex:null,
 			width:0,
 			height:0,
 			currentScene:0,
 			sprite:null,
-			loading:false
+			textureLoading:false,
+			metadataLoading:false
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -66,7 +70,7 @@ class App extends Component{
 			height: this.appNode.clientHeight
 		});
 
-		//Request data...
+		//Request initial data, which includes large sprite and layout data...
 		//...on data request complete, update state and trigger re-render
 		Promise.all([fetchImageList(), fetchSprite()])
 			.then(([data,texture]) => {
@@ -78,11 +82,6 @@ class App extends Component{
 				});
 			});
 
-		//FIXME
-/*		fetchMetadata()
-			.then(res=>res.json())
-			.then(res=>{console.log(res)});
-*/
 		//Window resize event
 		window.addEventListener('resize',()=>{
 			this.setState({
@@ -90,6 +89,55 @@ class App extends Component{
 				height: this.appNode.clientHeight
 			});
 		});
+
+	}
+
+	componentWillReceiveProps(nextProps){
+		
+		if(!nextProps.match.params.index){
+			this.setState({
+				selectedImageMetadata:null,
+				selectedImageIndex:null
+			});
+		}else{
+
+			const index = +nextProps.match.params.index;
+			if(!this.state.images[index]) return;
+			const filename = this.state.images[index].filename;
+			//FIXME: for debugging, remove
+			//const filename = '101D0001_DSC4101.jpg';
+			//const filename = '100D0001_DSC2813.jpg'
+
+			this.setState({
+				selectedImageIndex: index,
+				metadataLoading: true
+			});
+
+			fetchMetadata(filename)
+				.then(res => {
+					const metadata = res.json();
+					console.log(metadata);
+					return metadata;
+				}, err => {
+					console.log('Server error: ' + filename);
+					this.setState({
+						selectedImageMetadata:null,
+						metadataLoading:false
+					});
+				})
+				.then(res => {
+					this.setState({
+						selectedImageMetadata:res,
+						metadataLoading:false
+					});
+				}, err => {
+					console.log('Empty JSON: ' + filename);
+					this.setState({
+						selectedImageMetadata:null,
+						metadataLoading:false
+					});
+				});
+		}
 
 	}
 
@@ -102,13 +150,13 @@ class App extends Component{
 	_handleTextureLoadStart(){
 
 		this.setState({
-			loading:true
+			textureLoading:true
 		});
 	}
 
 	_handleTextureLoadEnd(){
 		this.setState({
-			loading:false
+			textureLoading:false
 		});
 	}
 
@@ -121,23 +169,36 @@ class App extends Component{
 
 	render(){
 
-		//console.log(`App:render:${new Date()}`);
-
-		const {images,sprite,width,height,currentScene,loading} = this.state;
+		const {images,
+			sprite,
+			width, height,
+			currentScene,
+			textureLoading,
+			metadataLoading,
+			selectedImageIndex,
+			selectedImageMetadata
+		} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
-		const selectedImage = this.props.match.params.index;
 
-		console.log(selectedImage);
-		console.log(images[+selectedImage]);
+		console.groupCollapsed('App:re-render');
+		console.log(`App:render:${new Date()}`);
+		console.log('textureLoading / metadataLoading: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading);
+		console.log(selectedImageMetadata);
+		console.log(selectedImageIndex);
+		console.log(images[selectedImageIndex]);
+		console.groupEnd();
+
 
 		return (
-			<div className='app' ref={(node)=>{this.appNode = node}} 
-			>
+			<div className='app' ref={(node)=>{this.appNode = node}} >
+				<Navigation
+					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
+				/>
 				{width&&height&&<GLWrapper 
 					width={width} 
 					height={height} 
 					data={images}
-					selectedImageIndex={selectedImage?(+selectedImage):null}
+					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
 					sprite={sprite}
 					sceneId={sceneSetting.id}
 					cameraPosition={sceneSetting.position}
@@ -148,9 +209,9 @@ class App extends Component{
 					onTextureLoadEnd={this._handleTextureLoadEnd}
 				/>}
 				<Image
-					data={images[+selectedImage]}
-					loading={loading}
-					onExit={this._handleExit}
+					metadata={selectedImageMetadata}
+					imageIndex={selectedImageIndex?(selectedImageIndex):null}
+					loading={textureLoading || metadataLoading}
 					next={ Math.floor(Math.random()*(images.length-1)) }
 					prev={ Math.floor(Math.random()*(images.length-1)) }
 				/>

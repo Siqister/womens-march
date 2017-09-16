@@ -12,15 +12,28 @@ const imageDetailStyle = {
 	position:'absolute',
 	width:'100%',
 	bottom:'25%',
-	top:'25%',
+	top:'60px',
 	pointerEvents:'none'
+}
+
+const imageDetailListStyle = {
+	position: 'absolute',
+	padding: '5px 0',
+	borderBottom: `2px solid rgb(120,120,120)`
 }
 
 const imageDetailListItemStyle = {
 	color:`${color}`,
-	borderBottom: `1px solid rgb(180,180,180)`,
 	width:'100%',
-	padding:'5px',
+	padding:'5px 0',
+	clear:'both'
+}
+
+const ImageDetailValueStyle = {
+	display:'inline',
+	margin:'3px',
+	fontSize:'.7em',
+	float:'left'
 }
 
 const buttonContainerStyle = {
@@ -37,10 +50,29 @@ const PrevButton = animatedButton(NavigationBefore);
 const NextButton = animatedButton(NavigationAfter);
 const ExitButton = animatedButton(Close);
 
+const ImageDetailValue = props => 
+	<li style={ImageDetailValueStyle}>
+		{props.type=='color'?<span style={{
+			width:15,
+			height:15,
+			borderRadius:20,
+			background:`#${props.value}`,
+			display:'inline-block'
+		}}></span>:props.value}
+	</li>
+
 const ImageDetailListItem = props => {
-	return <li style={imageDetailListItemStyle}>
-		<span style={{fontSize:'.7em', display:'block'}}>{props.id.toUpperCase()}</span>
-		<span style={{fontSize:'1.4em', display:'block'}}>{JSON.stringify(props.data[props.id])}</span>
+
+	const field = props.field.toUpperCase();
+	const value = props.data[props.id];
+
+	return <li style={imageDetailListItemStyle} className='clearfix'>
+		<span style={{fontSize:'.7em', display:'block'}}>{field}</span>
+		<span style={{fontSize:'1.3em', display:'block'}}>
+			{Array.isArray(value)?<ul>
+				{value.map(v=><ImageDetailValue value={v} type={props.type} key={v}/>)}
+			</ul>:JSON.stringify(value)}
+		</span>
 	</li>
 }
 
@@ -51,20 +83,25 @@ const Image = props => {
 			style={imageDetailStyle}
 		>
 			<div className='container'>
-				<CSSTransitionGroup
-					transitionName='image-detail-list'
-					transitionAppear={true}
-					transitionAppearTimeout={300}
-					transitionEnterTimeout={300}
-					transitionLeaveTimeout={300}
-				>
-					{props.data&&<ul className='image-detail-list col-md-3' style={{position:'absolute'}} key={props.data.id}>
-						<ImageDetailListItem data={props.data} id='id'/>
-						<ImageDetailListItem data={props.data} id='rotated'/>
-					</ul>}
-				</CSSTransitionGroup>
+				<div className='col-md-3 col-md-offset-9'>
+					<CSSTransitionGroup
+						transitionName='image-detail-list'
+						transitionAppear={true}
+						transitionAppearTimeout={300}
+						transitionEnterTimeout={300}
+						transitionLeaveTimeout={300}
+					>
+						{props.metadata&&<ul className='image-detail-list' style={imageDetailListStyle} key={props.metadata._id}>
+							<ImageDetailListItem data={props.metadata} id='_id' field='Unique ID'/>
+							<ImageDetailListItem data={props.metadata} id='filename' field='File'/>
+							<ImageDetailListItem data={props.metadata} id='colors' field='Colors' type='color'/>
+							<ImageDetailListItem data={props.metadata} id='labels' field='Labels'/>
+							
+						</ul>}
+					</CSSTransitionGroup>
+				</div>
 			</div>
-			{props.data&&<div className='button-container'
+			{props.imageIndex&&<div className='button-container'
 				style={buttonContainerStyle}>
 				<PrevButton disabled={props.loading} url={`/images/${props.prev}`}/>
 				{props.loading&&<LoadingIndicator />}

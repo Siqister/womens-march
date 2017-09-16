@@ -29,13 +29,6 @@ html,body{
 	100% {stroke-dashoffset:119.4px;}
 }
 
-.image-detail-list-appear{
-	transform: rotateX(90deg);
-}
-.image-detail-list-appear.image-detail-list-appear-active{
-	transform: rotateX(0deg);
-	transition:all 200ms ease-in;
-}
 .image-detail-list-enter{
 	opacity:0.01;
 	top:200px;
@@ -53,6 +46,12 @@ html,body{
 	opacity:0.01;
 	top: -500px;
 	transition:all 300ms ease-in;
+}
+.image-detail-list>li{
+	border-bottom: 1px solid rgb(180,180,180);
+}
+.image-detail-list>li:last-child{
+	border-bottom:none;
 }
 
 

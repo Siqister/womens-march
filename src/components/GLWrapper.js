@@ -128,7 +128,7 @@ class GLWrapper extends Component{
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
-			.to({x:1}, 1000)
+			.to({x:1}, 20000)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.signs, meshes.arrows, meshes.signsPicking
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
@@ -168,7 +168,6 @@ class GLWrapper extends Component{
 		//Layout data again
 		if(this.props.sceneId !== sceneId || nextProps.data.length !== this.props.data.length){
 
-			console.log('GLWrapper:layout');
 			let setPerInstanceProperties;
 
 			const wheelLayout = WheelLayout()
@@ -502,7 +501,7 @@ class GLWrapper extends Component{
 				//Progress callback, no op
 			}, xhr => {
 				this.props.onTextureLoadEnd();
-				console.log(`Texture for image ${_instance.id} not loaded`); //FIXME: remove in production
+				console.error(new Error(`Texture for image ${_instance.id} not loaded`)); //FIXME: remove in production
 			});
 
 
@@ -635,7 +634,6 @@ class GLWrapper extends Component{
 
 	render(){
 
-		console.log('GLWrapper:render');
 		const {width,height} = this.props;
 
 		return (

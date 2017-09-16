@@ -17,8 +17,8 @@ export const fetchImageList = () => {
 	});
 }
 
-export const fetchMetadata = () => {
-	return fetch('https://mfw-data-interface.herokuapp.com/api/v1/images?limit=1000');
+export const fetchMetadata = fileName => {
+	return fetch(`https://mfw-data-interface.herokuapp.com/api/v1/image/${fileName}`);
 }
 
 export const fetchSprite = () => {
