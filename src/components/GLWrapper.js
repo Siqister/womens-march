@@ -128,7 +128,7 @@ class GLWrapper extends Component{
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
-			.to({x:1}, 20000)
+			.to({x:1}, 2000)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.signs, meshes.arrows, meshes.signsPicking
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
