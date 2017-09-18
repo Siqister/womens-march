@@ -3,8 +3,8 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils';
-import * as glUtils from './gl_utils';
+import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
 import hemisphereVs from '../shaders/hemisphereVertexShader';

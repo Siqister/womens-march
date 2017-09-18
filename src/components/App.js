@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
 
-import {fetchImageList, fetchMetadata, fetchSprite} from '../utils';
+import {fetchImageList, fetchMetadata, fetchSprite} from '../utils/utils';
 import Navigation from './Navigation';
 import Toolbar from './Toolbar';
 import GLWrapper from './GLWrapper';
@@ -193,6 +193,9 @@ class App extends Component{
 			<div className='app' ref={(node)=>{this.appNode = node}} >
 				<Navigation
 					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
+					scenes={this.props.scenes}
+					currentScene={currentScene}
+					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
 				/>
 				{width&&height&&<GLWrapper 
 					width={width} 
@@ -215,12 +218,12 @@ class App extends Component{
 					next={ Math.floor(Math.random()*(images.length-1)) }
 					prev={ Math.floor(Math.random()*(images.length-1)) }
 				/>
-				<Toolbar 
+ 				<Toolbar 
 					scenes={this.props.scenes}
 					currentScene={currentScene}
 					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
 				/>
-			</div>
+				</div>
 		);
 
 	}

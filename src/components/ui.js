@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import {Link} from 'react-router-dom';
-import {mouse} from 'd3';
 
 //ANIMATED BUTTON HOC
 export const animatedButton = (Component) => class extends React.Component{
@@ -102,9 +101,10 @@ const defaultElementStyle = {
 	position:'absolute',
 	margin:0
 }
-const color = 'rgb(180,180,180)';
+const defaultSliderColor = 'rgb(180,180,180)';
 
 class Slider extends Component{
+
 	constructor(props){
 		super(props);
 
@@ -127,7 +127,7 @@ class Slider extends Component{
 		const num = positions.length;
 
 		this.setState({
-			targetPosition: currentPosition*width/(num-1) - 20/2
+			targetPosition: currentPosition*width/(num-1)
 		});
 
 	}
@@ -142,7 +142,7 @@ class Slider extends Component{
 				height: size,
 				left: i*width/(num-1) - size/2,
 				top: height/2 - size/2,
-				background:`${color}`,
+				background:`${this.props.color}`,
 				borderRadius:size
 			});
 
@@ -152,7 +152,7 @@ class Slider extends Component{
 
 	handleClick(e){
 
-		const position = Math.round((e.pageX - e.currentTarget.offsetLeft)/this.props.width*(this.props.positions.length-1));
+		const position = Math.round((e.pageX - e.currentTarget.getBoundingClientRect().left)/this.props.width*(this.props.positions.length-1));
 		this.props.onChange(position);
 
 	}
@@ -170,6 +170,7 @@ class Slider extends Component{
 	}
 
 	handleMouseMove(e){
+
 		if(!this.state.dragging) return;
 
 		const {prevPosition, prevX} = this.state;
@@ -177,29 +178,35 @@ class Slider extends Component{
 		if(targetPosition <= 0){
 			targetPosition = 0;
 		}else if(targetPosition >= this.props.width){
-			targetPosition = this.props.width + 10;
+			targetPosition = this.props.width;
 		}
 
 		this.setState({
-			targetPosition:targetPosition - 10
+			targetPosition:targetPosition
 		});
+
 	}
 
 	handleMouseUp(e){
+
 		this.setState({
 			dragging:false
 		});
+
 	}
 
 	render(){
 
-		const {pullRight, positions, width, height, currentPosition} = this.props;
+		const {pullRight, positions, width, height, currentPosition, style, color, targetColor} = this.props;
+		const {dragging} = this.state;
 		const num = positions.length
 
 		const sliderStyle = Object.assign({}, 
 			defaultSliderStyle, 
 			pullRight?{float:'right'}:{float:'left'},
-			{width, height});
+			{width, height},
+			style
+		);
 
 		return (
 			<div className='slider-container' style={sliderStyle}
@@ -207,25 +214,20 @@ class Slider extends Component{
 				onMouseDown = {this.handleMouseDown}
 				onMouseMove = {this.handleMouseMove}
 				onMouseUp = {this.handleMouseUp}
+				ref={node=>{this.containerNode = node}}
 			>
-				<hr style={ Object.assign({}, defaultElementStyle, {
-					width:'100%',
-					height:0,
-					top:height/2-1,
-					borderBottom:`1px solid ${color}`,
-					borderTop:'none',
-					boxSize:'content-box'
+				<div className='slider-target' style={ Object.assign({}, defaultElementStyle, {
+					width:dragging?25:20,
+					height:dragging?25:20,
+					transform:'translate(-50%,-50%)',
+					left: this.state.targetPosition,
+					top: height/2,
+					borderRadius: 20*2,
+					transition:'all 100ms',
+					background:targetColor,
+					opacity:dragging?.6:.2
 				}) }/>
 				{positions.map(this._renderPositions)}
-				<div className='slider-target' style={ Object.assign({}, defaultElementStyle, {
-					width:20,
-					height:20,
-					left: this.state.targetPosition,
-					top: height/2 - 20/2,
-					border: `2px solid ${color}`,
-					borderRadius: 20*2,
-					transition:'left 50ms'
-				}) }/>
 			</div>
 		);
 
@@ -240,7 +242,9 @@ Slider.defaultProps = {
 	],
 	currentPosition:0,
 	width:256,
-	height:48
+	height:48,
+	color:defaultSliderColor,
+	targetColor:'rgb(237,12,110)'
 }
 
 export {Slider};
