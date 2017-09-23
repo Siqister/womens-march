@@ -293,7 +293,7 @@ function SphereLayout(){
 export {WheelLayout, TileLayout, SphereLayout};
 
 //Vertices data
-const signVerticesArray = [
+export const signVerticesArray = [
 	-1.0, 1.0, 0,
 	1.0, 1.0, .05,
 	1.0, -1.0, 0,
@@ -301,7 +301,8 @@ const signVerticesArray = [
 	-1.0, -1.0, .05,
 	-1.0, 1.0, 0
 ];
-const signUvArray = [
+export const signNormalsArray = Array.from({length:6}).reduce(result => result.concat([0.0, 0.0, 1.0]), []);
+export const signUvArray = [
 	0,0,
 	1,0,
 	1,1,
@@ -309,10 +310,8 @@ const signUvArray = [
 	0,1,
 	0,0
 ];
-const arrowVerticesArray = [
+export const arrowVerticesArray = [
 	-0.2, 0, 0.2,
 	0, 0, -0.5,
 	0.2, 0, 0.2
 ];
-
-export {signVerticesArray, signUvArray, arrowVerticesArray};

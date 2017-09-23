@@ -1,6 +1,7 @@
 const vertexShaderText = `
 	attribute vec3 position;
 	attribute vec2 uv;
+	attribute vec3 normal;
 	attribute vec4 instanceColor;
 	attribute vec2 instanceTexUvOffset;
 	attribute vec2 instanceTexUvSize;
@@ -16,20 +17,28 @@ const vertexShaderText = `
 	attribute vec4 m1Col2;
 	attribute vec4 m1Col3;
 
+	//Available by default through THREE.RawShaderMaterial
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
+	uniform mat3 normalMatrix;
 
-	uniform vec4 uColor;
-	uniform vec4 uOrientation;
+	//Uniforms: boolean flags
 	uniform bool uUsePickingColor;
 	uniform bool uUseInstanceTransform;
 	uniform bool uUseTexture;
 	uniform bool uUseOrientation;
+	uniform bool uUseLighting;
+
+	//Uniforms: other
+	uniform vec4 uColor;
+	uniform vec4 uOrientation;
 	uniform float uInterpolateTransform;
+	uniform vec3 uLightSourcePosition;
 
 	varying vec4 vColor;
 	varying vec4 vVertexPosition;
 	varying vec2 vUv;
+	varying vec4 vLightWeighting;
 
 	void main(){
 		//Calculate per instance transform matrix from m0 and m1
@@ -69,16 +78,26 @@ const vertexShaderText = `
 		gl_Position = projectionMatrix * mvPosition;
 
 		//Varying color based on per instance attribute
-		float colorWeighting = 1.0; 
-		
 		if(uUsePickingColor){
 			vColor = instanceColor;
 		}else{
-			vColor = vec4(uColor.rgb * colorWeighting,1.0);		
+			vColor = uColor;		
+		}
+
+		//Varying light weighting
+		vec4 lightWeighting;
+		if(uUseLighting){
+			vec3 instanceNormal = normalize( (instanceTransformMatrix * vec4(normal, 0.0)).xyz );
+			vec3 transformedNormal = normalMatrix * instanceNormal;
+			vec3 lightDirection = normalize(uLightSourcePosition - mvPosition.xyz);
+			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0) + vec4(1.0, 1.0, 1.0, 1.0)*max(dot(transformedNormal, lightDirection), 0.0);
+		}else{
+			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
 		}
 		
 		vVertexPosition = mvPosition;
 		vUv = instanceTexUvOffset + vec2(instanceTexUvSize.x * uv.x, instanceTexUvSize.y * uv.y);
+		vLightWeighting = lightWeighting;
 
 	}
 `;

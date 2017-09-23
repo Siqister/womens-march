@@ -3,7 +3,7 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
 import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
@@ -32,6 +32,7 @@ class GLWrapper extends Component{
 			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
+			light: [500,700,-10],
 
 			//Controls spatial distribution of the signs
 			X:0,
@@ -101,7 +102,9 @@ class GLWrapper extends Component{
 				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
 				uUseOrientation:{value:false},
+				uUseLighting:{value:false},
 				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
+				uLightSourcePosition:{value:new THREE.Vector3(...this.state.light)},
 				map:{value:null},
 				uInterpolateTransform:{value:0.0}
 			},
@@ -287,10 +290,11 @@ class GLWrapper extends Component{
 
 	_initStaticMeshes(){
 
-		//TARGET
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
+		const normals = new THREE.BufferAttribute(new Float32Array(signNormalsArray),3);
 
+		//TARGET
 		const targetGeometry = new THREE.InstancedBufferGeometry();
 		targetGeometry.addAttribute('position',vertices);
 		targetGeometry.addAttribute('uv',uv);
@@ -311,6 +315,7 @@ class GLWrapper extends Component{
 		const pickedTargetGeometry = new THREE.InstancedBufferGeometry();
 		pickedTargetGeometry.addAttribute('position',vertices);
 		pickedTargetGeometry.addAttribute('uv',uv);
+		pickedTargetGeometry.addAttribute('normal', normals);
 		pickedTargetGeometry.addAttribute('instanceTexUvOffset', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		pickedTargetGeometry.addAttribute('instanceTexUvSize', new THREE.InstancedBufferAttribute(new Float32Array(2),2,1));
 		glUtils.initTransformMatrixAttrib(pickedTargetGeometry,1); //Initialize per instance transform mat4 instancedBufferAttribute
@@ -324,15 +329,15 @@ class GLWrapper extends Component{
 
 
 		//HEMISPHERE LIGHT
-		const hemisphereGeometry = new THREE.SphereBufferGeometry(this.state.R*5);
-		const hemisphereMaterial = new THREE.ShaderMaterial({
-			side:THREE.DoubleSide,
-			vertexShader:hemisphereVs,
-			fragmentShader:hemisphereFs,
-			blending: THREE.AdditiveBlending
-		});
-		this.meshes.hemisphere = new THREE.Mesh(hemisphereGeometry, hemisphereMaterial);
-		//this.scene.add(this.meshes.hemisphere);
+		// const hemisphereGeometry = new THREE.SphereBufferGeometry(this.state.R*5);
+		// const hemisphereMaterial = new THREE.ShaderMaterial({
+		// 	side:THREE.DoubleSide,
+		// 	vertexShader:hemisphereVs,
+		// 	fragmentShader:hemisphereFs,
+		// 	blending: THREE.AdditiveBlending
+		// });
+		// this.meshes.hemisphere = new THREE.Mesh(hemisphereGeometry, hemisphereMaterial);
+		// this.scene.add(this.meshes.hemisphere);
 
 
 		//Set up tweening of picked signs
@@ -347,7 +352,7 @@ class GLWrapper extends Component{
 
 		//Called when this.state.instances is initially populated and this.props.sprite is initially available
 
-		const {instances} = this.state;
+		const {instances, light} = this.state;
 		const COUNT = instances.length;
 
 		//Map this.props.sprite to this.meshes.pickedTarget
@@ -357,6 +362,7 @@ class GLWrapper extends Component{
 		//Initialize per vertex BufferAttribute
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
+		const normals = new THREE.BufferAttribute(new Float32Array(signNormalsArray), 3);
 		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		const instanceTexUvOffset = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
@@ -367,7 +373,8 @@ class GLWrapper extends Component{
 		//Construct InstancedBufferGeometry
 		let geometry = new THREE.InstancedBufferGeometry();
 		geometry.addAttribute('position', vertices);
-		geometry.addAttribute('uv',uv);
+		geometry.addAttribute('uv', uv);
+		geometry.addAttribute('normal', normals)
 		geometry.addAttribute('instanceColor', instanceColors);
 		geometry.addAttribute('instanceTexUvOffset', instanceTexUvOffset);
 		geometry.addAttribute('instanceTexUvSize', instanceTexUvSize);
@@ -377,6 +384,7 @@ class GLWrapper extends Component{
 		material.uniforms.uUseTexture.value = true;
 		material.uniforms.map.value = this.props.sprite; //this.texture;
 		material.uniforms.uFogFactor.value = .000003;
+		material.uniforms.uUseLighting.value = true;
 		//material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.signs = new THREE.Mesh(geometry,material);
