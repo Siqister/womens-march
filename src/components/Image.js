@@ -8,7 +8,7 @@ import Close from 'material-ui/svg-icons/navigation/close';
 
 const color = 'rgb(80,80,80)';
 
-const imageDetailStyle = {
+const imageStyle = {
 	position:'absolute',
 	width:'100%',
 	bottom:'25%',
@@ -18,12 +18,10 @@ const imageDetailStyle = {
 
 const imageDetailListStyle = {
 	position: 'absolute',
-	padding: '5px 0',
-	borderBottom: `2px solid rgb(120,120,120)`
+	padding: '5px 0'
 }
 
 const imageDetailListItemStyle = {
-	color:`${color}`,
 	width:'100%',
 	padding:'5px 0',
 	clear:'both'
@@ -66,7 +64,13 @@ const ImageDetailListItem = props => {
 	const field = props.field.toUpperCase();
 	const value = props.data[props.id];
 
-	return <li style={imageDetailListItemStyle} className='clearfix'>
+	return <li 
+		style={ Object.assign({}, imageDetailListItemStyle, {
+			color: props.colors[0],
+			borderBottomColor: props.colors[2]
+		}) } 
+		className='clearfix'
+	>
 		<span style={{fontSize:'.7em', display:'block'}}>{field}</span>
 		<span style={{fontSize:'1.3em', display:'block'}}>
 			{Array.isArray(value)?<ul>
@@ -80,7 +84,7 @@ const Image = props => {
 
 	return (
 		<div className='image-detail'
-			style={imageDetailStyle}
+			style={imageStyle}
 		>
 			<div className='container'>
 				<div className='col-md-3 col-md-offset-9'>
@@ -91,11 +95,14 @@ const Image = props => {
 						transitionEnterTimeout={300}
 						transitionLeaveTimeout={300}
 					>
-						{props.metadata&&<ul className='image-detail-list' style={imageDetailListStyle} key={props.metadata._id}>
-							<ImageDetailListItem data={props.metadata} id='_id' field='Unique ID'/>
-							<ImageDetailListItem data={props.metadata} id='filename' field='File'/>
-							<ImageDetailListItem data={props.metadata} id='colors' field='Colors' type='color'/>
-							<ImageDetailListItem data={props.metadata} id='labels' field='Labels'/>
+						{props.metadata&&<ul className='image-detail-list' 
+							style={ Object.assign({}, imageDetailListStyle, {borderBottom:`1px solid ${props.colors[1]}`}) } 
+							key={props.metadata._id}
+						>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='_id' field='Unique ID'/>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='filename' field='File'/>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='colors' field='Colors' type='color'/>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='labels' field='Labels'/>
 							
 						</ul>}
 					</CSSTransitionGroup>

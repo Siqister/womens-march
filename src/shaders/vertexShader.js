@@ -90,7 +90,7 @@ const vertexShaderText = `
 			vec3 instanceNormal = normalize( (instanceTransformMatrix * vec4(normal, 0.0)).xyz );
 			vec3 transformedNormal = normalMatrix * instanceNormal;
 			vec3 lightDirection = normalize(uLightSourcePosition - mvPosition.xyz);
-			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0) + vec4(1.0, 1.0, 1.0, 1.0)*max(dot(transformedNormal, lightDirection), 0.0);
+			lightWeighting = vec4(0.0, 0.0, 0.0, 0.0) + vec4(1.0, 1.0, 1.0, 1.0)*max(dot(transformedNormal, lightDirection), 0.0);
 		}else{
 			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
 		}

@@ -11,8 +11,7 @@ const navigationStyle = {
 const navigationBlockStyle = {
 	height:60,
 	lineHeight:'60px',
-	borderBottom:'2px solid rgb(120,120,120)',
-	color:'rgb(80,80,80)',
+	borderBottom:'1px solid rgb(120,120,120)',
 	display:'block',
 	fontSize:'1.3em'
 }
@@ -39,22 +38,31 @@ class Navigation extends Component{
 
 	render(){
 
+		const navigationBlockStyle = {
+			color:this.props.colors[0],
+			borderBottom:`1px solid ${this.props.colors[1]}`
+		}
+
 		return <nav className='navigation' role='navigation' style={navigationStyle}>
 			<div className='container'>
-				<div className='col-md-3 clearfix'><NavigationBlock>Art of the March</NavigationBlock></div>
+				<div className='col-md-3 clearfix'>
+					<NavigationBlock style={navigationBlockStyle}>Art of the March</NavigationBlock>
+				</div>
 				<div className='col-md-6 clearfix'>
-					<NavigationBlock style={{width:'30%', float:'left'}}>Layout</NavigationBlock>
-					<NavigationBlock style={{width:'70%', float:'left'}}>
+					<NavigationBlock style={Object.assign({width:'30%', float:'left'}, navigationBlockStyle)}>Layout</NavigationBlock>
+					<NavigationBlock style={Object.assign({width:'70%', float:'left'}, navigationBlockStyle)}>
 						<Slider
 							positions={this.props.scenes}
 							currentPosition={this.props.currentScene}
 							style={{top:60, transform:'translate(0,-50%)'}}
-							color='rgb(120,120,120)'
+							color={this.props.colors[1]}
 							onChange={this._handleSceneSettingChange}
 						/>
 					</NavigationBlock>
 				</div>
-				<div className='col-md-3 clearfix'><NavigationBlock>Image</NavigationBlock></div>
+				<div className='col-md-3 clearfix'>
+					<NavigationBlock style={navigationBlockStyle}>Image</NavigationBlock>
+				</div>
 			</div>
 		</nav>
 	}

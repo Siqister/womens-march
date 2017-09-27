@@ -3,40 +3,11 @@ import {Redirect} from 'react-router-dom';
 
 import {fetchImageList, fetchMetadata, fetchSprite} from '../utils/utils';
 import Navigation from './Navigation';
-import Toolbar from './Toolbar';
+//import Toolbar from './Toolbar';
 import GLWrapper from './GLWrapper';
+import GLBackground from './GLBackground';
 import Image from './Image';
 
-//TODO: remove scene settings from App.js
-const scenes = [
-	{
-		id:1,
-		position: [1500, 0, 1500],
-		layout: 'wheel',
-		layoutGroupBy: null
-	},
-	{
-		id:2,
-		position: [250, 0, 600],
-		layout: 'wheel',
-		layoutGroupBy: (v,i)=>v%3
-	},
-	{
-		id:3,
-		position: [0, -58, 100],
-		layout: 'march'
-	},
-	{
-		id:4,
-		position: [0,0,800],
-		layout: 'sphere'
-	},
-	{
-		id:5,
-		position: [0,0,20],
-		layout: 'sphere'
-	}
-];
 
 class App extends Component{
 	constructor(props){
@@ -196,7 +167,12 @@ class App extends Component{
 					scenes={this.props.scenes}
 					currentScene={currentScene}
 					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
+					colors={this.props.colors}
 				/>
+				{width&&height&&<GLBackground 
+					width={width} 
+					height={height} 
+				/>}
 				{width&&height&&<GLWrapper 
 					width={width} 
 					height={height} 
@@ -217,20 +193,46 @@ class App extends Component{
 					loading={textureLoading || metadataLoading}
 					next={ Math.floor(Math.random()*(images.length-1)) }
 					prev={ Math.floor(Math.random()*(images.length-1)) }
+					colors={this.props.colors}
 				/>
- 				<Toolbar 
-					scenes={this.props.scenes}
-					currentScene={currentScene}
-					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
-				/>
-				</div>
+			</div>
 		);
 
 	}
 }
 
+
 App.defaultProps = {
-	scenes:scenes
+	scenes:[
+		{
+			id:1,
+			position: [1500, 0, 1500],
+			layout: 'wheel',
+			layoutGroupBy: null
+		},
+		{
+			id:2,
+			position: [250, 0, 600],
+			layout: 'wheel',
+			layoutGroupBy: (v,i)=>v%3
+		},
+		{
+			id:3,
+			position: [0, -58, 100],
+			layout: 'march'
+		},
+		{
+			id:4,
+			position: [0,0,800],
+			layout: 'sphere'
+		},
+		{
+			id:5,
+			position: [0,0,20],
+			layout: 'sphere'
+		}
+	],
+	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']
 };
 
 export default App;

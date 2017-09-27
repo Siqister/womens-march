@@ -32,7 +32,7 @@ class GLWrapper extends Component{
 			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
-			light: [500,700,-10],
+			light: [500,700,5],
 
 			//Controls spatial distribution of the signs
 			X:0,
@@ -80,7 +80,7 @@ class GLWrapper extends Component{
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-		this.renderer.setClearColor(rendererClearcolor);
+		this.renderer.setClearColor(rendererClearcolor, 0);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
 		this.wrapperNode.appendChild(this.renderer.domElement);
@@ -399,6 +399,7 @@ class GLWrapper extends Component{
 		material = this.material.clone();
 		material.uniforms.uColor.value = new THREE.Vector4(237/255,12/255,110/255,1.0);
 		material.uniforms.uFogFactor.value = 0.000005;
+		material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
 		
