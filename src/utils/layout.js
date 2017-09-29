@@ -284,6 +284,7 @@ export function SphereClusterLayout(){
 			.key(groupByAccessor)
 			.entries(data);
 		const rootNode = hierarchy({key:'root',values:nestedData}, d => d.values);
+		console.log(rootNode);
 		//Compute tree layout and get links
 		const links = treeLayout(rootNode).links();
 		rootNode.fx = 0;
@@ -295,7 +296,7 @@ export function SphereClusterLayout(){
 			const staticForceLayoutWorker = new StaticForceLayoutWorker();
 
 			staticForceLayoutWorker.postMessage({
-				nodes: rootNode.descendants().map(n=>{n.x=Math.random(); n.y=Math.random(); n.z=Math.random(); return n}),
+				nodes: rootNode.descendants().map(n=>{n.x=Math.random()-.5; n.y=Math.random()-.5; n.z=Math.random()-.5; return n}),
 				links,
 				r,
 			});
@@ -324,9 +325,9 @@ export function SphereClusterLayout(){
 		const {frame} = v.data;
 
 		//Construct per instance transform matrices 
-		const instanceNormal = new THREE.Vector3(v.x, v.y, v.z)//.normalize();
+		const instanceNormal = new THREE.Vector3(v.x, v.y, v.z).normalize();
 		const instanceR = r + Math.random()*40-20;
-		let position = instanceNormal.clone()//.multiplyScalar(instanceR);
+		let position = instanceNormal.clone().multiplyScalar(instanceR);
 		const rotationMat4 = new THREE.Matrix4();
 
 		up.set(Math.random()*.6-.3, 1, 0).normalize();
@@ -336,7 +337,7 @@ export function SphereClusterLayout(){
 		transformMatrixSign.compose(position, rotation, scale);
 		transformMatrixSign.multiply(rotationMat4);
 
-		position = instanceNormal.clone()//.multiplyScalar(instanceR+15);
+		position = instanceNormal.clone().multiplyScalar(instanceR+15);
 		rotation.setFromAxisAngle(X_AXIS, Math.PI*2);
 		scale.set(7,7,7);
 		transformMatrixArrow.compose(position, rotation, scale);

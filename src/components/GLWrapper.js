@@ -180,7 +180,7 @@ class GLWrapper extends Component{
 			const sphereLayout = SphereLayout()
 				.r(this.state.R);
 			const sphereClusterLayout = SphereClusterLayout()
-				.r(this.state.R)
+				.r(this.state.R*1.2)
 				.groupBy(layoutGroupBy);
 
 			switch(layout){

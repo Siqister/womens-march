@@ -232,9 +232,9 @@ App.defaultProps = {
 		},
 		{
 			id:6,
-			position: [0,0,800],
+			position: [0,0,1200],
 			layout: 'sphereCluster',
-			layoutGroupBy: (v,i)=> String(v.frame.x>3000) //FIXME: dummy nesting
+			layoutGroupBy: (v,i)=> (Math.floor(Math.random()*5)) //FIXME: dummy nesting
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']
