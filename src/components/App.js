@@ -87,7 +87,6 @@ class App extends Component{
 			fetchMetadata(filename)
 				.then(res => {
 					const metadata = res.json();
-					console.log(metadata);
 					return metadata;
 				}, err => {
 					console.log('Server error: ' + filename);
@@ -230,6 +229,12 @@ App.defaultProps = {
 			id:5,
 			position: [0,0,20],
 			layout: 'sphere'
+		},
+		{
+			id:6,
+			position: [0,0,800],
+			layout: 'sphereCluster',
+			layoutGroupBy: (v,i)=> String(v.frame.x>3000) //FIXME: dummy nesting
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import {WheelLayout, TileLayout, SphereLayout, SphereClusterLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
 import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
@@ -32,7 +32,7 @@ class GLWrapper extends Component{
 			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
-			light: [500,700,5],
+			light: [500,700,100],
 
 			//Controls spatial distribution of the signs
 			X:0,
@@ -179,6 +179,9 @@ class GLWrapper extends Component{
 				.groupBy(layoutGroupBy);
 			const sphereLayout = SphereLayout()
 				.r(this.state.R);
+			const sphereClusterLayout = SphereClusterLayout()
+				.r(this.state.R)
+				.groupBy(layoutGroupBy);
 
 			switch(layout){
 				case 'wheel':
@@ -187,13 +190,21 @@ class GLWrapper extends Component{
 				case 'sphere':
 					setPerInstanceProperties = sphereLayout;
 					break;
+				case 'sphereCluster':
+					setPerInstanceProperties = sphereClusterLayout;
+					break;
 				default:
 					setPerInstanceProperties = wheelLayout;
 			}
 
-			this.setState({
-				instances: [...setPerInstanceProperties(nextProps.data)]
-			}); 
+			Promise.resolve(setPerInstanceProperties(nextProps.data))
+				.then(instances=>{
+					this.setState({instances})
+				});
+
+			// this.setState({
+			// 	instances: [...setPerInstanceProperties(nextProps.data)]
+			// }); 
 		}
 
 		//Given props.selectedImageIndex, call this._showSelectedImage()

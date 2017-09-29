@@ -24,11 +24,13 @@
     "style-loader": "^0.17.0",
     "url-loader": "^0.5.8",
     "webpack": "^2.5.1",
-    "webpack-dev-server": "^2.4.5"
+    "webpack-dev-server": "^2.4.5",
+    "worker-loader": "^1.0.0"
   },
   "dependencies": {
     "bootstrap": "^3.3.7",
     "d3": "^4.8.0",
+    "d3-force-3d": "^1.0.7",
     "dat.gui": "^0.6.1",
     "eslint": "^3.19.0",
     "history": "^4.7.2",
