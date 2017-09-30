@@ -49,7 +49,7 @@ class App extends Component{
 				this.setState({
 					images:[...images, ...data],
 					sprite:texture,
-					currentScene:3
+					currentScene:1
 				});
 			});
 
@@ -210,31 +210,15 @@ App.defaultProps = {
 			layoutGroupBy: null
 		},
 		{
-			id:2,
-			position: [250, 0, 600],
-			layout: 'wheel',
-			layoutGroupBy: (v,i)=>v%3
-		},
-		{
-			id:3,
-			position: [0, -58, 100],
-			layout: 'march'
-		},
-		{
 			id:4,
 			position: [0,0,800],
 			layout: 'sphere'
 		},
 		{
-			id:5,
-			position: [0,0,20],
-			layout: 'sphere'
-		},
-		{
 			id:6,
-			position: [0,0,1200],
+			position: [0,0,960],
 			layout: 'sphereCluster',
-			layoutGroupBy: (v,i)=> (Math.floor(Math.random()*5)) //FIXME: dummy nesting
+			layoutGroupBy: (v,i)=> (Math.floor(Math.random()*4)) //FIXME: dummy nesting
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']

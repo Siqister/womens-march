@@ -5,26 +5,25 @@ self.addEventListener('message', event => {
 
 	const {nodes, links, r} = event.data;
 
-	//Custom force
+	//Custom forces
+	//Cluster towards parent
 	const centrifugalForce = alpha => {
 
 		for(let i=0, n=nodes.length, node, k=alpha*.05; i<n; i++){
-
 			node = nodes[i];
 			if(node.depth===2){
 				node.vx -= (node.x - node.parent.x) * k;
 				node.vy -= (node.y - node.parent.y) * k;
 				node.vz -= (node.z - node.parent.z) * k;
 			}
-
 		}
 
 	}
 
+	//Cluster towards a sphere of radius r
 	const surfaceForce = alpha => {
 
 		for(let i=0, n=nodes.length, node, k=alpha*.07; i<n; i++){
-
 			node = nodes[i];
 			if(node.depth>0){
 				const length = Math.sqrt(node.x*node.x + node.y*node.y + node.z*node.z);
@@ -32,14 +31,12 @@ self.addEventListener('message', event => {
 				node.vy -= (node.y - node.y/length*r) * k;
 				node.vz -= (node.z - node.z/length*r) * k;
 			}
-
 		}
 
 	}
 
 	//Create force simulation and forces
 	const simulation = forceSimulation().numDimensions(3)
-		//.force('link', forceLink(links).distance(r*2).strength(1))
 		.force('manyBody', forceManyBody().strength(d=>d.depth===1?-2000:-1200))
 		.force('centrifugal', centrifugalForce)
 		.force('surface', surfaceForce)

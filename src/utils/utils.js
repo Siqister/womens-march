@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {randomNormal,pie,json} from 'd3';
 
-export * from './layout';
+//export * from './layout';
 
 //Fetch data
 export const fetchImageList = () => {
