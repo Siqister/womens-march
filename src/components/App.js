@@ -7,6 +7,9 @@ import Navigation from './Navigation';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 import Image from './Image';
+import Scene from './Scene';
+
+import Intro from './Intro';
 
 
 class App extends Component{
@@ -18,9 +21,12 @@ class App extends Component{
 			images:[],
 			selectedImageMetadata:null,
 			selectedImageIndex:null,
+			currentScene:0,
+
 			width:0,
 			height:0,
-			currentScene:0,
+			showIntro:false,
+
 			sprite:null,
 			textureLoading:false,
 			metadataLoading:false
@@ -49,7 +55,7 @@ class App extends Component{
 				this.setState({
 					images:[...images, ...data],
 					sprite:texture,
-					currentScene:3
+					currentScene:0
 				});
 			});
 
@@ -168,6 +174,16 @@ class App extends Component{
 					currentScene={currentScene}
 					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
 					colors={this.props.colors}
+					collapse={this.state.showIntro}
+				/>
+				<Scene 
+					onSceneEnter={()=>{ this.setState({showIntro:true}) }}
+					onSceneLeave={()=>{ this.setState({showIntro:false, currentScene:3}) }}
+				>
+					<Intro colors={this.props.colors}/>
+				</Scene>
+				<Scene 
+					height={height+300}
 				/>
 				{width&&height&&<GLBackground 
 					width={width} 

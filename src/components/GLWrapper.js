@@ -32,7 +32,7 @@ class GLWrapper extends Component{
 			cameraLookAt: new THREE.Vector3(0,0,0),
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
-			light: [500,700,5],
+			light: [500,700,50],
 
 			//Controls spatial distribution of the signs
 			X:0,
@@ -649,7 +649,9 @@ class GLWrapper extends Component{
 			<div className='gl-wrapper'
 				style={{
 					position:'fixed',
-					width, height
+					width, height,
+					top:0,
+					zIndex:-998
 				}}
 				ref={(node)=>{this.wrapperNode=node}}
 				onMouseMove={this.onMouseMove}

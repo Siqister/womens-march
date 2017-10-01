@@ -116,7 +116,7 @@ class Slider extends Component{
 
 		this.state = {
 			dragging:false,
-			targetPosition:0
+			targetPosition: props.currentPosition*props.width/(props.positions.length-1)
 		}
 
 	}

@@ -9,7 +9,7 @@ import Close from 'material-ui/svg-icons/navigation/close';
 const color = 'rgb(80,80,80)';
 
 const imageStyle = {
-	position:'absolute',
+	position:'fixed',
 	width:'100%',
 	bottom:'25%',
 	top:'60px',

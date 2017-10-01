@@ -40,11 +40,12 @@ class GLBackground extends Component{
 		const {width,height} = this.props;
 
 		return (
-			<canvas 
+			<canvas className='gl-background'
 				style={{
 					position:'fixed',
-					width:width,
-					height:height,
+					width,
+					height,
+					top:0,
 					zIndex:-999
 				}}
 				width={width}

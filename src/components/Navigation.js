@@ -2,9 +2,10 @@ import React, {Component} from 'react';
 import {Slider} from './ui';
 
 const navigationStyle = {
-	position: 'absolute',
+	position: 'fixed',
 	width:'100%',
 	height:60,
+	top:0,
 	zIndex:999
 }
 
@@ -46,10 +47,14 @@ class Navigation extends Component{
 		return <nav className='navigation' role='navigation' style={navigationStyle}>
 			<div className='container'>
 				<div className='col-md-3 clearfix'>
-					<NavigationBlock style={navigationBlockStyle}>Art of the March</NavigationBlock>
+					<NavigationBlock style={Object.assign({}, navigationBlockStyle, {borderBottom:'none'})}>
+						Art of the March
+					</NavigationBlock>
 				</div>
-				<div className='col-md-6 clearfix'>
-					<NavigationBlock style={Object.assign({width:'30%', float:'left'}, navigationBlockStyle)}>Layout</NavigationBlock>
+				{!this.props.collapse&&<div className='col-md-6 clearfix'>
+					<NavigationBlock style={Object.assign({width:'30%', float:'left'}, navigationBlockStyle)}>
+						Layout
+					</NavigationBlock>
 					<NavigationBlock style={Object.assign({width:'70%', float:'left'}, navigationBlockStyle)}>
 						<Slider
 							positions={this.props.scenes}
@@ -59,10 +64,10 @@ class Navigation extends Component{
 							onChange={this._handleSceneSettingChange}
 						/>
 					</NavigationBlock>
-				</div>
-				<div className='col-md-3 clearfix'>
+				</div>}
+				{!this.props.collapse&&<div className='col-md-3 clearfix'>
 					<NavigationBlock style={navigationBlockStyle}>Image</NavigationBlock>
-				</div>
+				</div>}
 			</div>
 		</nav>
 	}
