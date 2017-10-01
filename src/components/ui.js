@@ -101,7 +101,6 @@ const defaultElementStyle = {
 	position:'absolute',
 	margin:0
 }
-const defaultSliderColor = 'rgb(180,180,180)';
 
 class Slider extends Component{
 
@@ -197,7 +196,7 @@ class Slider extends Component{
 
 	render(){
 
-		const {pullRight, positions, width, height, currentPosition, style, color, targetColor} = this.props;
+		const {pullRight, positions, width, height, currentPosition, style, color, layoutComputing, targetColor} = this.props;
 		const {dragging} = this.state;
 		const num = positions.length
 
@@ -216,17 +215,37 @@ class Slider extends Component{
 				onMouseUp = {this.handleMouseUp}
 				ref={node=>{this.containerNode = node}}
 			>
-				<div className='slider-target' style={ Object.assign({}, defaultElementStyle, {
-					width:dragging?25:20,
-					height:dragging?25:20,
+				<svg className='slider-target' style={ Object.assign({}, defaultElementStyle, {
+					width:30, //dragging?25:20,
+					height:30, //dragging?25:20,
 					transform:'translate(-50%,-50%)',
 					left: this.state.targetPosition,
 					top: height/2,
-					borderRadius: 20*2,
+					//borderRadius: 20*2,
 					transition:'all 100ms',
-					background:targetColor,
-					opacity:dragging?.6:.2
-				}) }/>
+					//background:targetColor,
+					//opacity:dragging?.6:.2
+				}) }>
+					<circle className='inner'
+						cx={15}
+						cy={15}
+						r={dragging?12:10}
+						fill={targetColor}
+						fillOpacity={dragging?.6:.2}
+						style={{
+							transition:'all 100ms'
+						}}
+					/>
+					<circle className='outer'
+						cx={15}
+						cy={15}
+						r={dragging?12:10}
+						fill='none'
+						stroke={layoutComputing?targetColor:'none'}
+						strokeWidth='2px'
+						style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
+					/>
+				</svg>
 				{positions.map(this._renderPositions)}
 			</div>
 		);
@@ -243,8 +262,9 @@ Slider.defaultProps = {
 	currentPosition:0,
 	width:256,
 	height:48,
-	color:defaultSliderColor,
-	targetColor:'rgb(237,12,110)'
+	color:'rgb(180,180,180)',
+	targetColor:'rgb(255,255,255)',
+	layoutComputing:false
 }
 
 export {Slider};

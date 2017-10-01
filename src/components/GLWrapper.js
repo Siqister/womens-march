@@ -11,7 +11,6 @@ import fragmentShader from '../shaders/fragmentShader';
 import hemisphereVs from '../shaders/hemisphereVertexShader';
 import hemisphereFs from '../shaders/hemisphereFragmentShader';
 
-
 class GLWrapper extends Component{
 
 	constructor(props){
@@ -67,7 +66,7 @@ class GLWrapper extends Component{
 
 		//Cancellation token used to reject layout Promise
 		this.cancelToken = {};
-		
+
 	}
 
 	componentDidMount(){
@@ -209,16 +208,18 @@ class GLWrapper extends Component{
 			if(this.cancelToken.cancel){
 				this.cancelToken.cancel();
 			}
+			this.props.onLayoutStart();
+			//Compute a new layout, return a promise that is either immediately resolved
+			//or resolved later (if sphereClusterLayout)
 			Promise.resolve(setPerInstanceProperties(nextProps.data, this.cancelToken))
 				.then(instances => {
-					this.setState({instances})
+					this.setState({instances});
+					this.props.onLayoutEnd();
 				}, err => {
 					console.log('Layout is overriden and cancelled');
+					this.props.onLayoutEnd();
 				});
 
-			// this.setState({
-			// 	instances: [...setPerInstanceProperties(nextProps.data)]
-			// }); 
 		}
 
 		//Given props.selectedImageIndex, call this._showSelectedImage()

@@ -1,7 +1,3 @@
-import WheelLayout from './WheelLayout';
-import SphereLayout from './SphereLayout';
-import SphereClusterLayout from './SphereClusterLayout';
-
-export {WheelLayout};
-export {SphereLayout};
-export {SphereClusterLayout};
+export {default as WheelLayout} from './WheelLayout';
+export {default as SphereLayout} from './SphereLayout';
+export {default as SphereClusterLayout} from './SphereClusterLayout';

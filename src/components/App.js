@@ -23,12 +23,15 @@ class App extends Component{
 			currentScene:0,
 			sprite:null,
 			textureLoading:false,
-			metadataLoading:false
+			metadataLoading:false,
+			layoutComputing:false
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
 		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
 		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
+		this._handleLayoutStart = this._handleLayoutStart.bind(this);
+		this._handleLayoutEnd = this._handleLayoutEnd.bind(this);
 
 	}
 
@@ -75,9 +78,6 @@ class App extends Component{
 			const index = +nextProps.match.params.index;
 			if(!this.state.images[index]) return;
 			const filename = this.state.images[index].filename;
-			//FIXME: for debugging, remove
-			//const filename = '101D0001_DSC4101.jpg';
-			//const filename = '100D0001_DSC2813.jpg'
 
 			this.setState({
 				selectedImageIndex: index,
@@ -130,6 +130,18 @@ class App extends Component{
 		});
 	}
 
+	_handleLayoutStart(){
+		this.setState({
+			layoutComputing:true
+		});
+	}
+
+	_handleLayoutEnd(){
+		this.setState({
+			layoutComputing:false
+		});
+	}
+
 
 	componentWillUnmount(){
 
@@ -145,6 +157,7 @@ class App extends Component{
 			currentScene,
 			textureLoading,
 			metadataLoading,
+			layoutComputing,
 			selectedImageIndex,
 			selectedImageMetadata
 		} = this.state;
@@ -152,7 +165,7 @@ class App extends Component{
 
 		console.groupCollapsed('App:re-render');
 		console.log(`App:render:${new Date()}`);
-		console.log('textureLoading / metadataLoading: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading);
+		console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
 		console.log(selectedImageMetadata);
 		console.log(selectedImageIndex);
 		console.log(images[selectedImageIndex]);
@@ -167,6 +180,7 @@ class App extends Component{
 					currentScene={currentScene}
 					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
 					colors={this.props.colors}
+					layoutComputing={layoutComputing}
 				/>
 				{width&&height&&<GLBackground 
 					width={width} 
@@ -185,6 +199,8 @@ class App extends Component{
 					onSelect={this._handleSelect}
 					onTextureLoadStart={this._handleTextureLoadStart}
 					onTextureLoadEnd={this._handleTextureLoadEnd}
+					onLayoutStart={this._handleLayoutStart}
+					onLayoutEnd={this._handleLayoutEnd}
 				/>}
 				<Image
 					metadata={selectedImageMetadata}
