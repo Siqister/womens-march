@@ -200,12 +200,12 @@ class GLWrapper extends Component{
 		//FIXME: this will be a problem if props.selectedImageIndex is set at the same time as, or before, props.data
 		//because state.instances is set asynchromously
 		//FIXME: circular calling of this._showSelectedImage
-		if(selectedImageIndex){
-			if(selectedImageIndex === this.props.selectedImageIndex) return; 
-			this._showSelectedImage(selectedImageIndex);
-		}else if(this.props.selectedImageIndex){
-			this._hideSelectedImage(this.props.selectedImageIndex);
-		}
+		// if(selectedImageIndex){
+		// 	if(selectedImageIndex === this.props.selectedImageIndex) return; 
+		// 	this._showSelectedImage(selectedImageIndex);
+		// }else if(this.props.selectedImageIndex){
+		// 	this._hideSelectedImage(this.props.selectedImageIndex);
+		// }
 
 	}
 
@@ -215,7 +215,8 @@ class GLWrapper extends Component{
 		//Otherwise, skip re-render, and handle prop changes in the Three.js environment (via componentWillReceiveProps)
 		if(this.props.width !== nextProps.width 
 			|| this.props.height !== nextProps.height
-			|| this.state.instances !== nextState.instances){
+			|| this.state.instances !== nextState.instances
+			|| this.props.selectedImageIndex !== nextProps.selectedImageIndex){
 			return true;
 		}else{
 			return false;
@@ -241,6 +242,15 @@ class GLWrapper extends Component{
 		}else{
 			//Relayout
 			this._updateMeshes();
+		}
+
+		//Show or hide selected image based on props.selectedImageIndex and state.instances
+		if(this.props.selectedImageIndex){
+			if(this.props.selectedImageIndex !== prevProps.selectedImageIndex || this.state.instances !== prevState.instances){
+				this._showSelectedImage(this.props.selectedImageIndex);
+			}
+		}else if(prevProps.selectedImageIndex){
+			this._hideSelectedImage(prevProps.selectedImageIndex);
 		}
 
 	}
@@ -580,6 +590,8 @@ class GLWrapper extends Component{
 	}
 
 	_hideSelectedImage(index){
+
+		if(!this.state.instances[index]) return;
 
 		//Hide this.meshes.pickedTarget		
 		const _instance = this.state.instances[index];

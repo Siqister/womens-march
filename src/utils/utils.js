@@ -4,7 +4,7 @@ import {randomNormal,pie,json} from 'd3';
 //Fetch data
 export const fetchImageList = () => {
 	return new Promise((resolve, reject)=>{
-		json('./assets/all_images.json',(err,json)=>{
+		json('/assets/all_images.json',(err,json)=>{
 			if(err){
 				reject(err);
 			}else{
@@ -24,7 +24,7 @@ export const fetchMetadata = fileName => {
 export const fetchSprite = () => {
 	return new Promise((resolve, reject)=>{
 		const t = new THREE.TextureLoader()
-			.load('./assets/all_images_sprite_4096.png', 
+			.load('/assets/all_images_sprite_4096.png', 
 				texture => {
 					resolve(texture);
 				},

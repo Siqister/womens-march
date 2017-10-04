@@ -1,11 +1,6 @@
 import React, {Component} from 'react';
 import Waypoint from 'react-waypoint';
 
-const sceneStyle = {
-	width: '100%',
-	//height: '150%'
-}
-
 const Scene = props => {
 
 	return (

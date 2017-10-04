@@ -3,7 +3,6 @@ import {Redirect} from 'react-router-dom';
 
 import {fetchImageList, fetchMetadata, fetchSprite} from '../utils/utils';
 import Navigation from './Navigation';
-//import Toolbar from './Toolbar';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 import Image from './Image';
@@ -13,6 +12,7 @@ import Intro from './Intro';
 
 
 class App extends Component{
+
 	constructor(props){
 
 		super(props);
@@ -20,7 +20,7 @@ class App extends Component{
 		this.state = {
 			images:[],
 			selectedImageMetadata:null,
-			selectedImageIndex:null,
+			selectedImageIndex:props.match.params.index?+props.match.params.index:null,
 			currentScene:0,
 
 			width:0,
@@ -35,6 +35,7 @@ class App extends Component{
 		this._handleSelect = this._handleSelect.bind(this);
 		this._handleTextureLoadStart = this._handleTextureLoadStart.bind(this);
 		this._handleTextureLoadEnd = this._handleTextureLoadEnd.bind(this);
+		this._loadSelectedImageMetadata = this._loadSelectedImageMetadata.bind(this);
 
 	}
 
@@ -51,12 +52,16 @@ class App extends Component{
 		//...on data request complete, update state and trigger re-render
 		Promise.all([fetchImageList(), fetchSprite()])
 			.then(([data,texture]) => {
+
 				const {images} = this.state;
 				this.setState({
 					images:[...images, ...data],
 					sprite:texture,
 					currentScene:0
 				});
+
+				this._loadSelectedImageMetadata(this.state.selectedImageIndex);
+
 			});
 
 		//Window resize event
@@ -77,44 +82,45 @@ class App extends Component{
 				selectedImageIndex:null
 			});
 		}else{
-
 			const index = +nextProps.match.params.index;
-			if(!this.state.images[index]) return;
-			const filename = this.state.images[index].filename;
-			//FIXME: for debugging, remove
-			//const filename = '101D0001_DSC4101.jpg';
-			//const filename = '100D0001_DSC2813.jpg'
-
-			this.setState({
-				selectedImageIndex: index,
-				metadataLoading: true
-			});
-
-			fetchMetadata(filename)
-				.then(res => {
-					const metadata = res.json();
-					console.log(metadata);
-					return metadata;
-				}, err => {
-					console.log('Server error: ' + filename);
-					this.setState({
-						selectedImageMetadata:null,
-						metadataLoading:false
-					});
-				})
-				.then(res => {
-					this.setState({
-						selectedImageMetadata:res,
-						metadataLoading:false
-					});
-				}, err => {
-					console.log('Empty JSON: ' + filename);
-					this.setState({
-						selectedImageMetadata:null,
-						metadataLoading:false
-					});
-				});
+			this._loadSelectedImageMetadata(index);
 		}
+
+	}
+
+	_loadSelectedImageMetadata(index){
+
+		if(!this.state.images[index]) return;
+		const filename = this.state.images[index].filename;
+
+		this.setState({
+			selectedImageIndex: index,
+			metadataLoading: true
+		});
+
+		fetchMetadata(filename)
+			.then(res => {
+				const metadata = res.json();
+				return metadata;
+			}, err => {
+				console.log('Server error: ' + filename);
+				this.setState({
+					selectedImageMetadata:null,
+					metadataLoading:false
+				});
+			})
+			.then(res => {
+				this.setState({
+					selectedImageMetadata:res,
+					metadataLoading:false
+				});
+			}, err => {
+				console.log('Empty JSON: ' + filename);
+				this.setState({
+					selectedImageMetadata:null,
+					metadataLoading:false
+				});
+			});
 
 	}
 
@@ -132,6 +138,7 @@ class App extends Component{
 	}
 
 	_handleTextureLoadEnd(){
+
 		this.setState({
 			textureLoading:false
 		});
@@ -182,9 +189,7 @@ class App extends Component{
 				>
 					<Intro colors={this.props.colors}/>
 				</Scene>
-				<Scene 
-					height={height+300}
-				/>
+				<Scene height={height+300} />
 				{width&&height&&<GLBackground 
 					width={width} 
 					height={height} 
