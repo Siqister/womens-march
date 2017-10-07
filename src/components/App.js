@@ -201,7 +201,7 @@ class App extends Component{
 				/>
 				<Scene 
 					onSceneEnter={()=>{ this.setState({showIntro:true}) }}
-					onSceneLeave={()=>{ this.setState({showIntro:false, currentScene:3}) }}
+					onSceneLeave={()=>{ this.setState({showIntro:false, currentScene:1}) }}
 				>
 					<Intro colors={this.props.colors}/>
 				</Scene>
