@@ -3,12 +3,10 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, TileLayout, SphereLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import {WheelLayout, SphereLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
 import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
-import hemisphereVs from '../shaders/hemisphereVertexShader';
-import hemisphereFs from '../shaders/hemisphereFragmentShader';
 
 
 class GLWrapper extends Component{
@@ -18,18 +16,20 @@ class GLWrapper extends Component{
 		super(props);
 
 		this._animate = this._animate.bind(this);
-		this._initMeshes = this._initMeshes.bind(this);
 		this._initStaticMeshes = this._initStaticMeshes.bind(this);
+		this._initMeshes = this._initMeshes.bind(this);
 		this._updateMeshes = this._updateMeshes.bind(this);
 		this._showSelectedImage = this._showSelectedImage.bind(this);
 		this._hideSelectedImage = this._hideSelectedImage.bind(this);
+		this._setTarget = this._setTarget.bind(this);
 		this._pick = this._pick.bind(this);
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onClick = this.onClick.bind(this);
 
 		this.state = {
 
-			cameraLookAt: new THREE.Vector3(0,0,0),
+			//GL animation state
+			cameraLookAt: [0,0,0],
 			cameraUp: [.5,1,0],
 			speed:.001, //Rotational speed
 			light: [500,700,50],
@@ -40,11 +40,15 @@ class GLWrapper extends Component{
 			R:450,
 			R_WIGGLE:30,
 
-			//Per instance data, initial transform mat4, target transform mat4
-			instances:[], 
-
-			//Renderer settings
-			rendererClearcolor:0xeeeeee
+			//Per-instance data for each sign, contains:
+			// - transform mat4 for sign
+			// - transform mat4 for arrows
+			// - id
+			// - zero-based index
+			// - texture uv offset
+			// - picking color based on zero-based index
+			//is recomputed on scene/layout change and initial data injection
+			instances:[]
 		};
 
 		//Shared GL assets
@@ -67,20 +71,21 @@ class GLWrapper extends Component{
 	}
 
 	componentDidMount(){
+
 		const {width,height,data,cameraPosition} = this.props;
-		const {cameraLookAt,rendererClearcolor} = this.state;
+		const {cameraLookAt} = this.state;
 
 		//Component mounted, initialize camera, renderer, and scene
 		//Init camera
 		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.5, 4000);
 		this.camera.position.set(...cameraPosition);
-		this.camera.lookAt(cameraLookAt);
+		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
 		this.camera.up = new THREE.Vector3(...this.state.cameraUp).normalize(); //TODO: turn into a prop
 
 		//Init renderer, and mount renderer dom element
 		this.renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-		this.renderer.setClearColor(rendererClearcolor, 0);
+		this.renderer.setClearColor(0xeeeeee, 0);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(width, height);
 		this.wrapperNode.appendChild(this.renderer.domElement);
@@ -125,7 +130,7 @@ class GLWrapper extends Component{
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onUpdate(()=>{
-				this.camera.lookAt(this.state.cameraLookAt);
+				this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 			}); //Tweens camera position 
 		this.tween.updatePickedTarget = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
@@ -136,7 +141,7 @@ class GLWrapper extends Component{
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens fog
-		this.tween.foo = new TWEEN.Tween(); //Placeholder tween, no op
+		this.tween.foo = new TWEEN.Tween(); //Placeholder tween, no-op
 
 		//Init static meshes and start animation loop
 		this._initStaticMeshes();
@@ -158,17 +163,14 @@ class GLWrapper extends Component{
 			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
 		}
 
-		//If props.sceneId changes
-		//Re-orient camera
+		//If props.sceneId changes, signifying scene change, position and re-orient camera to scene default
 		if(this.props.sceneId !== sceneId){
 			this.tween.camera
 				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
 				.start();
 		}
 
-		//If props.sceneId changes (which implies layout change), or
-		//if props.data.length changes (e.g. initial data injection)
-		//Layout data again
+		//On scene change or initial data injection, recompute per-instance transform for each sign again
 		if(this.props.sceneId !== sceneId || nextProps.data.length !== this.props.data.length){
 
 			let setPerInstanceProperties;
@@ -196,17 +198,6 @@ class GLWrapper extends Component{
 			}); 
 		}
 
-		//Given props.selectedImageIndex, call this._showSelectedImage()
-		//FIXME: this will be a problem if props.selectedImageIndex is set at the same time as, or before, props.data
-		//because state.instances is set asynchromously
-		//FIXME: circular calling of this._showSelectedImage
-		// if(selectedImageIndex){
-		// 	if(selectedImageIndex === this.props.selectedImageIndex) return; 
-		// 	this._showSelectedImage(selectedImageIndex);
-		// }else if(this.props.selectedImageIndex){
-		// 	this._hideSelectedImage(this.props.selectedImageIndex);
-		// }
-
 	}
 
 	shouldComponentUpdate(nextProps, nextState){
@@ -227,15 +218,15 @@ class GLWrapper extends Component{
 	componentDidUpdate(prevProps, prevState){
 
 		//Component is updated only after changes to props.width, props.height, or state.instances (re-layout)
-		const {width,height,data,cameraPosition,sceneId} = this.props;
+		const {width, height, selectedImageIndex} = this.props;
 
-		//Assume width and height are changed
+		//Given new props.width and props.height, update camera and off-camera texture
 		this.camera.aspect = width/height;
 		this.camera.updateProjectionMatrix();
 		this.renderer.setSize(width,height);
 		this.pickingTexture.setSize(width,height);
 
-		//Respond to changes to this.state.instances
+		//Given new state.instances, either initialize or update the dynamic meshes
 		if(this.state.instances.length !== prevState.instances.length){
 			//Initial data injection
 			this._initMeshes();
@@ -245,9 +236,9 @@ class GLWrapper extends Component{
 		}
 
 		//Show or hide selected image based on props.selectedImageIndex and state.instances
-		if(this.props.selectedImageIndex){
-			if(this.props.selectedImageIndex !== prevProps.selectedImageIndex || this.state.instances !== prevState.instances){
-				this._showSelectedImage(this.props.selectedImageIndex);
+		if(selectedImageIndex){
+			if(selectedImageIndex !== prevProps.selectedImageIndex || this.state.instances !== prevState.instances){
+				this._showSelectedImage(selectedImageIndex);
 			}
 		}else if(prevProps.selectedImageIndex){
 			this._hideSelectedImage(prevProps.selectedImageIndex);
@@ -262,16 +253,7 @@ class GLWrapper extends Component{
 		const index = this._pick(x,y); //use current e.clientX / e.clientY to select index of image
 
 		//Set transform matrix and texture-related attribute values for this.meshes.target
-		if(this.state.instances && this.state.instances[index]){
-			
-			glUtils.updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
-			
-			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
-			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
-			instanceTexUvSize.setXY(0, ...this.state.instances[index].textureUvSize);
-			instanceTexUvOffset.needsUpdate = true;
-			instanceTexUvSize.needsUpdate = true;
-		}
+		this._setTarget(index);
 
 		//Slightly re-orient this.meshes.pickedTarget
 		if(this.prevX && this.prevY){
@@ -292,7 +274,7 @@ class GLWrapper extends Component{
 
 		const x = e.clientX, y = e.clientY;
 		const index = this._pick(x,y);
-		if(this.state.instances && this.state.instances[index]){
+		if(this.state.instances[index] && index){
 			this.props.onSelect(index);
 		}
 
@@ -360,7 +342,7 @@ class GLWrapper extends Component{
 
 	_initMeshes(){
 
-		//Called when this.state.instances is initially populated and this.props.sprite is initially available
+		//Initialize dynamic meshes (sign and arrow)
 
 		const {instances, light} = this.state;
 		const COUNT = instances.length;
@@ -369,7 +351,7 @@ class GLWrapper extends Component{
 		this.meshes.pickedTarget.material.uniforms.map.value = this.props.sprite;
 		this.meshes.target.material.uniforms.map.value = this.props.sprite;
 
-		//Initialize per vertex BufferAttribute
+		//Initialize BufferAttribute
 		const vertices = new THREE.BufferAttribute(new Float32Array(signVerticesArray),3);
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 		const normals = new THREE.BufferAttribute(new Float32Array(signNormalsArray), 3);
@@ -379,7 +361,7 @@ class GLWrapper extends Component{
 		const instanceTexUvSize = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
 		
 
-		//GEOMETRY, MATERIAL & MESH: SIGNS
+		//---this.meshes.signs---
 		//Construct InstancedBufferGeometry
 		let geometry = new THREE.InstancedBufferGeometry();
 		geometry.addAttribute('position', vertices);
@@ -400,7 +382,7 @@ class GLWrapper extends Component{
 		this.meshes.signs = new THREE.Mesh(geometry,material);
 
 
-		//GEOMETRY, MATERIAL & MESH: ARROWS
+		//---this.meshes.arrows---
 		const arrowsGeometry = new THREE.InstancedBufferGeometry();
 		arrowsGeometry.addAttribute('position', arrowVertices);
 		arrowsGeometry.addAttribute('instanceColor', instanceColors);
@@ -414,7 +396,7 @@ class GLWrapper extends Component{
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
 		
 
-		//SIGN FOR PICKING
+		//---this.meshes.signsPicking---
 		material = this.material.clone();
 		material.uniforms.uUsePickingColor.value = true;
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
@@ -480,14 +462,18 @@ class GLWrapper extends Component{
 	_showSelectedImage(index){
 
 		if(!this.state.instances[index]) return;
-
 		const _instance = this.state.instances[index];
 
-		//this.meshes.pickedTarget: texture
+		//---this.meshes.target---
+		//move this.meshes.target in place
+		this._setTarget(index);
+
+		//---this.meshes.pickedTarget---
+		//Set texture and tween in front of camera
+
 		//Reset texture uniform of pickedTarget back to large sprite...
 		const pickedTarget = this.meshes.pickedTarget;
 		pickedTarget.visible = false;
-
 		pickedTarget.material.uniforms.map.value = this.props.sprite;
 		const {instanceTexUvOffset, instanceTexUvSize} = pickedTarget.geometry.attributes;
 		instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
@@ -526,7 +512,7 @@ class GLWrapper extends Component{
 
 		//Move camera in place, and move this.meshes.pickedSign in front of camera
 		//Step 1: determine location for camera
-		let m0, m1; //m0: original (world) transform matrix for pickedSign, m1: final world transform matrix for pickedSign
+		let m0, m1; //m0: original (world) transform matrix for pickedTarget, m1: final world transform matrix for pickedTarget
 		
 		m0 = _instance.transformMatrixSign.clone();
 		m0.premultiply(new THREE.Matrix4().makeRotationFromEuler(this.meshes.target.rotation));
@@ -570,16 +556,8 @@ class GLWrapper extends Component{
 			.start();
 
 
-		//Move this.meshes.target in place
-		const target = this.meshes.target;
-		glUtils.updateTransformMatrices(target, _instance.transformMatrixSign, null, 0);
-		target.geometry.attributes.instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
-		target.geometry.attributes.instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
-		instanceTexUvOffset.needsUpdate = true;
-		instanceTexUvSize.needsUpdate = true;
-
-
-		//Increase uFogFactor (fade background)
+		//---global changes---
+		//Increase uFogFactor (fade this.meshes.signs)
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
 		this.tween.fog
 			.onUpdate(v=>{
@@ -609,9 +587,15 @@ class GLWrapper extends Component{
 		this.tween.updatePickedTarget.stop().start();
 
 		//Transform camera back to where it started
-		const {cameraPosition} = this.props;
+		const currentCameraPosition = this.camera.position;
+		const currentCameraDist = currentCameraPosition.length();
+		const targetCameraDist = new THREE.Vector3(...this.props.cameraPosition).length();
+		const {x,y,z} = currentCameraPosition;
 		this.tween.camera
-			.to({x: cameraPosition[0], y: cameraPosition[1], z: cameraPosition[2]}, 2000)
+			.to({
+				x: x/currentCameraDist*targetCameraDist, 
+				y: y/currentCameraDist*targetCameraDist, 
+				z: z/currentCameraDist*targetCameraDist}, 2000)
 			.chain(this.tween.foo) //No op
 			.onComplete(()=>{ /* No op */})
 			.start();
@@ -633,6 +617,20 @@ class GLWrapper extends Component{
 		this.renderer.readRenderTargetPixels(this.pickingTexture,x,this.pickingTexture.height-y,1,1,pixelBuffer);
 		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
 		return id;
+
+	}
+
+	_setTarget(index){
+
+		if(this.state.instances[index]){
+			glUtils.updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
+			
+			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
+			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
+			instanceTexUvSize.setXY(0, ...this.state.instances[index].textureUvSize);
+			instanceTexUvOffset.needsUpdate = true;
+			instanceTexUvSize.needsUpdate = true;
+		}
 
 	}
 
