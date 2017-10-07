@@ -61,6 +61,8 @@ class Navigation extends Component{
 							currentPosition={this.props.currentScene}
 							style={{top:60, transform:'translate(0,-50%)'}}
 							color={this.props.colors[1]}
+							targetColor='rgb(237,12,110)'
+							layoutComputing={this.props.layoutComputing}
 							onChange={this._handleSceneSettingChange}
 						/>
 					</NavigationBlock>

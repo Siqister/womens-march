@@ -3,11 +3,11 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
-import {WheelLayout, SphereLayout, signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import {signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
+import {WheelLayout, SphereLayout, SphereClusterLayout} from '../utils/layout/index';
 import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
-
 
 class GLWrapper extends Component{
 
@@ -67,6 +67,9 @@ class GLWrapper extends Component{
 		//Previous mouse client location
 		this.prevX = null;
 		this.prevY = null;
+
+		//Cancellation token used to reject layout Promise
+		this.cancelToken = {};
 
 	}
 
@@ -175,27 +178,50 @@ class GLWrapper extends Component{
 
 			let setPerInstanceProperties;
 
-			const wheelLayout = WheelLayout()
-				.x(this.state.X, this.state.X_WIGGLE)
-				.r(this.state.R, this.state.R_WIGGLE)
-				.groupBy(layoutGroupBy);
-			const sphereLayout = SphereLayout()
-				.r(this.state.R);
+			const wheelLayout = new WheelLayout()
+				.setX(this.state.X)
+				.setXStdDev(this.state.X_WIGGLE)
+				.setR(this.state.R)
+				.setRStdDev(this.state.R_WIGGLE)
+				.setGroupByAccessor(layoutGroupBy);
+
+			const sphereLayout = new SphereLayout()
+				.setR(this.state.R);
+
+			const sphereClusterLayout = new SphereClusterLayout()
+				.setR(this.state.R*1.2)
+				.setGroupByAccessor(layoutGroupBy);
 
 			switch(layout){
 				case 'wheel':
-					setPerInstanceProperties = wheelLayout;
+					setPerInstanceProperties = wheelLayout.compute;
 					break;
 				case 'sphere':
-					setPerInstanceProperties = sphereLayout;
+					setPerInstanceProperties = sphereLayout.compute;
+					break;
+				case 'sphereCluster':
+					setPerInstanceProperties = sphereClusterLayout.compute;
 					break;
 				default:
-					setPerInstanceProperties = wheelLayout;
+					setPerInstanceProperties = wheelLayout.compute;
 			}
 
-			this.setState({
-				instances: [...setPerInstanceProperties(nextProps.data)]
-			}); 
+			//Cancel any existing layout computation
+			if(this.cancelToken.cancel){
+				this.cancelToken.cancel();
+			}
+			this.props.onLayoutStart();
+			//Compute a new layout, return a promise that is either immediately resolved
+			//or resolved later (if sphereClusterLayout)
+			Promise.resolve(setPerInstanceProperties(nextProps.data, this.cancelToken))
+				.then(instances => {
+					this.setState({instances});
+					this.props.onLayoutEnd();
+				}, err => {
+					console.log('Layout is overriden and cancelled');
+					this.props.onLayoutEnd();
+				});
+
 		}
 
 	}
