@@ -34,6 +34,8 @@ const vertexShaderText = `
 	uniform vec4 uOrientation;
 	uniform float uInterpolateTransform;
 	uniform vec3 uLightSourcePosition;
+	uniform vec4 uAmbientLight;
+	uniform vec4 uDirectionalLight;
 
 	varying vec4 vColor;
 	varying vec4 vVertexPosition;
@@ -81,16 +83,16 @@ const vertexShaderText = `
 		if(uUsePickingColor){
 			vColor = instanceColor;
 		}else{
-			vColor = uColor;		
+			vColor = uColor; //white by default
 		}
 
-		//Varying light weighting
+		//Directional lighting
 		vec4 lightWeighting;
 		if(uUseLighting){
 			vec3 instanceNormal = normalize( (instanceTransformMatrix * vec4(normal, 0.0)).xyz );
 			vec3 transformedNormal = normalMatrix * instanceNormal;
 			vec3 lightDirection = normalize(uLightSourcePosition - mvPosition.xyz);
-			lightWeighting = vec4(0.0, 0.0, 0.0, 0.0) + 1.5*vec4(.95, .95, 1.0, 1.0)*max(dot(transformedNormal, lightDirection), 0.0);
+			lightWeighting = uAmbientLight + 1.5*uDirectionalLight*max(dot(transformedNormal, lightDirection), 0.0);
 		}else{
 			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
 		}

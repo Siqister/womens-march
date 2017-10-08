@@ -104,16 +104,23 @@ class GLWrapper extends Component{
 		//Shader material
 		this.material = new THREE.RawShaderMaterial({
 			uniforms:{
+				//fog, color, and light
 				uFogFactor:{value:0.000004},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
+				uLightSourcePosition:{value:new THREE.Vector3(...this.state.light)},
+				uAmbientLight:{value:new THREE.Vector4(0.0,0.0,0.1,1.0)},
+				uDirectionalLight:{value: new THREE.Vector4(.9, .9, 1.0, 1.0)},
+				//orientation and lighting
+				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
+				//boolean flags to determine how vertices are treated
 				uUsePickingColor:{value:false},
 				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
 				uUseOrientation:{value:false},
 				uUseLighting:{value:false},
-				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
-				uLightSourcePosition:{value:new THREE.Vector3(...this.state.light)},
+				//sprite
 				map:{value:null},
+				//for interpolating between source and target transform matrices
 				uInterpolateTransform:{value:0.0}
 			},
 			vertexShader:vertexShader,

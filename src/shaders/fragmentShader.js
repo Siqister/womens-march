@@ -7,14 +7,20 @@ const fragmentShaderText = `
 
 	uniform sampler2D map;
 
-	varying vec4 vColor;
 	varying vec4 vVertexPosition;
 	varying vec2 vUv;
+	varying vec4 vColor; 
 	varying vec4 vLightWeighting;
 
 	void main(){
 		//Fog attenuation
 		float atten = 1.0/(1.0 + uFogFactor * dot(vVertexPosition, vVertexPosition));
+
+		// How final color is determined:
+		// - if "uUsePickingColor" = true, then use instance color "vColor" directly without applying effects
+		// - else
+		// -- if "uUseTexture", then use textureColor, followed by tinting with "vColor", then by lighting, and finally fog attenuation
+		// -- else, start with "vColor", followed by lighting, and finally fog attenuation
 
 		if(uUsePickingColor){
 
