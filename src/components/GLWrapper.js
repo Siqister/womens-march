@@ -75,13 +75,13 @@ class GLWrapper extends Component{
 
 	componentDidMount(){
 
-		const {width,height,data,cameraPosition} = this.props;
+		const {width,height,data,scene} = this.props;
 		const {cameraLookAt} = this.state;
 
 		//Component mounted, initialize camera, renderer, and scene
 		//Init camera
 		this.camera = new THREE.PerspectiveCamera(60, width/height, 0.5, 4000);
-		this.camera.position.set(...cameraPosition);
+		this.camera.position.set(...scene.cameraPosition);
 		this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
 		this.camera.zoom = 1;
 		this.camera.up = new THREE.Vector3(...this.state.cameraUp).normalize(); //TODO: turn into a prop
@@ -164,9 +164,7 @@ class GLWrapper extends Component{
 		const {data,
 			sprite,
 			sceneId,
-			cameraPosition,
-			layout, 
-			layoutGroupBy,
+			scene,
 			selectedImageIndex} = nextProps;
 
 		if(sprite){
@@ -174,14 +172,14 @@ class GLWrapper extends Component{
 		}
 
 		//If props.sceneId changes, signifying scene change, position and re-orient camera to scene default
-		if(this.props.sceneId !== sceneId){
+		if(this.props.scene.id !== scene.id){
 			this.tween.camera
-				.to({ x : cameraPosition[0], y : cameraPosition[1], z : cameraPosition[2]}, 2000)
+				.to({ x : scene.cameraPosition[0], y : scene.cameraPosition[1], z : scene.cameraPosition[2]}, 2000)
 				.start();
 		}
 
 		//On scene change or initial data injection, recompute per-instance transform for each sign again
-		if(this.props.sceneId !== sceneId || nextProps.data.length !== this.props.data.length){
+		if(this.props.scene.id !== scene.id || nextProps.data.length !== this.props.data.length){
 
 			let setPerInstanceProperties;
 
@@ -190,16 +188,16 @@ class GLWrapper extends Component{
 				.setXStdDev(this.state.X_WIGGLE)
 				.setR(this.state.R)
 				.setRStdDev(this.state.R_WIGGLE)
-				.setGroupByAccessor(layoutGroupBy);
+				.setGroupByAccessor(scene.layoutGroupBy);
 
 			const sphereLayout = new SphereLayout()
 				.setR(this.state.R);
 
 			const sphereClusterLayout = new SphereClusterLayout()
 				.setR(this.state.R*1.2)
-				.setGroupByAccessor(layoutGroupBy);
+				.setGroupByAccessor(scene.layoutGroupBy);
 
-			switch(layout){
+			switch(scene.layout){
 				case 'wheel':
 					setPerInstanceProperties = wheelLayout.compute;
 					break;
@@ -622,7 +620,7 @@ class GLWrapper extends Component{
 		//Transform camera back to where it started
 		const currentCameraPosition = this.camera.position;
 		const currentCameraDist = currentCameraPosition.length();
-		const targetCameraDist = new THREE.Vector3(...this.props.cameraPosition).length();
+		const targetCameraDist = new THREE.Vector3(...this.props.scene.cameraPosition).length();
 		const {x,y,z} = currentCameraPosition;
 		this.tween.camera
 			.to({
@@ -707,7 +705,10 @@ class GLWrapper extends Component{
 
 GLWrapper.defaultProps = {
 	data:[],
-	sceneId:null
+	sceneId:null,
+	scene:{
+		id:null
+	}
 };
 
 export default GLWrapper;

@@ -216,10 +216,7 @@ class App extends Component{
 					data={images}
 					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
 					sprite={sprite}
-					sceneId={sceneSetting.id}
-					cameraPosition={sceneSetting.position}
-					layout={sceneSetting.layout}
-					layoutGroupBy={sceneSetting.layoutGroupBy?sceneSetting.layoutGroupBy:null}
+					scene={sceneSetting}
 					onSelect={this._handleSelect}
 					onTextureLoadStart={this._handleTextureLoadStart}
 					onTextureLoadEnd={this._handleTextureLoadEnd}
@@ -245,18 +242,18 @@ App.defaultProps = {
 	scenes:[
 		{
 			id:1,
-			position: [1500, 0, 1500],
+			cameraPosition: [1500, 0, 1500],
 			layout: 'wheel',
 			layoutGroupBy: null
 		},
 		{
 			id:4,
-			position: [0,0,800],
+			cameraPosition: [0,0,800],
 			layout: 'sphere'
 		},
 		{
 			id:6,
-			position: [0,0,960],
+			cameraPosition: [0,0,960],
 			layout: 'sphereCluster',
 			layoutGroupBy: (v,i)=> (Math.floor(Math.random()*7)) //FIXME: dummy nesting
 		}
