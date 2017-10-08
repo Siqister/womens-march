@@ -208,7 +208,8 @@ class App extends Component{
 				<Scene height={height+300} />
 				{width&&height&&<GLBackground 
 					width={width} 
-					height={height} 
+					height={height}
+					
 				/>}
 				{width&&height&&<GLWrapper 
 					width={width} 
@@ -244,18 +245,21 @@ App.defaultProps = {
 			id:1,
 			cameraPosition: [1500, 0, 1500],
 			layout: 'wheel',
-			layoutGroupBy: null
+			layoutGroupBy: null,
+			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
 			id:4,
 			cameraPosition: [0,0,800],
-			layout: 'sphere'
+			layout: 'sphere',
+			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
 			id:6,
 			cameraPosition: [0,0,960],
 			layout: 'sphereCluster',
-			layoutGroupBy: (v,i)=> (Math.floor(Math.random()*7)) //FIXME: dummy nesting
+			layoutGroupBy: (v,i) => (Math.floor(Math.random()*3)), //FIXME: dummy nesting
+			ambientLight: [1.0,1.0,1.0,1.0]
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']

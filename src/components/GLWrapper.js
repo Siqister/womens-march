@@ -52,6 +52,8 @@ class GLWrapper extends Component{
 		};
 
 		//Shared GL assets
+		this.camera = null;
+		this.renderer = null;
 		this.meshes = {
 			signs:null,
 			signsPicking:null,
@@ -63,6 +65,7 @@ class GLWrapper extends Component{
 		this.material = null;
 		this.pickedTargetTexture = new THREE.TextureLoader();
 		this.pickedTargetTexture.crossOrigin = '';
+		this.ambientLight = new THREE.Vector4(...props.scene.ambientLight);
 
 		//Previous mouse client location
 		this.prevX = null;
@@ -108,7 +111,7 @@ class GLWrapper extends Component{
 				uFogFactor:{value:0.000004},
 				uColor:{value: new THREE.Vector4(1.0,1.0,1.0,1.0)},
 				uLightSourcePosition:{value:new THREE.Vector3(...this.state.light)},
-				uAmbientLight:{value:new THREE.Vector4(0.0,0.0,0.1,1.0)},
+				uAmbientLight:{value:this.ambientLight},
 				uDirectionalLight:{value: new THREE.Vector4(.9, .9, 1.0, 1.0)},
 				//orientation and lighting
 				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
@@ -148,6 +151,7 @@ class GLWrapper extends Component{
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
 			.to({x:1}, 2000)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.signs, meshes.arrows, meshes.signsPicking
+		this.tween.ambientLight = new TWEEN.Tween(this.ambientLight);
 		this.tween.fog = new TWEEN.Tween({x:0})
 			.to({x:1},500)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens fog
@@ -171,11 +175,19 @@ class GLWrapper extends Component{
 			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
 		}
 
-		//If props.sceneId changes, signifying scene change, position and re-orient camera to scene default
+		//On scene change, restore to scene defaults: scene.cameraPosition, scene.ambientLight
 		if(this.props.scene.id !== scene.id){
 			this.tween.camera
 				.to({ x : scene.cameraPosition[0], y : scene.cameraPosition[1], z : scene.cameraPosition[2]}, 2000)
 				.start();
+
+			if(this.meshes.signs){
+				const l = scene.ambientLight;
+				this.tween.ambientLight
+					.to({x:l[0], y:l[1], z:l[2], w:l[3]}, 3000)
+					.onUpdate(()=>{ this.meshes.signs.material.uniforms.uAmbientLight.value = this.ambientLight })
+					.start();
+			}
 		}
 
 		//On scene change or initial data injection, recompute per-instance transform for each sign again
@@ -707,7 +719,8 @@ GLWrapper.defaultProps = {
 	data:[],
 	sceneId:null,
 	scene:{
-		id:null
+		id:null,
+		ambientLight:[0.0,0.0,0.0,1.0]
 	}
 };
 
