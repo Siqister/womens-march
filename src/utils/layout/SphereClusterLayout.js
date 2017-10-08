@@ -1,5 +1,5 @@
 import Layout from './Layout';
-import {nest, hierarchy, tree} from 'd3';
+import {nest, hierarchy, tree, extent, scaleLog, scaleLinear} from 'd3';
 import * as THREE from 'three';
 
 const StaticForceLayoutWorker = require('worker-loader!../workers/StaticForceLayoutWorker');
@@ -14,6 +14,7 @@ export default class SphereClusterLayout extends Layout{
 		this.computePerInstance = this.computePerInstance.bind(this);
 
 		this.treeLayout = tree();
+		this.rScale = scaleLinear();
 
 	}
 
@@ -28,6 +29,9 @@ export default class SphereClusterLayout extends Layout{
 		const links = this.treeLayout(rootNode).links();
 		rootNode.fx = 0;
 		rootNode.fy = 0;
+
+		//Set range for this.rScale
+		this.rScale.range([0, this.r]);
 
 		//Use webworker to compute a static 3d force layout
 		return new Promise((resolve, reject)=>{
@@ -51,7 +55,9 @@ export default class SphereClusterLayout extends Layout{
 					case 'tick':
 						break;
 					case 'end':
-						resolve(e.data.nodes.filter(d => d.depth===2).map(this.computePerInstance));
+						const nodes = e.data.nodes.filter(d => d.depth===2);
+						this.rScale.domain(extent(nodes.map(d => Math.sqrt(d.x*d.x+d.y*d.y+d.z+d.z))));
+						resolve(nodes.map(this.computePerInstance));
 						break;
 				}
 
@@ -72,7 +78,7 @@ export default class SphereClusterLayout extends Layout{
 
 		//Construct per instance transform matrices 
 		const instanceNormal = new THREE.Vector3(v.x, v.y, v.z).normalize();
-		const instanceR = this.r + Math.random()*40-20;
+		const instanceR = this.r + this.rScale(Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z)) - this.r;
 		this.position.copy(instanceNormal);
 		this.position.multiplyScalar(instanceR);
 		const rotationMat4 = new THREE.Matrix4();

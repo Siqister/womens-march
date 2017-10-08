@@ -37,7 +37,7 @@ self.addEventListener('message', event => {
 
 	//Create force simulation and forces
 	const simulation = forceSimulation().numDimensions(3)
-		.force('manyBody', forceManyBody().strength(d=>d.depth===1?-2000:-1200))
+		.force('manyBody', forceManyBody().strength(d=>d.depth===1?-150:-120))
 		.force('centrifugal', centrifugalForce)
 		.force('surface', surfaceForce)
 		.nodes(nodes)
