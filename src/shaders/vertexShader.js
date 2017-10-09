@@ -3,6 +3,7 @@ const vertexShaderText = `
 	attribute vec2 uv;
 	attribute vec3 normal;
 	attribute vec4 instanceColor;
+	attribute vec4 instanceClusterColor;
 	attribute vec2 instanceTexUvOffset;
 	attribute vec2 instanceTexUvSize;
 	attribute vec3 instanceOrientation;
@@ -24,6 +25,7 @@ const vertexShaderText = `
 
 	//Uniforms: boolean flags
 	uniform bool uUsePickingColor;
+	uniform bool uUseClusterColor;
 	uniform bool uUseInstanceTransform;
 	uniform bool uUseTexture;
 	uniform bool uUseOrientation;
@@ -79,11 +81,13 @@ const vertexShaderText = `
 		vec4 mvPosition = modelViewMatrix * vec4(transformedPosition.xyz, 1.0);
 		gl_Position = projectionMatrix * mvPosition;
 
-		//Varying color based on per instance attribute
+		//Per instance "tinting" color
 		if(uUsePickingColor){
-			vColor = instanceColor;
+			vColor = instanceColor; //for off canvas picking
+		}else if(uUseClusterColor){
+			vColor = vec4(uColor.xyz * instanceClusterColor.xyz, 1.0); //white by default
 		}else{
-			vColor = uColor; //white by default
+			vColor = uColor; //for everything except signs
 		}
 
 		//Directional lighting

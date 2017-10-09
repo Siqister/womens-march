@@ -209,7 +209,6 @@ class App extends Component{
 				{width&&height&&<GLBackground 
 					width={width} 
 					height={height}
-					
 				/>}
 				{width&&height&&<GLWrapper 
 					width={width} 
@@ -256,9 +255,9 @@ App.defaultProps = {
 		},
 		{
 			id:6,
-			cameraPosition: [0,0,960],
+			cameraPosition: [0,0,850],
 			layout: 'sphereCluster',
-			layoutGroupBy: (v,i) => (Math.floor(Math.random()*3)), //FIXME: dummy nesting
+			layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
 			ambientLight: [1.0,1.0,1.0,1.0]
 		}
 	],

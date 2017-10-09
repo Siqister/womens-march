@@ -1,5 +1,5 @@
 import Layout from './Layout';
-import {nest, hierarchy, tree, extent, scaleLog, scaleLinear} from 'd3';
+import {nest, hierarchy, tree, extent, scaleLog, scaleLinear, scaleOrdinal} from 'd3';
 import * as THREE from 'three';
 
 const StaticForceLayoutWorker = require('worker-loader!../workers/StaticForceLayoutWorker');
@@ -15,6 +15,17 @@ export default class SphereClusterLayout extends Layout{
 
 		this.treeLayout = tree();
 		this.rScale = scaleLinear();
+		this.clusterColorScale = scaleOrdinal()
+			.range([
+				0x00ff80,
+				0x330066,
+				0x00ff1a,
+				0xf51268,
+				0xffdb4b,
+				'rgb(0,0,255)',
+				'rgb(255,0,255)',
+				'rgb(255,128,225)'
+			]); //FIXME: extract category colors from this module
 
 	}
 
@@ -22,7 +33,14 @@ export default class SphereClusterLayout extends Layout{
 
 		const nestedData = nest()
 			.key(this.groupByAccessor)
-			.entries(data);
+			.entries(data)
+			.map(cluster => ({
+					key:cluster.key,
+					values:cluster.values.map(d => Object.assign({},d,{cluster:cluster.key}))
+			}));
+
+		this.clusterColorScale.domain(nestedData.map(cluster => cluster.key));
+
 		const rootNode = hierarchy({key:'root',values:nestedData}, d => d.values);
 
 		//Compute tree layout and get links
@@ -74,7 +92,7 @@ export default class SphereClusterLayout extends Layout{
 	computePerInstance(v,i){
 
 		//Texture-mapping related
-		const {frame} = v.data;
+		const {frame, cluster} = v.data;
 
 		//Construct per instance transform matrices 
 		const instanceNormal = new THREE.Vector3(v.x, v.y, v.z).normalize();
@@ -103,6 +121,7 @@ export default class SphereClusterLayout extends Layout{
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
 			pickingColor: this.color.clone().setHex(i),
+			clusterColor: new THREE.Color(this.clusterColorScale(cluster)),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
 		};
