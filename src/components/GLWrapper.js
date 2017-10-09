@@ -231,7 +231,7 @@ class GLWrapper extends Component{
 			this.props.onLayoutStart();
 			//Compute a new layout, return a promise that is either immediately resolved
 			//or resolved later (if sphereClusterLayout)
-			Promise.resolve(setPerInstanceProperties(nextProps.data, this.cancelToken))
+			Promise.resolve(setPerInstanceProperties(nextProps.data, nextProps.imagesToHighlight, this.cancelToken))
 				.then(instances => {
 					this.setState({instances});
 					this.props.onLayoutEnd();
@@ -401,7 +401,8 @@ class GLWrapper extends Component{
 		const normals = new THREE.BufferAttribute(new Float32Array(signNormalsArray), 3);
 		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		const instanceClusterColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
+		const instanceClusterColors0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
+		const instanceClusterColors1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		const instanceTexUvOffset = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
 		const instanceTexUvSize = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
 		
@@ -413,7 +414,8 @@ class GLWrapper extends Component{
 		geometry.addAttribute('uv', uv);
 		geometry.addAttribute('normal', normals)
 		geometry.addAttribute('instanceColor', instanceColors);
-		geometry.addAttribute('instanceClusterColor', instanceClusterColors);
+		geometry.addAttribute('instanceClusterColor0', instanceClusterColors0);
+		geometry.addAttribute('instanceClusterColor1', instanceClusterColors1);
 		geometry.addAttribute('instanceTexUvOffset', instanceTexUvOffset);
 		geometry.addAttribute('instanceTexUvSize', instanceTexUvSize);
 		glUtils.initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
@@ -462,11 +464,13 @@ class GLWrapper extends Component{
 			glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
 			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
-			instanceClusterColors.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
+			instanceClusterColors0.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
+			instanceClusterColors1.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
 			instanceTexUvOffset.setXY(i, ...textureUvOffset);
 			instanceTexUvSize.setXY(i, ...textureUvSize);
 		}
-		instanceClusterColors.needsUpdate = true;
+		instanceClusterColors0.needsUpdate = true;
+		instanceClusterColors1.needsUpdate = true;
 		instanceColors.needsUpdate = true;
 		instanceTexUvOffset.needsUpdate = true;
 		instanceTexUvSize.needsUpdate = true;
@@ -487,28 +491,31 @@ class GLWrapper extends Component{
 		//Called when this.state.instances is updated, 
 		const {instances} = this.state;
 		const COUNT = instances.length;
-		const {instanceClusterColor} = this.meshes.signs.geometry.attributes;
+		const {instanceClusterColor0, instanceClusterColor1} = this.meshes.signs.geometry.attributes;
 
 		//Populate attributes with value
 		for(let i=0; i<COUNT; i++){
-			const {pickingColor, clusterColor, transformMatrixSign, transformMatrixArrow} = instances[i];
+			const {clusterColor, transformMatrixSign, transformMatrixArrow} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
 
-			instanceClusterColor.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
+			instanceClusterColor1.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
 		}
-		instanceClusterColor.needsUpdate = true;
+		instanceClusterColor1.needsUpdate = true;
 
 		this.tween.updateMeshes
 			.start()
 			.onComplete(()=>{
 				for(let i=0; i<COUNT; i++){
-					const {transformMatrixSign, transformMatrixArrow} = instances[i];
+					const {transformMatrixSign, transformMatrixArrow, clusterColor} = instances[i];
 
 					glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, null, i);
 					glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
+
+					instanceClusterColor0.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
 				}
+				instanceClusterColor0.needsUpdate = true;
 			});
 	}
 

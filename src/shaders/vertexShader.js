@@ -3,7 +3,8 @@ const vertexShaderText = `
 	attribute vec2 uv;
 	attribute vec3 normal;
 	attribute vec4 instanceColor;
-	attribute vec4 instanceClusterColor;
+	attribute vec4 instanceClusterColor0;
+	attribute vec4 instanceClusterColor1;
 	attribute vec2 instanceTexUvOffset;
 	attribute vec2 instanceTexUvSize;
 	attribute vec3 instanceOrientation;
@@ -85,6 +86,7 @@ const vertexShaderText = `
 		if(uUsePickingColor){
 			vColor = instanceColor; //for off canvas picking
 		}else if(uUseClusterColor){
+			vec4 instanceClusterColor = (1.0 - uInterpolateTransform) * instanceClusterColor0 + uInterpolateTransform * instanceClusterColor1;
 			vColor = vec4(uColor.xyz * instanceClusterColor.xyz, 1.0); //white by default
 		}else{
 			vColor = uColor; //for everything except signs

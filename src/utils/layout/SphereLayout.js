@@ -13,7 +13,7 @@ export default class SphereLayout extends Layout{
 
 	}
 
-	compute(data){
+	compute(data, imagesToHighlight=[]){
 
 		const LNG_BANDS = Math.ceil(Math.sqrt(data.length)); 
 		const LAT_BANDS = Math.ceil(data.length/LNG_BANDS);
@@ -36,7 +36,16 @@ export default class SphereLayout extends Layout{
 			}
 		} 
 
-		return data.map(this.computePerInstance);
+		//Combine data and imagesToHighlight
+		const imageMap = data.reduce((result,val)=>{
+			if(!result[val.filename]) result[val.filename] = Object.assign({},val);
+			return result;
+		},{});
+		imagesToHighlight.forEach(filename => {
+			imageMap[filename].highlight = true;
+		});
+
+		return Object.values(imageMap).map(this.computePerInstance);
 
 	}
 
@@ -47,7 +56,7 @@ export default class SphereLayout extends Layout{
 
 		//Construct per instance transform matrices 
 		const instanceNormal = this.sphericalNormals[i];
-		const instanceR = this.r + Math.random()*40-20;
+		const instanceR = this.r + Math.random()*40-20 + (v.highlight?120:0);
 		let instancePosition = instanceNormal.map(v=>v*instanceR);
 		const rotationMat4 = new THREE.Matrix4();
 
@@ -63,7 +72,7 @@ export default class SphereLayout extends Layout{
 		instancePosition = instanceNormal.map(v=>v*(instanceR+15));
 		this.position.set(...instancePosition);
 		this.rotation.setFromAxisAngle(this.X_AXIS, Math.PI*2);
-		this.scale.set(7,7,7);
+		this.scale.set(7,7,(v.highlight?14:7));
 		this.transformMatrixArrow.compose(this.position, this.rotation, this.scale);
 		this.transformMatrixArrow.multiply(rotationMat4);
 

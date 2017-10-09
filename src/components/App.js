@@ -19,6 +19,7 @@ class App extends Component{
 
 		this.state = {
 			images:[],
+			imagesToHighlight:[],
 			selectedImageMetadata:null,
 			selectedImageIndex:props.match.params.index?+props.match.params.index:null,
 			currentScene:0,
@@ -59,6 +60,7 @@ class App extends Component{
 				const {images} = this.state;
 				this.setState({
 					images:[...images, ...data],
+					imagesToHighlight:[...data.filter(d => Math.random()<.1).map(d => d.id)], //FIXME: dummy data
 					sprite:texture,
 					currentScene:0
 				});
@@ -147,12 +149,14 @@ class App extends Component{
 	}
 
 	_handleLayoutStart(){
+
 		this.setState({
 			layoutComputing:true
 		});
 	}
 
 	_handleLayoutEnd(){
+
 		this.setState({
 			layoutComputing:false
 		});
@@ -168,6 +172,7 @@ class App extends Component{
 	render(){
 
 		const {images,
+			imagesToHighlight,
 			sprite,
 			width, height,
 			currentScene,
@@ -185,6 +190,7 @@ class App extends Component{
 		console.log(selectedImageMetadata);
 		console.log(selectedImageIndex);
 		console.log(images[selectedImageIndex]);
+		console.log(imagesToHighlight);
 		console.groupEnd();
 
 
@@ -214,6 +220,7 @@ class App extends Component{
 					width={width} 
 					height={height} 
 					data={images}
+					imagesToHighlight={imagesToHighlight}
 					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
 					sprite={sprite}
 					scene={sceneSetting}

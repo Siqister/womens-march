@@ -29,7 +29,7 @@ export default class SphereClusterLayout extends Layout{
 
 	}
 
-	compute(data, cancelToken){
+	compute(data, imagesToHighlight=[], cancelToken){
 
 		const nestedData = nest()
 			.key(this.groupByAccessor)
