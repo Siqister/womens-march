@@ -2,14 +2,13 @@ import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
 
 import {fetchImageList, fetchMetadata, fetchSprite} from '../utils/utils';
+
+import Banner from './Banner';
 import Navigation from './Navigation';
 import GLWrapper from './GLWrapper';
 import GLBackground from './GLBackground';
 import Image from './Image';
-import Scene from './Scene';
-
-import Intro from './Intro';
-
+import ScrollContent from '../pages/ScrollContent';
 
 class App extends Component{
 
@@ -26,7 +25,6 @@ class App extends Component{
 
 			width:0,
 			height:0,
-			showIntro:false,
 
 			sprite:null,
 			textureLoading:false,
@@ -62,7 +60,7 @@ class App extends Component{
 					images:[...images, ...data],
 					imagesToHighlight:[...data.filter(d => Math.random()<.1).map(d => d.id)], //FIXME: dummy data
 					sprite:texture,
-					currentScene:0
+					currentScene:1
 				});
 
 				this._loadSelectedImageMetadata(this.state.selectedImageIndex);
@@ -162,7 +160,6 @@ class App extends Component{
 		});
 	}
 
-
 	componentWillUnmount(){
 
 		window.removeEventListener('resize');
@@ -196,22 +193,21 @@ class App extends Component{
 
 		return (
 			<div className='app' ref={(node)=>{this.appNode = node}} >
-				<Navigation
-					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
-					scenes={this.props.scenes}
-					currentScene={currentScene}
-					onSceneSettingChange={(i)=>{this.setState({currentScene:i})}}
+				<Banner colors={this.props.colors} />
+				<ScrollContent 
+					width={width}
+					height={height}
 					colors={this.props.colors}
-					collapse={this.state.showIntro}
-					layoutComputing={layoutComputing}
+					scenes={this.props.scenes}
+					onSceneChange={i => { this.setState({currentScene:i}); }}
 				/>
-				<Scene 
-					onSceneEnter={()=>{ this.setState({showIntro:true}) }}
-					onSceneLeave={()=>{ this.setState({showIntro:false, currentScene:1}) }}
-				>
-					<Intro colors={this.props.colors}/>
-				</Scene>
-				<Scene height={height+300} />
+				<Navigation 
+					colors={this.props.colors}
+					scenes={this.props.scenes}
+					layoutComputing={layoutComputing}
+					currentScene={currentScene}
+					onSceneChange={i => { this.setState({currentScene:i}); }}
+				/>
 				{width&&height&&<GLBackground 
 					width={width} 
 					height={height}
@@ -248,24 +244,34 @@ class App extends Component{
 App.defaultProps = {
 	scenes:[
 		{
-			id:1,
-			cameraPosition: [1500, 0, 1500],
-			layout: 'wheel',
+			id:1, //Required, unique ID
+			desc:'The big wheel',
+			cameraPosition: [1500, 0, 1500], //Required, camera position
+			layout: 'wheel', //Required, must be one of 'wheel', 'sphere', or 'sphereCluster'
 			layoutGroupBy: null,
-			ambientLight: [0.0,0.0,.1,1.0]
+			ambientLight: [0.0,0.0,.1,1.0] //Required, ambient light for this scene
 		},
 		{
-			id:4,
+			id:2, 
+			desc:'The globe',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
-			id:6,
+			id:3,
+			desc:'Clusters',
 			cameraPosition: [0,0,850],
 			layout: 'sphereCluster',
 			layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
 			ambientLight: [1.0,1.0,1.0,1.0]
+		},
+		{
+			id:4, 
+			desc:'The globe',
+			cameraPosition: [0,0,800],
+			layout: 'sphere',
+			ambientLight: [0.0,0.0,.1,1.0]
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']

@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-const tweenState = require('react-tween-state');
 
 class GLBackground extends Component{
 

@@ -274,7 +274,7 @@ class GLWrapper extends Component{
 		if(this.state.instances.length !== prevState.instances.length){
 			//Initial data injection
 			this._initMeshes();
-		}else{
+		}else if(this.meshes.signs){
 			//Relayout
 			this._updateMeshes();
 		}

@@ -29,6 +29,8 @@ html,body{
 	100% {stroke-dashoffset:119.4px;}
 }
 
+
+/*Image*/
 .image-detail-list-enter{
 	opacity:0.01;
 	top:200px;
@@ -52,6 +54,11 @@ html,body{
 }
 .image-detail-list>li:last-child{
 	border-bottom:none;
+}
+
+/*Intro*/
+.intro p{
+	margin:0 0 15px;
 }
 
 
