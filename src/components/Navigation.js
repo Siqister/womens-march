@@ -29,8 +29,9 @@ class NavigationLink extends Component{
 				className='scene-navigation-link' 
 				style={{
 					height:height,
-					background:'black',
-					cursor:'pointer' 
+					background:focus?'black':'none',
+					cursor:'pointer',
+					transition:'background 200ms'
 				}}
 				onMouseEnter={() => {this.setState({focus:true}); }}
 				onMouseLeave={() => {this.setState({focus:false}); }}
@@ -42,17 +43,7 @@ class NavigationLink extends Component{
 					float:'left'
 				}}>
 					<circle 
-						className='spinning'
-						cx={height/2}
-						cy={height/2}
-						r={focus?12:10}
-						fill='none'
-						stroke={active&&layoutComputing?colors[0]:'none'}
-						strokeWidth='2px'
-						style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
-					/>
-					<circle 
-						className='inner'
+						className='halo'
 						cx={height/2}
 						cy={height/2}
 						r={focus?12:10}
@@ -61,6 +52,16 @@ class NavigationLink extends Component{
 						style={{
 							transition:'all 100ms'
 						}}
+					/>
+					<circle 
+						className='spinning'
+						cx={height/2}
+						cy={height/2}
+						r={focus?12:10}
+						fill='none'
+						stroke={active&&layoutComputing?colors[1]:'none'}
+						strokeWidth='2px'
+						style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
 					/>
 					<circle
 						className='center'
@@ -75,14 +76,13 @@ class NavigationLink extends Component{
 						lineHeight:`${height}px`,
 						height:height,
 						float:'left',
-						padding:'0 10px',
+						padding:'0 5px',
 						color:colors[0],
-						marginLeft:focus?0:-200,
-						transition:'all 200ms',
+						visibility:focus?'visible':'hidden',
 						fontSize:'16px'
 					}}
 				>
-					{desc.toUpperCase()}
+					{desc}
 				</span>
 			</li>
 		);
