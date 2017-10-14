@@ -6,22 +6,24 @@ import Intro from '../pages/Intro';
 
 const ScrollContent = props => {
 
+	const lastScene = props.scenes.length - 1;
+
 	const vizStateScenes = props.scenes.map((v,i) => {
 		return <Scene
-			height={props.height*2}
+			id={v.id}
+			height={i===lastScene?props.height:props.height*2}
 			onSceneEnter={()=>{props.onSceneChange(i)}}
 			key={v.id}
-		/>
+		>
+			{(i===lastScene)&&<FacetBrowser />}
+		</Scene>
 	});
 
 	return <div className='scroll-content' style={{pointerEvents:'none'}}>
-		<Scene>
+		<Scene id='intro'>
 			<Intro colors={props.colors}/>
 		</Scene>
 		{vizStateScenes}
-		<Scene>
-			<FacetBrowser />
-		</Scene>
 	</div>
 
 }

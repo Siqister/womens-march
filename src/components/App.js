@@ -60,7 +60,7 @@ class App extends Component{
 					images:[...images, ...data],
 					imagesToHighlight:[...data.filter(d => Math.random()<.1).map(d => d.id)], //FIXME: dummy data
 					sprite:texture,
-					currentScene:1
+					currentScene:0
 				});
 
 				this._loadSelectedImageMetadata(this.state.selectedImageIndex);
@@ -198,8 +198,6 @@ class App extends Component{
 					colors={this.props.colors}
 					height={height}
 					scenes={this.props.scenes}
-					currentScene={currentScene}
-					onSceneChange={i => { this.setState({currentScene:i}); }}
 				/>
 				<Navigation 
 					colors={this.props.colors}
@@ -217,7 +215,7 @@ class App extends Component{
 					height={height} 
 					data={images}
 					imagesToHighlight={imagesToHighlight}
-					selectedImageIndex={selectedImageIndex?(selectedImageIndex):null}
+					selectedImageIndex={selectedImageIndex?selectedImageIndex:null}
 					sprite={sprite}
 					scene={sceneSetting}
 					onSelect={this._handleSelect}
@@ -228,7 +226,7 @@ class App extends Component{
 				/>}
 				<Image
 					metadata={selectedImageMetadata}
-					imageIndex={selectedImageIndex?(selectedImageIndex):null}
+					imageIndex={selectedImageIndex?selectedImageIndex:null}
 					loading={textureLoading || metadataLoading}
 					next={ Math.floor(Math.random()*(images.length-1)) }
 					prev={ Math.floor(Math.random()*(images.length-1)) }
@@ -244,7 +242,7 @@ class App extends Component{
 App.defaultProps = {
 	scenes:[
 		{
-			id:1, //Required, unique ID
+			id:'a', //Required, unique ID
 			desc:'The big wheel',
 			cameraPosition: [1500, 0, 1500], //Required, camera position
 			layout: 'wheel', //Required, must be one of 'wheel', 'sphere', or 'sphereCluster'
@@ -252,14 +250,14 @@ App.defaultProps = {
 			ambientLight: [0.0,0.0,.1,1.0] //Required, ambient light for this scene
 		},
 		{
-			id:2, 
+			id:'b', 
 			desc:'The globe',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
-			id:3,
+			id:'c',
 			desc:'Clusters',
 			cameraPosition: [0,0,850],
 			layout: 'sphereCluster',
@@ -267,8 +265,8 @@ App.defaultProps = {
 			ambientLight: [1.0,1.0,1.0,1.0]
 		},
 		{
-			id:4, 
-			desc:'The globe',
+			id:'browse', //last scene contains facet browser
+			desc:'Facet browse',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			ambientLight: [0.0,0.0,.1,1.0]

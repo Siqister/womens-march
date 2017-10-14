@@ -67,10 +67,6 @@ class GLWrapper extends Component{
 		this.pickedTargetTexture.crossOrigin = '';
 		this.ambientLight = new THREE.Vector4(...props.scene.ambientLight);
 
-		//Previous mouse client location
-		this.prevX = null;
-		this.prevY = null;
-
 		//Cancellation token used to reject layout Promise
 		this.cancelToken = {};
 
@@ -300,17 +296,14 @@ class GLWrapper extends Component{
 		this._setTarget(index);
 
 		//Slightly re-orient this.meshes.pickedTarget
-		if(this.prevX && this.prevY){
-			const offsetX = (x-this.prevX)/width,
-				offsetY = -(y-this.prevY)/height;
-			this.meshes.pickedTarget.material.uniforms.uOrientation.value = new THREE.Vector4(offsetX, offsetY, 1.0, 0.0).normalize();
-		
-			this.prevX = x;
-			this.prevY = y;
-		}else{
-			this.prevX = x;
-			this.prevY = y;
-		}
+		this.meshes.pickedTarget.material.uniforms.uOrientation.value = new THREE.Vector4(
+				(x/width-.5)/2,
+				(y/height-.5)/2,
+				1.0,
+				0.0
+			).normalize();
+
+		//Slightly move light source
 
 	}
 
@@ -318,7 +311,7 @@ class GLWrapper extends Component{
 
 		const x = e.clientX, y = e.clientY;
 		const index = this._pick(x,y);
-		if(this.state.instances[index] && index){
+		if(this.state.instances.filter(v => v.index===index).length>0 && index){
 			this.props.onSelect(index);
 		}
 
@@ -521,8 +514,8 @@ class GLWrapper extends Component{
 
 	_showSelectedImage(index){
 
-		if(!this.state.instances[index]) return;
-		const _instance = this.state.instances[index];
+		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		if(!_instance) return;
 
 		//---this.meshes.target---
 		//move this.meshes.target in place
@@ -629,10 +622,10 @@ class GLWrapper extends Component{
 
 	_hideSelectedImage(index){
 
-		if(!this.state.instances[index]) return;
+		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		if(!_instance) return;
 
 		//Hide this.meshes.pickedTarget		
-		const _instance = this.state.instances[index];
 		const s1 = new THREE.Vector3();
 		const r1 = new THREE.Quaternion();
 		const p1 = new THREE.Vector3(20,20,5);
@@ -682,15 +675,16 @@ class GLWrapper extends Component{
 
 	_setTarget(index){
 
-		if(this.state.instances[index]){
-			glUtils.updateTransformMatrices(this.meshes.target, this.state.instances[index].transformMatrixSign, this.state.instances[index].transformMatrixSign, 0);
-			
-			const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
-			instanceTexUvOffset.setXY(0, ...this.state.instances[index].textureUvOffset);
-			instanceTexUvSize.setXY(0, ...this.state.instances[index].textureUvSize);
-			instanceTexUvOffset.needsUpdate = true;
-			instanceTexUvSize.needsUpdate = true;
-		}
+		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		if(!_instance) return;
+
+		glUtils.updateTransformMatrices(this.meshes.target, _instance.transformMatrixSign, _instance.transformMatrixSign, 0);
+		
+		const {instanceTexUvOffset, instanceTexUvSize} = this.meshes.target.geometry.attributes;
+		instanceTexUvOffset.setXY(0, ..._instance.textureUvOffset);
+		instanceTexUvSize.setXY(0, ..._instance.textureUvSize);
+		instanceTexUvOffset.needsUpdate = true;
+		instanceTexUvSize.needsUpdate = true;
 
 	}
 

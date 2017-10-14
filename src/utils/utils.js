@@ -10,8 +10,9 @@ export const fetchImageList = () => {
 			if(err){
 				reject(err);
 			}else{
-				resolve(json.frames.map(v=>{
+				resolve(json.frames.map((v,i)=>{
 					v.id = v.filename;
+					v.index = i;
 					return v;
 				}));
 			}

@@ -13,26 +13,16 @@ const imageStyle = {
 	width:'100%',
 	bottom:'25%',
 	top:'60px',
-	pointerEvents:'none'
-}
+	pointerEvents:'none',
+	zIndex:-997
+};
 
 const imageDetailListStyle = {
 	position: 'absolute',
-	padding: '5px 0'
-}
-
-const imageDetailListItemStyle = {
-	width:'100%',
-	padding:'5px 0',
-	clear:'both'
-}
-
-const ImageDetailValueStyle = {
-	display:'inline',
-	margin:'3px',
-	fontSize:'.7em',
-	float:'left'
-}
+	padding: '5px 0',
+	display: 'flex',
+	flexWrap: 'wrap'
+};
 
 const buttonContainerStyle = {
 	position:'absolute',
@@ -42,7 +32,21 @@ const buttonContainerStyle = {
 	left:'50%',
 	transform:'translate(-50%,-20px)',
 	pointerEvents:'auto'
-}
+};
+
+const imageDetailListItemStyle = {
+	padding:'5px 0',
+	margin:'0 5px',
+	clear:'both'
+};
+
+const ImageDetailValueStyle = {
+	display:'inline',
+	margin:'3px',
+	fontSize:'.7em',
+	float:'left'
+};
+
 
 const PrevButton = animatedButton(NavigationBefore);
 const NextButton = animatedButton(NavigationAfter);
@@ -50,7 +54,7 @@ const ExitButton = animatedButton(Close);
 
 const ImageDetailValue = props => 
 	<li style={ImageDetailValueStyle}>
-		{props.type=='color'?<span style={{
+		{props.type==='color'?<span style={{
 			width:15,
 			height:15,
 			borderRadius:20,
@@ -58,6 +62,7 @@ const ImageDetailValue = props =>
 			display:'inline-block'
 		}}></span>:props.value}
 	</li>
+
 
 const ImageDetailListItem = props => {
 
@@ -67,18 +72,18 @@ const ImageDetailListItem = props => {
 	return <li 
 		style={ Object.assign({}, imageDetailListItemStyle, {
 			color: props.colors[0],
-			borderBottomColor: props.colors[2]
+			borderBottom: `1px solid ${props.colors[1]}`
 		}) } 
-		className='clearfix'
 	>
-		<span style={{fontSize:'.7em', display:'block'}}>{field}</span>
-		<span style={{fontSize:'1.3em', display:'block'}}>
+		<span style={{fontSize:'.7em', display:'block', color:props.colors[1]}}>{field}</span>
+		<span style={{fontSize:'1.3em', display:'block', color:props.colors[0]}}>
 			{Array.isArray(value)?<ul>
 				{value.map(v=><ImageDetailValue value={v} type={props.type} key={v}/>)}
 			</ul>:JSON.stringify(value)}
 		</span>
 	</li>
 }
+
 
 const Image = props => {
 
@@ -87,7 +92,7 @@ const Image = props => {
 			style={imageStyle}
 		>
 			<div className='container'>
-				<div className='col-md-3 col-md-offset-9'>
+				<div className='col-md-6 col-md-offset-3'>
 					<CSSTransitionGroup
 						transitionName='image-detail-list'
 						transitionAppear={true}
@@ -96,7 +101,7 @@ const Image = props => {
 						transitionLeaveTimeout={300}
 					>
 						{props.metadata&&<ul className='image-detail-list' 
-							style={ Object.assign({}, imageDetailListStyle, {borderBottom:`1px solid ${props.colors[1]}`}) } 
+							style={ imageDetailListStyle } 
 							key={props.metadata._id}
 						>
 							<ImageDetailListItem colors={props.colors} data={props.metadata} id='_id' field='Unique ID'/>

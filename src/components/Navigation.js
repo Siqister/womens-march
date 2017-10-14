@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 
+import Scrollspy from 'react-scrollspy';
+
 const NavigationStyle = {
 	position:'fixed',
 	top:'50%',
-	padding:'0 15px',
 	transform:'translate(0,-50%)'
 };
 
@@ -22,7 +23,7 @@ class NavigationLink extends Component{
 	render(){
 
 		const {focus} = this.state;
-		const {colors, layoutComputing, desc, height, active, onClick} = this.props;
+		const {colors, layoutComputing, desc, height, active} = this.props;
 
 		return (
 			<li 
@@ -35,55 +36,56 @@ class NavigationLink extends Component{
 				}}
 				onMouseEnter={() => {this.setState({focus:true}); }}
 				onMouseLeave={() => {this.setState({focus:false}); }}
-				onClick={onClick}
 			>
-				<svg className='target' style={{
-					width:height,
-					height:height,
-					float:'left'
-				}}>
-					<circle 
-						className='halo'
-						cx={height/2}
-						cy={height/2}
-						r={focus?12:10}
-						fill={colors[2]}
-						fillOpacity={active||focus?1:0}
-						style={{
-							transition:'all 100ms'
-						}}
-					/>
-					<circle 
-						className='spinning'
-						cx={height/2}
-						cy={height/2}
-						r={focus?12:10}
-						fill='none'
-						stroke={active&&layoutComputing?colors[1]:'none'}
-						strokeWidth='2px'
-						style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
-					/>
-					<circle
-						className='center'
-						cx={height/2}
-						cy={height/2}
-						r={3}
-						fill={colors[0]}
-					/>
-				</svg>
-				<span
-					style={{
-						lineHeight:`${height}px`,
+				<a href={`#${this.props.id}`}>
+					<svg className='target' style={{
+						width:height,
 						height:height,
-						float:'left',
-						padding:'0 5px',
-						color:colors[0],
-						visibility:focus?'visible':'hidden',
-						fontSize:'16px'
-					}}
-				>
-					{desc}
-				</span>
+						float:'left'
+					}}>
+						<circle 
+							className='halo'
+							cx={height/2}
+							cy={height/2}
+							r={focus?12:10}
+							fill={colors[2]}
+							fillOpacity={active||focus?1:0}
+							style={{
+								transition:'all 100ms'
+							}}
+						/>
+						<circle 
+							className='spinning'
+							cx={height/2}
+							cy={height/2}
+							r={focus?12:10}
+							fill='none'
+							stroke={active&&layoutComputing?colors[1]:'none'}
+							strokeWidth='2px'
+							style={{strokeDasharray:`${Math.PI*19}px ${Math.PI*19}px`, animation:'spinning 500ms infinite'}}
+						/>
+						<circle
+							className='center'
+							cx={height/2}
+							cy={height/2}
+							r={3}
+							fill={colors[0]}
+						/>
+					</svg>
+					<span
+						style={{
+							lineHeight:`${height}px`,
+							height:height,
+							float:'left',
+							padding:'0 5px',
+							color:colors[0],
+							visibility:focus?'visible':'hidden',
+							fontSize:'16px'
+						}}
+					>
+						{desc}
+					</span>
+				</a>
 			</li>
 		);
 
@@ -101,14 +103,24 @@ const Navigation = ({scenes,colors,layoutComputing,currentScene,onSceneChange}) 
 			desc={v.desc}
 			height={40}
 			active={i===currentScene}
-			onClick={()=>{onSceneChange(i)}}
 		/>);
+
+	const idToIndex = scenes.reduce((acc,v,i)=>{
+			acc[v.id] = i;
+			return acc;
+		},{});
 
 	return (
 		<nav className='scene-navigation' style={NavigationStyle}>
-			<ul>
+			<Scrollspy 
+				items={scenes.map(v => v.id)} 
+				onUpdate={(...args) => {
+					if(args[0]&&idToIndex[args[0].id]>-1){
+						onSceneChange( idToIndex[args[0].id] );
+					}
+				}}>
 				{links}
-			</ul>
+			</Scrollspy>
 		</nav>
 	)
 
