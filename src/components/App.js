@@ -195,10 +195,10 @@ class App extends Component{
 			<div className='app' ref={(node)=>{this.appNode = node}} >
 				<Banner colors={this.props.colors} />
 				<ScrollContent 
-					width={width}
-					height={height}
 					colors={this.props.colors}
+					height={height}
 					scenes={this.props.scenes}
+					currentScene={currentScene}
 					onSceneChange={i => { this.setState({currentScene:i}); }}
 				/>
 				<Navigation 
