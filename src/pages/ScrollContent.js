@@ -3,6 +3,8 @@ import React from 'react';
 import Scene from '../components/Scene';
 import FacetBrowser from '../components/FacetBrowser';
 import Intro from '../pages/Intro';
+import {facetBrowserDimensions as dimensions} from '../utils/utils';
+
 
 const ScrollContent = props => {
 
@@ -15,7 +17,11 @@ const ScrollContent = props => {
 			onSceneEnter={()=>{props.onSceneChange(i)}}
 			key={v.id}
 		>
-			{(i===lastScene)&&<FacetBrowser />}
+			{(i===lastScene)&&<FacetBrowser 
+				data={props.data}
+				dimensions={dimensions}
+				onFilter={ids => { props.onFilter(ids); }}
+			/>}
 		</Scene>
 	});
 

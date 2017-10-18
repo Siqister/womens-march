@@ -58,7 +58,6 @@ class App extends Component{
 				const {images} = this.state;
 				this.setState({
 					images:[...images, ...data],
-					imagesToHighlight:[...data.filter(d => Math.random()<.1).map(d => d.id)], //FIXME: dummy data
 					sprite:texture,
 					currentScene:0
 				});
@@ -188,6 +187,7 @@ class App extends Component{
 		console.log(selectedImageIndex);
 		console.log(images[selectedImageIndex]);
 		console.log(imagesToHighlight);
+		console.log(`currentScene:${currentScene}`);
 		console.groupEnd();
 
 
@@ -198,6 +198,8 @@ class App extends Component{
 					colors={this.props.colors}
 					height={height}
 					scenes={this.props.scenes}
+					data={images}
+					onFilter={ids => { this.setState({imagesToHighlight:[...ids]}); }}
 				/>
 				<Navigation 
 					colors={this.props.colors}

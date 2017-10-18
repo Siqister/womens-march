@@ -11,14 +11,17 @@ import createBrowserHistory from 'history/createBrowserHistory';
 import App from './components/App';
 
 import 'bootstrap/dist/css/bootstrap.css';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import darkBaseTheme from 'material-ui/styles/baseThemes/darkBaseTheme';
 import './stylesheet/main.css';
 
 //const history = createBrowserHistory();
+injectTapEventPlugin();
 
 render(
 	<Router>
-		<MuiThemeProvider>
+		<MuiThemeProvider muiTheme={getMuiTheme(darkBaseTheme)}>
 			<Switch>
 				<Route path='/images/:index?' component={App} />
 				<Route component={App} />
@@ -27,4 +30,3 @@ render(
 	</Router>, 
 	document.getElementById('root'));
 
-injectTapEventPlugin();

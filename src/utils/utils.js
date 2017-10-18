@@ -13,6 +13,11 @@ export const fetchImageList = () => {
 				resolve(json.frames.map((v,i)=>{
 					v.id = v.filename;
 					v.index = i;
+					//FIXME dummy categorical attributes, remove
+					v.attr1 = `value ${Math.ceil(Math.random()*3)}`;
+					v.attr2 = `value ${Math.ceil(Math.random()*5)}`;
+					//-FIXME
+
 					return v;
 				}));
 			}
@@ -38,6 +43,14 @@ export const fetchSprite = () => {
 			);
 	});
 }
+
+//Facet browser dimensions
+export const facetBrowserDimensions = [
+	{name:'Attribute 1', accessor:d=>d.attr1, type:'single'}, //FIXME: dummy
+	{name:'Attribute 2', accessor:d=>d.attr2, type:'multiple'}, //FIXME: dummy
+	{name:'Frame X', accessor:d=>d.frame.x, type:'continuous'},
+	{name:'Frame Y', accessor:d=>d.frame.y, type:'continuous'}
+];
 
 //Vertices data
 export const signVerticesArray = [

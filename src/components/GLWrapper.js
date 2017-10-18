@@ -146,7 +146,7 @@ class GLWrapper extends Component{
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
 		this.tween.updateMeshes = new TWEEN.Tween({x:0})
-			.to({x:1}, 2000)
+			.to({x:1}, 1000)
 			.easing(TWEEN.Easing.Cubic.InOut); //Tweens meshes.signs, meshes.arrows, meshes.signsPicking
 		this.tween.ambientLight = new TWEEN.Tween(this.ambientLight);
 		this.tween.fog = new TWEEN.Tween({x:0})
@@ -188,7 +188,10 @@ class GLWrapper extends Component{
 		}
 
 		//On scene change or initial data injection, recompute per-instance transform for each sign again
-		if(this.props.scene.id !== scene.id || nextProps.data.length !== this.props.data.length){
+		if(this.props.scene.id !== scene.id 
+			|| nextProps.data.length !== this.props.data.length
+			|| nextProps.imagesToHighlight !== this.props.imagesToHighlight
+		){
 
 			let setPerInstanceProperties;
 
