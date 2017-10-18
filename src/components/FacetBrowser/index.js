@@ -3,15 +3,20 @@ const crossfilter = require('crossfilter');
 import {nest, extent} from 'd3';
 import {Toolbar} from 'material-ui/Toolbar';
 
-import {MultipleDimension, ContinuousDimension} from './Dimension';
+import {CategoricalDimension, ContinuousDimension} from './Dimension';
 
 const facetBrowserStyle = {
 	width:'100%',
-	height:60,
-	background:'linear-gradient(120deg, rgb(5,5,5), rgb(40,40,40))',
+	height:75,
 	position:'absolute',
 	bottom:0,
 	pointerEvents:'all'
+}
+
+const toolBarStyle = {
+	background:'none',
+	justifyContent:'none',
+	height:66
 }
 
 export default class FacetBrowser extends Component{
@@ -102,7 +107,7 @@ export default class FacetBrowser extends Component{
 			case 'multiple':
 			default:
 				let keys = nest().key(d.accessor).entries(this.props.data).map(d=>d.key);
-				return <MultipleDimension
+				return <CategoricalDimension
 					name={d.name}
 					accessor={d.accessor}
 					data={this.state.filteredData}
@@ -119,9 +124,11 @@ export default class FacetBrowser extends Component{
 		console.log('FacetBrowser:re-render');
 
 		return (<div className='facet-browser-wrapper' style={facetBrowserStyle}>
-			<Toolbar>
-				{this.props.dimensions.map(this._renderDimension)}
-			</Toolbar>
+			<div className='facet-browser-inner' style={{padding:'0 60px'}}>
+				<Toolbar style={toolBarStyle} className='clearfix'>
+					{this.props.dimensions.map(this._renderDimension)}
+				</Toolbar>
+			</div>
 		</div>)
 
 	}
