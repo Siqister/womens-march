@@ -34,7 +34,7 @@ export default class extends Component{
 		const {values} = this.state;
 		const countByKey = nest().key(accessor).rollup(l => l.length).map(data);
 
-		return	<ToolbarGroup style={{margin:'0 5px'}}>
+		return	<ToolbarGroup style={{margin:'0 5px'}} className='dimension categorical'>
 			<SelectField
 				multiple={true}
 				hintText={name}

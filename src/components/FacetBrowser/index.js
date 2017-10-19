@@ -7,16 +7,15 @@ import {CategoricalDimension, ContinuousDimension} from './Dimension';
 
 const facetBrowserStyle = {
 	width:'100%',
-	height:75,
+	height:100,
 	position:'absolute',
 	bottom:0,
 	pointerEvents:'all'
 }
 
 const toolBarStyle = {
-	background:'none',
 	justifyContent:'none',
-	height:66
+	background:'none'
 }
 
 export default class FacetBrowser extends Component{
@@ -69,7 +68,7 @@ export default class FacetBrowser extends Component{
 
 		const dimension = this.cfDimensions[dimensionName];
 
-		//For categorical values
+		//Filter for categorical values
 		if(values.length===0){
 			//Nothing selected on this dimension
 			dimension.filter(null);
@@ -81,12 +80,12 @@ export default class FacetBrowser extends Component{
 			filteredData:[...filteredData]
 		});
 
+		//TODO
+		//Filter for continuous values
+
 		//Update rest of viz
-		if(values.length===0){
-			this.props.onFilter([]);
-		}else{
-			this.props.onFilter(filteredData.map(d => d.filename));
-		}
+		//FIXME: If every sign is selected, then don't highlight anything
+		this.props.onFilter(filteredData.length===this.props.data.length?[]:filteredData.map(d => d.filename));
 
 	}
 
@@ -120,8 +119,6 @@ export default class FacetBrowser extends Component{
 	}
 
 	render(){
-
-		console.log('FacetBrowser:re-render');
 
 		return (<div className='facet-browser-wrapper' style={facetBrowserStyle}>
 			<div className='facet-browser-inner' style={{padding:'0 60px'}}>
