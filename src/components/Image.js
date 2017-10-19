@@ -75,8 +75,8 @@ const ImageDetailListItem = props => {
 			borderBottom: `1px solid ${props.colors[1]}`
 		}) } 
 	>
-		<span style={{fontSize:'.7em', display:'block', color:props.colors[1]}}>{field}</span>
-		<span style={{fontSize:'1.3em', display:'block', color:props.colors[0]}}>
+		<label style={{fontSize:'12px', display:'block', color:props.colors[1]}}>{field}</label>
+		<span style={{fontSize:'16px', display:'block', color:props.colors[0]}}>
 			{Array.isArray(value)?<ul>
 				{value.map(v=><ImageDetailValue value={v} type={props.type} key={v}/>)}
 			</ul>:JSON.stringify(value)}

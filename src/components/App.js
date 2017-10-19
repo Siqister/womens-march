@@ -244,23 +244,23 @@ class App extends Component{
 App.defaultProps = {
 	scenes:[
 		{
-			id:'a', //Required, unique ID
-			desc:'The big wheel',
+			id:'scene-1', //Required, unique ID
+			desc:'Scene 1',
 			cameraPosition: [1500, 0, 1500], //Required, camera position
 			layout: 'wheel', //Required, must be one of 'wheel', 'sphere', or 'sphereCluster'
 			layoutGroupBy: null,
 			ambientLight: [0.0,0.0,.1,1.0] //Required, ambient light for this scene
 		},
 		{
-			id:'b', 
-			desc:'The globe',
+			id:'scene-2', 
+			desc:'Scene 2',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
-			id:'c',
-			desc:'Clusters',
+			id:'cluster',
+			desc:'Cluster',
 			cameraPosition: [0,0,850],
 			layout: 'sphereCluster',
 			layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
