@@ -48,8 +48,8 @@ export const fetchSprite = () => {
 export const facetBrowserDimensions = [
 	{name:'Attribute 1', accessor:d=>d.attr1, type:'single'}, //FIXME: dummy
 	{name:'Attribute 2', accessor:d=>d.attr2, type:'multiple'}, //FIXME: dummy
-	{name:'Frame X', accessor:d=>d.frame.x, type:'continuous'},
-	{name:'Frame Y', accessor:d=>d.frame.y, type:'continuous'}
+	//{name:'Frame X', accessor:d=>d.frame.x, type:'continuous'},
+	//{name:'Frame Y', accessor:d=>d.frame.y, type:'continuous'}
 ];
 
 //Vertices data

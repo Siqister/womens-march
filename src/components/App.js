@@ -180,13 +180,13 @@ class App extends Component{
 		} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
-		console.groupCollapsed('App:re-render');
-		console.log(`App:render:${new Date()}`);
-		console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
-		console.log(selectedImageMetadata);
-		console.log(selectedImageIndex);
-		console.log(images[selectedImageIndex]);
-		console.log(imagesToHighlight);
+		console.group('App:re-render');
+		// console.log(`App:render:${new Date()}`);
+		// console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
+		// console.log(selectedImageMetadata);
+		// console.log(selectedImageIndex);
+		// console.log(images[selectedImageIndex]);
+		// console.log(imagesToHighlight);
 		console.log(`currentScene:${currentScene}`);
 		console.groupEnd();
 
