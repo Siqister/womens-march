@@ -85,7 +85,7 @@ export default class FacetBrowser extends Component{
 
 		//Update rest of viz
 		//FIXME: If every sign is selected, then don't highlight anything
-		this.props.onFilter(filteredData.length===this.props.data.length?[]:filteredData.map(d => d.filename));
+		this.props.onFilter(filteredData.length===this.props.data.length?[]:filteredData.map(d => d.id));
 
 	}
 

@@ -79,10 +79,10 @@ export default class WheelLayout extends Layout{
 		//Per instance datum
 		return {
 			id:v.id,
-			index:v.index,
+			filename:v.filename,
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
-			pickingColor: this.color.clone().setHex(v.index),
+			pickingColor: this.color.clone().setHex(i),
 			clusterColor: new THREE.Color('rgb(255,255,255)'),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096], //FIXME: hardcoded

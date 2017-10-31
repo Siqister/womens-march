@@ -20,7 +20,7 @@ class App extends Component{
 			images:[],
 			imagesToHighlight:[],
 			selectedImageMetadata:null,
-			selectedImageIndex:props.match.params.index?+props.match.params.index:null,
+			selectedImageId:props.match.params.id?props.match.params.id:null,
 			currentScene:0,
 
 			width:0,
@@ -62,7 +62,7 @@ class App extends Component{
 					currentScene:0
 				});
 
-				this._loadSelectedImageMetadata(this.state.selectedImageIndex);
+				this._loadSelectedImageMetadata(this.state.selectedImageId);
 
 			});
 
@@ -78,24 +78,26 @@ class App extends Component{
 
 	componentWillReceiveProps(nextProps){
 		
-		if(!nextProps.match.params.index){
+		if(!nextProps.match.params.id){
 			this.setState({
 				selectedImageMetadata:null,
-				selectedImageIndex:null
+				selectedImageId:null
 			});
 		}else{
-			const index = +nextProps.match.params.index;
-			this._loadSelectedImageMetadata(index);
+			const id = nextProps.match.params.id;
+			this._loadSelectedImageMetadata(id);
 		}
 	}
 
-	_loadSelectedImageMetadata(index){
+	_loadSelectedImageMetadata(id){
 
-		if(!this.state.images[index]) return;
-		const filename = this.state.images[index].filename;
+		const _image = this.state.images.filter(image => image.id===id)[0];
+		if(!_image) return;
+
+		const filename = _image.filename;
 
 		this.setState({
-			selectedImageIndex: index,
+			selectedImageId: id,
 			metadataLoading: true
 		});
 
@@ -125,9 +127,9 @@ class App extends Component{
 
 	}
 
-	_handleSelect(index){
+	_handleSelect(id){
 
-		this.props.history.push(`/images/${index}`);
+		this.props.history.push(`/images/${id}`);
 
 	}
 
@@ -175,21 +177,25 @@ class App extends Component{
 			textureLoading,
 			metadataLoading,
 			layoutComputing,
-			selectedImageIndex,
+			selectedImageId,
 			selectedImageMetadata
 		} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
 		console.group('App:re-render');
+		console.log(this.state.images);
 		// console.log(`App:render:${new Date()}`);
 		// console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
-		// console.log(selectedImageMetadata);
-		// console.log(selectedImageIndex);
+		console.log(selectedImageMetadata);
+		console.log(selectedImageId);
 		// console.log(images[selectedImageIndex]);
 		// console.log(imagesToHighlight);
 		console.log(`currentScene:${currentScene}`);
 		console.groupEnd();
 
+		//Compute next and prev randomized id to navigate to
+		const nextId = images.length?images[Math.floor(Math.random()*(images.length-1))].id:null;
+		const prevId = images.length?images[Math.floor(Math.random()*(images.length-1))].id:null;
 
 		return (
 			<div className='app' ref={(node)=>{this.appNode = node}} >
@@ -217,7 +223,7 @@ class App extends Component{
 					height={height} 
 					data={images}
 					imagesToHighlight={imagesToHighlight}
-					selectedImageIndex={selectedImageIndex?selectedImageIndex:null}
+					selectedImageId={selectedImageId?selectedImageId:null}
 					sprite={sprite}
 					scene={sceneSetting}
 					onSelect={this._handleSelect}
@@ -228,10 +234,10 @@ class App extends Component{
 				/>}
 				<Image
 					metadata={selectedImageMetadata}
-					imageIndex={selectedImageIndex?selectedImageIndex:null}
+					selectedImageId={selectedImageId?selectedImageId:null}
 					loading={textureLoading || metadataLoading}
-					next={ Math.floor(Math.random()*(images.length-1)) }
-					prev={ Math.floor(Math.random()*(images.length-1)) }
+					next={ nextId }
+					prev={ prevId }
 					colors={this.props.colors}
 				/>
 			</div>

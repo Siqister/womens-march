@@ -11,8 +11,7 @@ export const fetchImageList = () => {
 				reject(err);
 			}else{
 				resolve(json.frames.map((v,i)=>{
-					v.id = v.filename;
-					v.index = i;
+					v.id = v.filename.slice(0,-4);
 					//FIXME dummy categorical attributes, remove
 					v.attr1 = `value ${Math.ceil(Math.random()*3)}`;
 					v.attr2 = `value ${Math.ceil(Math.random()*5)}`;

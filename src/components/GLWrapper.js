@@ -165,8 +165,7 @@ class GLWrapper extends Component{
 		const {data,
 			sprite,
 			sceneId,
-			scene,
-			selectedImageIndex} = nextProps;
+			scene} = nextProps;
 
 		if(sprite){
 			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
@@ -250,7 +249,7 @@ class GLWrapper extends Component{
 		if(this.props.width !== nextProps.width 
 			|| this.props.height !== nextProps.height
 			|| this.state.instances !== nextState.instances
-			|| this.props.selectedImageIndex !== nextProps.selectedImageIndex){
+			|| this.props.selectedImageId !== nextProps.selectedImageId){
 			return true;
 		}else{
 			return false;
@@ -261,7 +260,7 @@ class GLWrapper extends Component{
 	componentDidUpdate(prevProps, prevState){
 
 		//Component is updated only after changes to props.width, props.height, or state.instances (re-layout)
-		const {width, height, selectedImageIndex} = this.props;
+		const {width, height, selectedImageId} = this.props;
 
 		//Given new props.width and props.height, update camera and off-camera texture
 		this.camera.aspect = width/height;
@@ -278,13 +277,13 @@ class GLWrapper extends Component{
 			this._updateMeshes();
 		}
 
-		//Show or hide selected image based on props.selectedImageIndex and state.instances
-		if(selectedImageIndex){
-			if(selectedImageIndex !== prevProps.selectedImageIndex || this.state.instances !== prevState.instances){
-				this._showSelectedImage(selectedImageIndex);
+		//Show or hide selected image based on props.selectedImageId and state.instances
+		if(selectedImageId){
+			if(selectedImageId !== prevProps.selectedImageId || this.state.instances !== prevState.instances){
+				this._showSelectedImage(selectedImageId);
 			}
-		}else if(prevProps.selectedImageIndex){
-			this._hideSelectedImage(prevProps.selectedImageIndex);
+		}else if(prevProps.selectedImageId){
+			this._hideSelectedImage(prevProps.selectedImageId);
 		}
 
 	}
@@ -314,8 +313,9 @@ class GLWrapper extends Component{
 
 		const x = e.clientX, y = e.clientY;
 		const index = this._pick(x,y);
-		if(this.state.instances.filter(v => v.index===index).length>0 && index){
-			this.props.onSelect(index);
+		if(this.state.instances[index] && index){
+			this.props.onSelect(this.state.instances[index].id);
+			this._setTarget(index);
 		}
 
 	}
@@ -515,17 +515,14 @@ class GLWrapper extends Component{
 			});
 	}
 
-	_showSelectedImage(index){
+	_showSelectedImage(id){
 
-		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		const _instance = this.state.instances.filter(v=>v.id===id)[0];
 		if(!_instance) return;
-
-		//---this.meshes.target---
-		//move this.meshes.target in place
-		this._setTarget(index);
 
 		//---this.meshes.pickedTarget---
 		//Set texture and tween in front of camera
+		this._setTarget(this.state.instances.findIndex(v=>v.id===id));
 
 		//Reset texture uniform of pickedTarget back to large sprite...
 		const pickedTarget = this.meshes.pickedTarget;
@@ -538,7 +535,7 @@ class GLWrapper extends Component{
 		instanceTexUvSize.needsUpdate = true;
 		//...then immediately start requesting high-res texture
 		this.props.onTextureLoadStart();
-		this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.id}`, (timestamp => {
+		this.pickedTargetTexture.load(`https://s3.us-east-2.amazonaws.com/artofthemarch/med_res/${_instance.filename}`, (timestamp => {
 
 			pickedTarget.timestamp = timestamp; //timestamp of the last request
 
@@ -562,7 +559,7 @@ class GLWrapper extends Component{
 				//Progress callback, no op
 			}, xhr => {
 				this.props.onTextureLoadEnd();
-				console.error(new Error(`Texture for image ${_instance.id} not loaded`)); //FIXME: remove in production
+				console.error(new Error(`Texture for image ${_instance.filename} not loaded`)); //FIXME: remove in production
 			});
 
 
@@ -623,9 +620,9 @@ class GLWrapper extends Component{
 
 	}
 
-	_hideSelectedImage(index){
+	_hideSelectedImage(id){
 
-		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		const _instance = this.state.instances.filter(v=>v.id===id)[0];
 		if(!_instance) return;
 
 		//Hide this.meshes.pickedTarget		
@@ -671,14 +668,14 @@ class GLWrapper extends Component{
 		this.renderer.render(this.pickingScene, this.camera, this.pickingTexture);
 		const pixelBuffer = new Uint8Array(4);
 		this.renderer.readRenderTargetPixels(this.pickingTexture,x,this.pickingTexture.height-y,1,1,pixelBuffer);
-		const id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
-		return id;
+		const index = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
+		return index;
 
 	}
 
 	_setTarget(index){
 
-		const _instance = this.state.instances.filter(v=>v.index===index)[0];
+		const _instance = this.state.instances[index];
 		if(!_instance) return;
 
 		glUtils.updateTransformMatrices(this.meshes.target, _instance.transformMatrixSign, _instance.transformMatrixSign, 0);

@@ -23,7 +23,7 @@ render(
 	<Router>
 		<MuiThemeProvider muiTheme={getMuiTheme(darkBaseTheme)}>
 			<Switch>
-				<Route path='/images/:index?' component={App} />
+				<Route path='/images/:id?' component={App} />
 				<Route component={App} />
 			</Switch>
 		</MuiThemeProvider>

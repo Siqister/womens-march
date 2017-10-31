@@ -74,8 +74,18 @@ export default class SphereClusterLayout extends Layout{
 						break;
 					case 'end':
 						const nodes = e.data.nodes.filter(d => d.depth===2);
+						//Compute r scale
 						this.rScale.domain(extent(nodes.map(d => Math.sqrt(d.x*d.x+d.y*d.y+d.z+d.z))));
-						resolve(nodes.map(this.computePerInstance));
+						//Convert nodes to map
+						const nodesMap = nodes.reduce((result,val)=>{
+							if(!result[val.data.id]){
+								const {x,y,z} = val;
+								const {cluster} = val.data;
+								result[val.data.id] = {x,y,z,cluster};
+							}
+							return result;
+						},{});
+						resolve(data.map(d=>Object.assign({},d,nodesMap[d.id])).map(this.computePerInstance));
 						break;
 				}
 
@@ -92,7 +102,7 @@ export default class SphereClusterLayout extends Layout{
 	computePerInstance(v,i){
 
 		//Texture-mapping related
-		const {frame, cluster} = v.data;
+		const {frame, cluster} = v;
 
 		//Construct per instance transform matrices 
 		const instanceNormal = new THREE.Vector3(v.x, v.y, v.z).normalize();
@@ -116,11 +126,11 @@ export default class SphereClusterLayout extends Layout{
 		this.transformMatrixArrow.multiply(rotationMat4);
 
 		return {
-			id:v.data.id,
-			index:v.data.index,
+			id:v.id,
+			filename:v.filename,
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
-			pickingColor: this.color.clone().setHex(v.data.index),
+			pickingColor: this.color.clone().setHex(i),
 			clusterColor: new THREE.Color(this.clusterColorScale(cluster)),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded

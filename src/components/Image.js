@@ -113,7 +113,7 @@ const Image = props => {
 					</CSSTransitionGroup>
 				</div>
 			</div>
-			{props.imageIndex&&<div className='button-container'
+			{props.selectedImageId&&<div className='button-container'
 				style={buttonContainerStyle}>
 				<PrevButton disabled={props.loading} url={`/images/${props.prev}`}/>
 				{props.loading&&<LoadingIndicator />}
