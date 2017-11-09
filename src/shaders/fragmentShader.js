@@ -31,7 +31,7 @@ const fragmentShaderText = `
 
 			if(uUseTexture){
 				vec4 textureColor = texture2D(map, vec2(vUv.x, vUv.y));
-				gl_FragColor = vec4( (textureColor*vColor*vLightWeighting).rgb, atten );
+				gl_FragColor = vec4((textureColor*vColor*vLightWeighting).rgb, atten);
 			}else{
 				gl_FragColor = vec4(vColor.rgb*vLightWeighting.rgb, atten);
 			}

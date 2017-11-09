@@ -7,7 +7,6 @@ const vertexShaderText = `
 	attribute vec4 instanceClusterColor1;
 	attribute vec2 instanceTexUvOffset;
 	attribute vec2 instanceTexUvSize;
-	attribute vec3 instanceOrientation;
 
 	attribute vec4 instanceTransformCol0;
 	attribute vec4 instanceTransformCol1;
@@ -27,7 +26,6 @@ const vertexShaderText = `
 	//Uniforms: boolean flags
 	uniform bool uUsePickingColor;
 	uniform bool uUseClusterColor;
-	uniform bool uUseInstanceTransform;
 	uniform bool uUseTexture;
 	uniform bool uUseOrientation;
 	uniform bool uUseLighting;
@@ -70,16 +68,8 @@ const vertexShaderText = `
 			orientedPosition = position;
 		}
 
-		//Transform vertex position
-		vec4 transformedPosition;
-		if(uUseInstanceTransform){
-			transformedPosition = instanceTransformMatrix * vec4(orientedPosition, 1.0);
-		}else{
-			transformedPosition = vec4(orientedPosition, 1.0);
-		}
-		
-		//Vertex in world coordinates
-		vec4 mvPosition = modelViewMatrix * vec4(transformedPosition.xyz, 1.0);
+		//Per-instance transform orientedPosition, and compute mvPosition
+		vec4 mvPosition = modelViewMatrix * vec4((instanceTransformMatrix * vec4(orientedPosition,1.0)).xyz, 1.0);
 		gl_Position = projectionMatrix * mvPosition;
 
 		//Per instance "tinting" color
@@ -98,7 +88,7 @@ const vertexShaderText = `
 			vec3 instanceNormal = normalize( (instanceTransformMatrix * vec4(normal, 0.0)).xyz );
 			vec3 transformedNormal = normalMatrix * instanceNormal;
 			vec3 lightDirection = normalize(uLightSourcePosition - mvPosition.xyz);
-			lightWeighting = uAmbientLight + 1.5*uDirectionalLight*max(dot(transformedNormal, lightDirection), 0.0);
+			lightWeighting = uAmbientLight + 1.5 * uDirectionalLight * max(dot(transformedNormal, lightDirection), 0.0);
 		}else{
 			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
 		}

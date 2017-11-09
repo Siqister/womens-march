@@ -114,7 +114,6 @@ class GLWrapper extends Component{
 				//boolean flags to determine how vertices are treated
 				uUsePickingColor:{value:false},
 				uUseClusterColor:{value:false},
-				uUseInstanceTransform:{value:true},
 				uUseTexture:{value:false},
 				uUseOrientation:{value:false},
 				uUseLighting:{value:false},
