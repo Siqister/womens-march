@@ -4,7 +4,7 @@ const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
 import {signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
-import {WheelLayout, SphereLayout, SphereClusterLayout} from '../utils/layout/index';
+import {WheelLayout, SphereLayout, SphereClusterLayout, PrecomputedLayout} from '../utils/layout/index';
 import * as glUtils from '../utils/gl_utils';
 import vertexShader from '../shaders/vertexShader';
 import fragmentShader from '../shaders/fragmentShader';
@@ -109,7 +109,7 @@ class GLWrapper extends Component{
 				uLightSourcePosition:{value:new THREE.Vector3(...this.state.light)},
 				uAmbientLight:{value:this.ambientLight},
 				uDirectionalLight:{value: new THREE.Vector4(.9, .9, 1.0, 1.0)},
-				//orientation and lighting
+				//orientation
 				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
 				//boolean flags to determine how vertices are treated
 				uUsePickingColor:{value:false},
@@ -208,6 +208,10 @@ class GLWrapper extends Component{
 				.setR(this.state.R*1.2)
 				.setGroupByAccessor(scene.layoutGroupBy);
 
+			const tsneLayout = new PrecomputedLayout()
+				.setR(this.state.R*2)
+				.setDataSource(scene.dataSource);
+
 			switch(scene.layout){
 				case 'wheel':
 					setPerInstanceProperties = wheelLayout.compute;
@@ -217,6 +221,9 @@ class GLWrapper extends Component{
 					break;
 				case 'sphereCluster':
 					setPerInstanceProperties = sphereClusterLayout.compute;
+					break;
+				case 'tsne':
+					setPerInstanceProperties = tsneLayout.compute;
 					break;
 				default:
 					setPerInstanceProperties = wheelLayout.compute;
@@ -234,6 +241,7 @@ class GLWrapper extends Component{
 					this.setState({instances});
 					this.props.onLayoutEnd();
 				}, err => {
+					console.log(err);
 					console.log('Layout is overriden and cancelled');
 					this.props.onLayoutEnd();
 				});

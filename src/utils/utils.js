@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {randomNormal,pie,json} from 'd3';
+import {randomNormal,pie,json,csv} from 'd3';
 
 //export * from './layout';
 
@@ -23,6 +23,18 @@ export const fetchImageList = () => {
 		});
 	});
 }
+
+export const fetchLayout = url => new Promise((resolve, reject) => {
+	csv(url, 
+		d => {if(d.file) return {x:+d.x, y:+d.y, z:+d.z, id:d.file.slice(0,-4)}},
+		(err,data)=>{
+			if(err){
+				reject(err);
+			}else{
+				resolve(data);
+			}
+		});
+});
 
 export const fetchMetadata = fileName => {
 	return fetch(`https://mfw-data-interface.herokuapp.com/api/v1/image/${fileName}`);

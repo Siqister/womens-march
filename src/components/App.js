@@ -22,14 +22,13 @@ class App extends Component{
 			selectedImageMetadata:null,
 			selectedImageId:props.match.params.id?props.match.params.id:null,
 			currentScene:0,
-
 			width:0,
 			height:0,
-
 			sprite:null,
 			textureLoading:false,
 			metadataLoading:false,
-			layoutComputing:false
+			layoutComputing:false,
+			initialDataLoaded:false
 		};
 
 		this._handleSelect = this._handleSelect.bind(this);
@@ -59,7 +58,8 @@ class App extends Component{
 				this.setState({
 					images:[...images, ...data],
 					sprite:texture,
-					currentScene:0
+					currentScene:0,
+					initialDataLoaded:true
 				});
 
 				this._loadSelectedImageMetadata(this.state.selectedImageId);
@@ -84,8 +84,7 @@ class App extends Component{
 				selectedImageId:null
 			});
 		}else{
-			const id = nextProps.match.params.id;
-			this._loadSelectedImageMetadata(id);
+			this._loadSelectedImageMetadata(nextProps.match.params.id);
 		}
 	}
 
@@ -178,11 +177,12 @@ class App extends Component{
 			metadataLoading,
 			layoutComputing,
 			selectedImageId,
-			selectedImageMetadata
+			selectedImageMetadata,
+			initialDataLoaded
 		} = this.state;
 		const sceneSetting = this.props.scenes[currentScene];
 
-		console.group('App:re-render');
+		console.groupCollapsed('App:re-render');
 		console.log(this.state.images);
 		// console.log(`App:render:${new Date()}`);
 		// console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
@@ -205,6 +205,7 @@ class App extends Component{
 					height={height}
 					scenes={this.props.scenes}
 					data={images}
+					initialDataLoaded={initialDataLoaded}
 					onFilter={ids => { this.setState({imagesToHighlight:[...ids]}); }}
 				/>
 				<Navigation 
@@ -212,6 +213,7 @@ class App extends Component{
 					scenes={this.props.scenes}
 					layoutComputing={layoutComputing}
 					currentScene={currentScene}
+					initialDataLoaded={initialDataLoaded}
 					onSceneChange={i => { this.setState({currentScene:i}); }}
 				/>
 				{width&&height&&<GLBackground 
@@ -270,6 +272,14 @@ App.defaultProps = {
 			cameraPosition: [0,0,850],
 			layout: 'sphereCluster',
 			layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
+			ambientLight: [1.0,1.0,1.0,1.0]
+		},
+		{
+			id:'tsne-3d',
+			desc:'3D TSNE',
+			cameraPosition: [0,0,850],
+			layout: 'tsne',
+			dataSource:'/assets/3dtsne.csv',
 			ambientLight: [1.0,1.0,1.0,1.0]
 		},
 		{

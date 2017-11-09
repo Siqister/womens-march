@@ -15,39 +15,50 @@ class NavigationLink extends Component{
 		super(props);
 
 		this.state = {
-			focus:false
+			focus:false,
+			marginLeft:-50
 		};
+
+	}
+
+	componentDidMount(){
+
+		this.setState({
+			marginLeft:0
+		});
 
 	}
 
 	render(){
 
-		const {focus} = this.state;
-		const {colors, layoutComputing, desc, height, active} = this.props;
+		const {focus, marginLeft} = this.state;
+		const {colors, layoutComputing, desc, active, size, sequence} = this.props;
+		const width = size, height = size;
+		const radiusInner = 3, radiusOuter = 10;
 
 		return (
 			<li 
 				className='scene-navigation-link' 
 				style={{
 					height:height,
-					background:focus?'black':'none',
 					cursor:'pointer',
-					transition:'background 200ms'
+					marginLeft,
+					transition:`margin-left 1s ${sequence*200}ms`
 				}}
 				onMouseEnter={() => {this.setState({focus:true}); }}
 				onMouseLeave={() => {this.setState({focus:false}); }}
 			>
 				<a href={`#${this.props.id}`}>
 					<svg className='target' style={{
-						width:height,
+						width:width,
 						height:height,
 						float:'left'
 					}}>
 						<circle 
 							className='halo'
-							cx={height/2}
+							cx={width/2}
 							cy={height/2}
-							r={focus?12:10}
+							r={focus?radiusOuter+2:radiusOuter}
 							fill={colors[2]}
 							fillOpacity={active||focus?1:0}
 							style={{
@@ -56,9 +67,9 @@ class NavigationLink extends Component{
 						/>
 						<circle 
 							className='spinning'
-							cx={height/2}
+							cx={width/2}
 							cy={height/2}
-							r={focus?12:10}
+							r={focus?radiusOuter+2:radiusOuter}
 							fill='none'
 							stroke={active&&layoutComputing?colors[1]:'none'}
 							strokeWidth='2px'
@@ -66,9 +77,9 @@ class NavigationLink extends Component{
 						/>
 						<circle
 							className='center'
-							cx={height/2}
+							cx={width/2}
 							cy={height/2}
-							r={3}
+							r={radiusInner}
 							fill={colors[0]}
 						/>
 					</svg>
@@ -93,15 +104,16 @@ class NavigationLink extends Component{
 
 }
 
-const Navigation = ({scenes,colors,layoutComputing,currentScene,onSceneChange}) => {
+const Navigation = ({scenes,colors,layoutComputing,currentScene,onSceneChange,initialDataLoaded}) => {
 
 	const links = scenes.map((v,i) => <NavigationLink 
 			layoutComputing={layoutComputing}
 			colors={colors}
 			key={v.id}
 			id={v.id}
+			sequence={i}
 			desc={v.desc}
-			height={40}
+			size={40}
 			active={i===currentScene}
 		/>);
 
@@ -119,10 +131,10 @@ const Navigation = ({scenes,colors,layoutComputing,currentScene,onSceneChange}) 
 						onSceneChange( idToIndex[args[0].id] );
 					}
 				}}>
-				{links}
+				{initialDataLoaded&&links}
 			</Scrollspy>
 		</nav>
-	)
+	);
 
 }
 
