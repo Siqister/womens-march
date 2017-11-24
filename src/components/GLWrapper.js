@@ -31,7 +31,7 @@ class GLWrapper extends Component{
 			//GL animation state
 			cameraLookAt: [0,0,0],
 			cameraUp: [.5,1,0],
-			speed:.001, //Rotational speed
+			speed:0, //.001, //Rotational speed
 			light: [500,700,50],
 
 			//Controls spatial distribution of the signs

@@ -17,6 +17,16 @@ export default class PrecomputedLayout extends Layout{
 
 	compute(data, imagesToHighlight=[]){
 
+		//Merge data and imagesToHighlight
+		const imageMap = data.reduce((acc,val)=>{
+			if(!acc[val.id]) acc[val.id] = val;
+			return acc;
+		},{});
+
+		imagesToHighlight.forEach(id => {
+			imageMap[id].highlight = true;
+		});
+
 		return fetchLayout(this.src)
 			.then(res => {
 				//Convert coordinates to map
@@ -74,7 +84,7 @@ export default class PrecomputedLayout extends Layout{
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),
 			pickingColor: this.color.clone().setHex(i),
-			clusterColor: new THREE.Color('rgb(255,255,255)'),
+			clusterColor: v.highlight?new THREE.Color('rgb(255,255,255)'):new THREE.Color('rgb(255,255,50)'),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
 		};
