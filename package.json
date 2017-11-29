@@ -7,11 +7,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server",
     "build": "webpack -p",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "deploy": "NODE_ENV=production webpack -p && node deploy dist"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "aws-sdk": "^2.156.0",
     "babel-core": "^6.24.1",
     "babel-eslint": "^7.2.3",
     "babel-loader": "^7.0.0",
@@ -24,6 +26,7 @@
     "path": "^0.12.7",
     "react-scroll": "^1.5.5",
     "react-scrollspy": "^3.3.4",
+    "s3": "^4.4.0",
     "style-loader": "^0.17.0",
     "url-loader": "^0.5.8",
     "webpack": "^2.5.1",
