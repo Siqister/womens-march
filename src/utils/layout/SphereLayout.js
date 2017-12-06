@@ -54,9 +54,9 @@ export default class SphereLayout extends Layout{
 		//Texture-mapping related
 		const {frame} = v;
 
-		//Construct per instance transform matrices 
+		//Sign
 		const instanceNormal = this.sphericalNormals[i];
-		const instanceR = this.r + Math.random()*40-20 + (v.highlight?120:0);
+		const instanceR = this.r + Math.random()*40-20 + (v.highlight?20:0); 
 		let instancePosition = instanceNormal.map(v=>v*instanceR);
 		const rotationMat4 = new THREE.Matrix4();
 
@@ -69,20 +69,23 @@ export default class SphereLayout extends Layout{
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
 		this.transformMatrixSign.multiply(rotationMat4);
 
-		instancePosition = instanceNormal.map(v=>v*(instanceR+15));
+		//Arrow
+		instancePosition = instanceNormal.map(v => v*(instanceR + 15 + (v.highlight?15:0)));
 		this.position.set(...instancePosition);
 		this.rotation.setFromAxisAngle(this.X_AXIS, Math.PI*2);
-		this.scale.set(7,7,(v.highlight?14:7));
+		this.scale.set(5,5,(v.highlight?14:7));
 		this.transformMatrixArrow.compose(this.position, this.rotation, this.scale);
 		this.transformMatrixArrow.multiply(rotationMat4);
 
 		return {
 			id:v.id,
 			filename:v.filename,
+			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),
 			pickingColor: this.color.clone().setHex(i),
-			clusterColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(255,255,255)'),
+			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(0,160,172)'),
+			//clusterColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(255,255,255)'),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
 		};

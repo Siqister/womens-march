@@ -83,9 +83,8 @@ export default class FacetBrowser extends Component{
 		//TODO
 		//Filter for continuous values
 
-		//Update rest of viz
-		//FIXME: If every sign is selected, then don't highlight anything
-		this.props.onFilter(filteredData.length===this.props.data.length?[]:filteredData.map(d => d.id));
+		//Callback
+		this.props.onFilter(filteredData.map(d => d.id));
 
 	}
 

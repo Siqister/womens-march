@@ -3,10 +3,10 @@ const vertexShaderText = `
 	attribute vec2 uv;
 	attribute vec3 normal;
 	attribute vec4 instanceColor;
-	attribute vec4 instanceClusterColor0;
-	attribute vec4 instanceClusterColor1;
 	attribute vec2 instanceTexUvOffset;
 	attribute vec2 instanceTexUvSize;
+	attribute float instanceHighlightBool0;
+	attribute float instanceHighlightBool1;
 
 	attribute vec4 instanceTransformCol0;
 	attribute vec4 instanceTransformCol1;
@@ -25,10 +25,10 @@ const vertexShaderText = `
 
 	//Uniforms: boolean flags
 	uniform bool uUsePickingColor;
-	uniform bool uUseClusterColor;
 	uniform bool uUseTexture;
 	uniform bool uUseOrientation;
 	uniform bool uUseLighting;
+	uniform bool uUseHighlight;
 
 	//Uniforms: other
 	uniform vec4 uColor;
@@ -42,6 +42,7 @@ const vertexShaderText = `
 	varying vec4 vVertexPosition;
 	varying vec2 vUv;
 	varying vec4 vLightWeighting;
+	varying float vHighlightBool;
 
 	void main(){
 		//Calculate per instance transform matrix from m0 and m1
@@ -72,30 +73,26 @@ const vertexShaderText = `
 		vec4 mvPosition = modelViewMatrix * vec4((instanceTransformMatrix * vec4(orientedPosition,1.0)).xyz, 1.0);
 		gl_Position = projectionMatrix * mvPosition;
 
-		//Per instance "tinting" color
+		//Per instance color
 		if(uUsePickingColor){
-			vColor = instanceColor; //for off canvas picking
-		}else if(uUseClusterColor){
-			vec4 instanceClusterColor = (1.0 - uInterpolateTransform) * instanceClusterColor0 + uInterpolateTransform * instanceClusterColor1;
-			vColor = vec4(uColor.xyz * instanceClusterColor.xyz, 1.0); //white by default
+			vColor = instanceColor; //per instance color, for arrows & off-canvas picking texture
 		}else{
-			vColor = uColor; //for everything except signs
+			vColor = uColor; //a uniform "tinting color", white by default
 		}
 
 		//Directional lighting
-		vec4 lightWeighting;
 		if(uUseLighting){
 			vec3 instanceNormal = normalize( (instanceTransformMatrix * vec4(normal, 0.0)).xyz );
 			vec3 transformedNormal = normalMatrix * instanceNormal;
 			vec3 lightDirection = normalize(uLightSourcePosition - mvPosition.xyz);
-			lightWeighting = uAmbientLight + 1.5 * uDirectionalLight * max(dot(transformedNormal, lightDirection), 0.0);
+			vLightWeighting = uAmbientLight + 1.5 * uDirectionalLight * max(dot(transformedNormal, lightDirection), 0.0);
 		}else{
-			lightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
+			vLightWeighting = vec4(1.0, 1.0, 1.0, 1.0);
 		}
 		
 		vVertexPosition = mvPosition;
 		vUv = instanceTexUvOffset + vec2(instanceTexUvSize.x * uv.x, instanceTexUvSize.y * uv.y);
-		vLightWeighting = lightWeighting;
+		vHighlightBool = (1.0 - uInterpolateTransform) * instanceHighlightBool0 + uInterpolateTransform * instanceHighlightBool1;
 
 	}
 `;

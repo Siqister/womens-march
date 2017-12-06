@@ -54,9 +54,10 @@ class App extends Component{
 		Promise.all([fetchImageList(), fetchSprite()])
 			.then(([data,texture]) => {
 
-				const {images} = this.state;
+				const {images, imagesToHighlight} = this.state;
 				this.setState({
 					images:[...images, ...data],
+					imagesToHighlight:[...imagesToHighlight, ...data.map(d => d.id)],
 					sprite:texture,
 					currentScene:0,
 					initialDataLoaded:true
@@ -186,10 +187,10 @@ class App extends Component{
 		console.log(this.state.images);
 		// console.log(`App:render:${new Date()}`);
 		// console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
-		console.log(selectedImageMetadata);
-		console.log(selectedImageId);
+		// console.log(selectedImageMetadata);
+		// console.log(selectedImageId);
 		// console.log(images[selectedImageIndex]);
-		// console.log(imagesToHighlight);
+		console.log(imagesToHighlight);
 		console.log(`currentScene:${currentScene}`);
 		console.groupEnd();
 
@@ -252,7 +253,7 @@ class App extends Component{
 App.defaultProps = {
 	scenes:[
 		{
-			id:'scene-1', //Required, unique ID
+			id:'scene-1', //Required, must be unique
 			desc:'Scene 1',
 			cameraPosition: [1500, 0, 1500], //Required, camera position
 			layout: 'wheel', //Required, must be one of 'wheel', 'sphere', or 'sphereCluster'
@@ -280,7 +281,7 @@ App.defaultProps = {
 			cameraPosition: [0,0,850],
 			layout: 'tsne',
 			dataSource:'/assets/3dtsne.csv',
-			ambientLight: [1.0,1.0,1.0,1.0]
+			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
 			id:'browse', //last scene contains facet browser

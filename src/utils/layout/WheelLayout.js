@@ -16,10 +16,22 @@ export default class WheelLayout extends Layout{
 
 	}
 
-	compute(data){
+	compute(data, imagesToHighlight=[]){
 
 		this.randomX = randomNormal(this.x, this.xStdDev);
 		this.randomR = randomNormal(this.r, this.rStdDev);
+
+		//Highlight attribute
+		const imageMap = data.reduce((acc,val)=>{
+				if(!acc[val.id]){
+					acc[val.id] = Object.assign({},val);
+				}
+				return acc;
+			}, {})
+		imagesToHighlight.forEach(id => {
+			imageMap[id].highlight = true;
+		});
+
 
 		if(this.groupByAccessor){
 			const groups = data.map(this.groupByAccessor)
@@ -39,7 +51,7 @@ export default class WheelLayout extends Layout{
 				},{});
 		}
 
-		return data.map(this.computePerInstance);
+		return Object.values(imageMap).map(this.computePerInstance);
 
 	}
 
@@ -80,10 +92,12 @@ export default class WheelLayout extends Layout{
 		return {
 			id:v.id,
 			filename:v.filename,
+			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
 			pickingColor: this.color.clone().setHex(i),
-			clusterColor: new THREE.Color('rgb(255,255,255)'),
+			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(0,160,172)'),
+			//clusterColor: new THREE.Color('rgb(255,255,255)'),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096], //FIXME: hardcoded
 			x,

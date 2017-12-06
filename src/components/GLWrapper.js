@@ -113,10 +113,10 @@ class GLWrapper extends Component{
 				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
 				//boolean flags to determine how vertices are treated
 				uUsePickingColor:{value:false},
-				uUseClusterColor:{value:false},
 				uUseTexture:{value:false},
 				uUseOrientation:{value:false},
 				uUseLighting:{value:false},
+				uUseHighlight:{value:false}, //differentiate between highlighted and unhighlighted signs
 				//sprite
 				map:{value:null},
 				//for interpolating between source and target transform matrices
@@ -162,6 +162,7 @@ class GLWrapper extends Component{
 	componentWillReceiveProps(nextProps){
 
 		const {data,
+			imagesToHighlight,
 			sprite,
 			sceneId,
 			scene} = nextProps;
@@ -203,9 +204,9 @@ class GLWrapper extends Component{
 			const sphereLayout = new SphereLayout()
 				.setR(this.state.R);
 
-			const sphereClusterLayout = new SphereClusterLayout()
-				.setR(this.state.R*1.2)
-				.setGroupByAccessor(scene.layoutGroupBy);
+			// const sphereClusterLayout = new SphereClusterLayout()
+			// 	.setR(this.state.R*1.2)
+			// 	.setGroupByAccessor(scene.layoutGroupBy);
 
 			const tsneLayout = new PrecomputedLayout()
 				.setR(this.state.R*2)
@@ -218,14 +219,14 @@ class GLWrapper extends Component{
 				case 'sphere':
 					setPerInstanceProperties = sphereLayout.compute;
 					break;
-				case 'sphereCluster':
-					setPerInstanceProperties = sphereClusterLayout.compute;
-					break;
+				// case 'sphereCluster':
+				// 	setPerInstanceProperties = sphereClusterLayout.compute;
+				// 	break;
 				case 'tsne':
 					setPerInstanceProperties = tsneLayout.compute;
 					break;
 				default:
-					setPerInstanceProperties = wheelLayout.compute;
+					setPerInstanceProperties = sphereLayout.compute;
 			}
 
 			//Cancel any existing layout computation
@@ -235,7 +236,7 @@ class GLWrapper extends Component{
 			this.props.onLayoutStart();
 			//Compute a new layout, return a promise that is either immediately resolved
 			//or resolved later (if sphereClusterLayout)
-			Promise.resolve(setPerInstanceProperties(nextProps.data, nextProps.imagesToHighlight, this.cancelToken))
+			Promise.resolve(setPerInstanceProperties(data, imagesToHighlight, this.cancelToken))
 				.then(instances => {
 					this.setState({instances});
 					this.props.onLayoutEnd();
@@ -390,7 +391,6 @@ class GLWrapper extends Component{
 	_initMeshes(){
 
 		//Initialize dynamic meshes (sign and arrow)
-
 		const {instances, light} = this.state;
 		const COUNT = instances.length;
 
@@ -403,11 +403,13 @@ class GLWrapper extends Component{
 		const uv = new THREE.BufferAttribute(new Float32Array(signUvArray),2);
 		const normals = new THREE.BufferAttribute(new Float32Array(signNormalsArray), 3);
 		const arrowVertices = new THREE.BufferAttribute(new Float32Array(arrowVerticesArray),3);
+		const arrowInstanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		const instanceColors = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		const instanceClusterColors0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
-		const instanceClusterColors1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*4),4,1);
 		const instanceTexUvOffset = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
 		const instanceTexUvSize = new THREE.InstancedBufferAttribute(new Float32Array(COUNT*2),2,1);
+
+		const instanceHighlightBool0 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT),1,1);
+		const instanceHighlightBool1 = new THREE.InstancedBufferAttribute(new Float32Array(COUNT),1,1);
 		
 
 		//---this.meshes.signs---
@@ -417,18 +419,18 @@ class GLWrapper extends Component{
 		geometry.addAttribute('uv', uv);
 		geometry.addAttribute('normal', normals)
 		geometry.addAttribute('instanceColor', instanceColors);
-		geometry.addAttribute('instanceClusterColor0', instanceClusterColors0);
-		geometry.addAttribute('instanceClusterColor1', instanceClusterColors1);
 		geometry.addAttribute('instanceTexUvOffset', instanceTexUvOffset);
 		geometry.addAttribute('instanceTexUvSize', instanceTexUvSize);
+		geometry.addAttribute('instanceHighlightBool0', instanceHighlightBool0);
+		geometry.addAttribute('instanceHighlightBool1', instanceHighlightBool1);
 		glUtils.initTransformMatrixAttrib(geometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
-		material.uniforms.uUseClusterColor.value = true;
 		material.uniforms.map.value = this.props.sprite; //this.texture;
 		material.uniforms.uFogFactor.value = .000003;
 		material.uniforms.uUseLighting.value = true;
+		material.uniforms.uUseHighlight.value = true;
 		//material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.signs = new THREE.Mesh(geometry,material);
@@ -437,12 +439,13 @@ class GLWrapper extends Component{
 		//---this.meshes.arrows---
 		const arrowsGeometry = new THREE.InstancedBufferGeometry();
 		arrowsGeometry.addAttribute('position', arrowVertices);
-		arrowsGeometry.addAttribute('instanceColor', instanceColors);
+		arrowsGeometry.addAttribute('instanceColor', arrowInstanceColors);
 		glUtils.initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		material = this.material.clone();
-		material.uniforms.uColor.value = new THREE.Vector4(237/255,12/255,110/255,1.0);
+		//material.uniforms.uColor.value = new THREE.Vector4(.8,.8,.6,1.0)//new THREE.Vector4(237/255,12/255,110/255,1.0);
 		material.uniforms.uFogFactor.value = 0.000005;
+		material.uniforms.uUsePickingColor.value = true;
 		material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
@@ -462,21 +465,23 @@ class GLWrapper extends Component{
 
 		//Populate attributes with value
 		for(let i=0; i<COUNT; i++){
-			const {pickingColor, clusterColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize} = instances[i];
+			const {pickingColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize, highlight} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
 			instanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
-			instanceClusterColors0.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
-			instanceClusterColors1.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
 			instanceTexUvOffset.setXY(i, ...textureUvOffset);
 			instanceTexUvSize.setXY(i, ...textureUvSize);
+			instanceHighlightBool0.setX(i, highlight);
+			instanceHighlightBool1.setX(i, highlight);
+			arrowInstanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
 		}
-		instanceClusterColors0.needsUpdate = true;
-		instanceClusterColors1.needsUpdate = true;
 		instanceColors.needsUpdate = true;
 		instanceTexUvOffset.needsUpdate = true;
 		instanceTexUvSize.needsUpdate = true;
+		instanceHighlightBool0.needsUpdate = true;
+		instanceHighlightBool1.needsUpdate = true;
+		arrowInstanceColors.needsUpdate = true;
 
 
 		//Set up tween
@@ -494,31 +499,35 @@ class GLWrapper extends Component{
 		//Called when this.state.instances is updated, 
 		const {instances} = this.state;
 		const COUNT = instances.length;
-		const {instanceClusterColor0, instanceClusterColor1} = this.meshes.signs.geometry.attributes;
+		const {instanceHighlightBool0, instanceHighlightBool1} = this.meshes.signs.geometry.attributes;
+		const arrowInstanceColors = this.meshes.arrows.geometry.attributes.instanceColor;
 
 		//Populate attributes with value
 		for(let i=0; i<COUNT; i++){
-			const {clusterColor, transformMatrixSign, transformMatrixArrow} = instances[i];
+			const {transformMatrixSign, transformMatrixArrow, highlight, arrowColor} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
 
-			instanceClusterColor1.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
+			instanceHighlightBool1.setX(i, highlight);
+			arrowInstanceColors.setXYZW(i, arrowColor.r, arrowColor.g, arrowColor.b, 1.0);
 		}
-		instanceClusterColor1.needsUpdate = true;
+		instanceHighlightBool1.needsUpdate = true;
+		arrowInstanceColors.needsUpdate = true;
 
 		this.tween.updateMeshes
 			.start()
 			.onComplete(()=>{
 				for(let i=0; i<COUNT; i++){
-					const {transformMatrixSign, transformMatrixArrow, clusterColor} = instances[i];
+					const {transformMatrixSign, transformMatrixArrow, highlight} = instances[i];
 
 					glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, null, i);
 					glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, null, i);
 
-					instanceClusterColor0.setXYZW(i, clusterColor.r, clusterColor.g, clusterColor.b, 1.0);
+					instanceHighlightBool0.setX(i, highlight);
+
 				}
-				instanceClusterColor0.needsUpdate = true;
+				instanceHighlightBool0.needsUpdate = true;
 			});
 	}
 
