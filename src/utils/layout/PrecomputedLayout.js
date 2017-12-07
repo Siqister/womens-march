@@ -59,23 +59,16 @@ export default class PrecomputedLayout extends Layout{
 	computeInstance(v,i){
 
 		const {frame} = v;
-		const rotationMat4 = new THREE.Matrix4();
 
 		//Sign
-		this.position.set(v.x,v.y,v.z);
-		this.up.set(Math.random()*.6-.3, 1, 0).normalize();
-		rotationMat4.lookAt(this.position, this.CENTER, this.up);
-		
+		this.position.set(v.x,v.y,v.z);		
 		this.scale.set(frame.w/8, frame.h/8, 10);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
-		this.transformMatrixSign.multiply(rotationMat4);
 
 		//Arrow
-		this.position.set(v.x,v.y,v.z);
-		this.rotation.setFromAxisAngle(this.X_AXIS, Math.PI*2);
+		this.position.set(v.x,v.y+10,v.z);
 		this.scale.set(5,5,v.highlight?14:7);
-		this.transformMatrixArrow.compose(this.position, this.rotation, this.scale);
-		this.transformMatrixArrow.multiply(rotationMat4);
+		this.transformMatrixArrow.compose(this.position, new THREE.Quaternion().setFromAxisAngle(this.X_AXIS, Math.PI/2), this.scale);
 
 		return {
 			id:v.id,
@@ -83,6 +76,8 @@ export default class PrecomputedLayout extends Layout{
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),
+			_transformMatrixSign: this.transformMatrixSign.clone(), //permanent record
+			_transformMatrixArrow: this.transformMatrixArrow.clone(), //permanent record
 			pickingColor: this.color.clone().setHex(i),
 			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(0,160,172)'),
 			//clusterColor: v.highlight?new THREE.Color('rgb(255,255,255)'):new THREE.Color('rgb(255,255,50)'),

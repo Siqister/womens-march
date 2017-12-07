@@ -24,6 +24,8 @@ class GLWrapper extends Component{
 		this._setTarget = this._setTarget.bind(this);
 		this._pick = this._pick.bind(this);
 		this.onMouseMove = this.onMouseMove.bind(this);
+		this.onMouseDown = this.onMouseDown.bind(this);
+		this.onMouseUp = this.onMouseUp.bind(this);
 		this.onClick = this.onClick.bind(this);
 
 		this.state = {
@@ -48,7 +50,9 @@ class GLWrapper extends Component{
 			// - texture uv offset
 			// - picking color based on zero-based index
 			//is recomputed on scene/layout change and initial data injection
-			instances:[]
+			instances:[],
+
+			dragging:false
 		};
 
 		//Shared GL assets
@@ -165,13 +169,13 @@ class GLWrapper extends Component{
 			imagesToHighlight,
 			sprite,
 			sceneId,
-			scene} = nextProps;
+			scene } = nextProps;
 
 		if(sprite){
 			sprite.flipY = false; //FIXME: shouldn't mutate incoming props.sprite
 		}
 
-		//On scene change, restore to scene defaults: scene.cameraPosition, scene.ambientLight
+		//On scene change, restore to scene defaults: scene.cameraPosition, scene.ambientLight, scene.speed
 		if(this.props.scene.id !== scene.id){
 			this.tween.camera
 				.to({ x : scene.cameraPosition[0], y : scene.cameraPosition[1], z : scene.cameraPosition[2]}, 2000)
@@ -184,6 +188,8 @@ class GLWrapper extends Component{
 					.onUpdate(()=>{ this.meshes.signs.material.uniforms.uAmbientLight.value = this.ambientLight })
 					.start();
 			}
+
+			this.setState({speed:typeof(scene.speed)==='undefined'?0:scene.speed});
 		}
 
 		//On scene change or initial data injection, recompute per-instance transform for each sign again
@@ -209,7 +215,7 @@ class GLWrapper extends Component{
 			// 	.setGroupByAccessor(scene.layoutGroupBy);
 
 			const tsneLayout = new PrecomputedLayout()
-				.setR(this.state.R*2)
+				.setR(this.state.R*3)
 				.setDataSource(scene.dataSource);
 
 			switch(scene.layout){
@@ -314,6 +320,40 @@ class GLWrapper extends Component{
 			).normalize();
 
 		//Slightly move light source
+
+	}
+
+	onMouseDown(e){
+
+		//Dragging starts
+		this.setState({dragging:false});
+
+	}
+
+	onMouseUp(e){
+
+		if(this.props.scene.layout === 'tsne'){
+			//pre-computed tsne layout; signs will need to individually reoriented towards camera
+			//Two transformations required to face camera: counter-balance rotations to this.meshes.signs & make it face camera
+			const rotationInverse = new THREE.Matrix4().getInverse(new THREE.Matrix4().makeRotationFromEuler(this.meshes.signs.rotation));
+			const cameraRotation = new THREE.Matrix4().extractRotation(this.camera.matrixWorld);
+			const faceCamera = cameraRotation.premultiply(rotationInverse);
+
+			const instances = this.state.instances.map(instance => {
+				return Object.assign({}, instance, {
+					transformMatrixSign:(instance._transformMatrixSign.clone()).multiply(faceCamera),
+					transformMatrixArrow:(instance._transformMatrixArrow.clone()).multiply(faceCamera)
+				});
+			});
+
+			this.setState({
+				dragging:false,
+				instances
+			});
+		}else{
+			//Dragging ends
+			this.setState({dragging:false});
+		}
 
 	}
 
@@ -465,7 +505,7 @@ class GLWrapper extends Component{
 
 		//Populate attributes with value
 		for(let i=0; i<COUNT; i++){
-			const {pickingColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize, highlight} = instances[i];
+			const {pickingColor, arrowColor, transformMatrixSign, transformMatrixArrow, textureUvOffset, textureUvSize, highlight} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, transformMatrixSign, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, transformMatrixArrow, transformMatrixArrow, i);
@@ -474,7 +514,7 @@ class GLWrapper extends Component{
 			instanceTexUvSize.setXY(i, ...textureUvSize);
 			instanceHighlightBool0.setX(i, highlight);
 			instanceHighlightBool1.setX(i, highlight);
-			arrowInstanceColors.setXYZW(i, pickingColor.r, pickingColor.g, pickingColor.b, 1.0);
+			arrowInstanceColors.setXYZW(i, arrowColor.r, arrowColor.g, arrowColor.b, 1.0);
 		}
 		instanceColors.needsUpdate = true;
 		instanceTexUvOffset.needsUpdate = true;
@@ -495,6 +535,8 @@ class GLWrapper extends Component{
 	}
 
 	_updateMeshes(){
+
+		console.log("Update meshes");
 
 		//Called when this.state.instances is updated, 
 		const {instances} = this.state;
@@ -734,6 +776,8 @@ class GLWrapper extends Component{
 					zIndex:-998
 				}}
 				ref={(node)=>{this.wrapperNode=node}}
+				onMouseDown={this.onMouseDown}
+				onMouseUp={this.onMouseUp}
 				onMouseMove={this.onMouseMove}
 				onClick={this.onClick}
 			>

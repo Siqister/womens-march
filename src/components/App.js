@@ -255,9 +255,10 @@ App.defaultProps = {
 		{
 			id:'scene-1', //Required, must be unique
 			desc:'Scene 1',
-			cameraPosition: [1500, 0, 1500], //Required, camera position
-			layout: 'wheel', //Required, must be one of 'wheel', 'sphere', or 'sphereCluster'
-			layoutGroupBy: null,
+			cameraPosition: [2000, 0, 2000], //Required, camera position
+			layout: 'wheel', //Optional
+			layoutGroupBy: null, //Optional
+			speed:0.001, //optional
 			ambientLight: [0.0,0.0,.1,1.0] //Required, ambient light for this scene
 		},
 		{
@@ -265,6 +266,7 @@ App.defaultProps = {
 			desc:'Scene 2',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
+			speed:0.001, //optional
 			ambientLight: [0.0,0.0,.1,1.0]
 		},
 		{
@@ -278,7 +280,7 @@ App.defaultProps = {
 		{
 			id:'tsne-3d',
 			desc:'3D TSNE',
-			cameraPosition: [0,0,850],
+			cameraPosition: [0,0,1500],
 			layout: 'tsne',
 			dataSource:'/assets/3dtsne.csv',
 			ambientLight: [0.0,0.0,.1,1.0]
