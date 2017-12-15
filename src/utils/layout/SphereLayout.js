@@ -58,6 +58,7 @@ export default class SphereLayout extends Layout{
 		const instanceNormal = this.sphericalNormals[i];
 		const instanceR = this.r + Math.random()*40-20 + (v.highlight?20:0); 
 		let instancePosition = instanceNormal.map(v=>v*instanceR);
+		const xyz = [...instancePosition];
 		const rotationMat4 = new THREE.Matrix4();
 
 		this.position.set(...instancePosition);
@@ -80,6 +81,7 @@ export default class SphereLayout extends Layout{
 		return {
 			id:v.id,
 			filename:v.filename,
+			xyz:xyz,
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),

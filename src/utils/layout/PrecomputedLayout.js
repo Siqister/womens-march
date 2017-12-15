@@ -61,8 +61,9 @@ export default class PrecomputedLayout extends Layout{
 		const {frame} = v;
 
 		//Sign
+		const scaleFactor = v.highlight?1.5:1; //scale highlighted images up
 		this.position.set(v.x,v.y,v.z);		
-		this.scale.set(frame.w/8, frame.h/8, 10);
+		this.scale.set(frame.w/8*scaleFactor, frame.h/8*scaleFactor, 10*scaleFactor);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
 
 		//Arrow
@@ -73,6 +74,7 @@ export default class PrecomputedLayout extends Layout{
 		return {
 			id:v.id,
 			filename:v.filename,
+			xyz:[v.x, v.y, v.z],
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),

@@ -3,6 +3,8 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbitcontrols');
 const TWEEN = require('tween.js');
 
+import GLOverlay from './GLOverlay';
+
 import {signVerticesArray, signNormalsArray, signUvArray, arrowVerticesArray} from '../utils/utils';
 import {WheelLayout, SphereLayout, SphereClusterLayout, PrecomputedLayout} from '../utils/layout/index';
 import * as glUtils from '../utils/gl_utils';
@@ -52,8 +54,15 @@ class GLWrapper extends Component{
 			//is recomputed on scene/layout change and initial data injection
 			instances:[],
 
-			dragging:false
+			dragging:false,
+			cameraTransitioning:false,
+
+			fogFactor:0.000002 //fogFactor uniform for this.meshes.sign
 		};
+
+		//GL state
+		//Not part of this.state, as it will trigger too many calls to shouldComponentUpdate
+		this.rotation = 0;
 
 		//Shared GL assets
 		this.camera = null;
@@ -142,9 +151,15 @@ class GLWrapper extends Component{
 		this.tween = {};
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
 			.easing(TWEEN.Easing.Cubic.InOut)
+			.onStart(()=>{
+				this.setState({cameraTransitioning:true}); //hide overlay at the start
+			})
 			.onUpdate(()=>{
-				this.camera.lookAt(new THREE.Vector3(...cameraLookAt));
-			}); //Tweens camera position 
+				this.camera.lookAt(new THREE.Vector3(...cameraLookAt)); //Tweens camera position 
+			})
+			.onComplete(()=>{
+				this.setState({cameraTransitioning:false});
+			});
 		this.tween.updatePickedTarget = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
 			.easing(TWEEN.Easing.Cubic.Out); //Tweens meshes.pickedTarget
@@ -176,7 +191,7 @@ class GLWrapper extends Component{
 		}
 
 		//On scene change, restore to scene defaults: scene.cameraPosition, scene.ambientLight, scene.speed
-		if(this.props.scene.id !== scene.id){
+		if(this.props.scene !== scene){
 			this.tween.camera
 				.to({ x : scene.cameraPosition[0], y : scene.cameraPosition[1], z : scene.cameraPosition[2]}, 2000)
 				.start();
@@ -189,13 +204,16 @@ class GLWrapper extends Component{
 					.start();
 			}
 
-			this.setState({speed:typeof(scene.speed)==='undefined'?0:scene.speed});
+			this.setState({
+				speed:typeof(scene.speed)==='undefined'?0:scene.speed,
+				fogFactor:typeof(scene.fogFactor)==='undefined'?0.000002:scene.fogFactor
+			});
 		}
 
 		//On scene change or initial data injection, recompute per-instance transform for each sign again
-		if(this.props.scene.id !== scene.id 
-			|| nextProps.data.length !== this.props.data.length
-			|| nextProps.imagesToHighlight !== this.props.imagesToHighlight
+		if(this.props.scene !== scene 
+			|| data.length !== this.props.data.length
+			|| imagesToHighlight !== this.props.imagesToHighlight
 		){
 
 			let setPerInstanceProperties;
@@ -244,8 +262,8 @@ class GLWrapper extends Component{
 			//or resolved later (if sphereClusterLayout)
 			Promise.resolve(setPerInstanceProperties(data, imagesToHighlight, this.cancelToken))
 				.then(instances => {
-					this.setState({instances});
 					this.props.onLayoutEnd();
+					this.setState({instances});
 				}, err => {
 					console.log(err);
 					console.log('Layout is overriden and cancelled');
@@ -258,12 +276,26 @@ class GLWrapper extends Component{
 
 	shouldComponentUpdate(nextProps, nextState){
 
-		//Only update if props.width or props.height change, or this.state.instances changes
 		//Otherwise, skip re-render, and handle prop changes in the Three.js environment (via componentWillReceiveProps)
 		if(this.props.width !== nextProps.width 
 			|| this.props.height !== nextProps.height
 			|| this.state.instances !== nextState.instances
-			|| this.props.selectedImageId !== nextProps.selectedImageId){
+			|| this.state.dragging !== nextState.dragging
+			|| this.state.cameraTransitioning !== nextState.cameraTransitioning
+			|| this.props.selectedImageId !== nextProps.selectedImageId
+			|| this.props.scene !== nextProps.scene
+		){
+
+			//DEBUG
+			// console.group('GLWrapper:shouldComponentUpdate');
+			// if(this.props.width !== nextProps.width) console.log('Width changed');
+			// if(this.props.height !== nextProps.height) console.log('Height changed');
+			// if(this.state.instances !== nextState.instances) console.log('Instances changed');
+			// if(this.state.dragging !== nextState.dragging) console.log('dragging changed');
+			// if(this.props.selectedImageId !== nextProps.selectedImageId) console.log('selectedImageId changed');
+			// if(this.props.scene !== nextProps.scene) console.log('scene changed');
+			// console.groupEnd();
+
 			return true;
 		}else{
 			return false;
@@ -292,8 +324,12 @@ class GLWrapper extends Component{
 		}
 
 		//Show or hide selected image based on props.selectedImageId and state.instances
+		//TODO: dragging state change should trigger this._showSelectedImage
 		if(selectedImageId){
-			if(selectedImageId !== prevProps.selectedImageId || this.state.instances !== prevState.instances){
+			if(selectedImageId !== prevProps.selectedImageId 
+				|| this.state.instances !== prevState.instances
+				//|| this.state.dragging !== prevState.dragging
+			){
 				this._showSelectedImage(selectedImageId);
 			}
 		}else if(prevProps.selectedImageId){
@@ -326,7 +362,7 @@ class GLWrapper extends Component{
 	onMouseDown(e){
 
 		//Dragging starts
-		this.setState({dragging:false});
+		this.setState({dragging:true});
 
 	}
 
@@ -431,7 +467,7 @@ class GLWrapper extends Component{
 	_initMeshes(){
 
 		//Initialize dynamic meshes (sign and arrow)
-		const {instances, light} = this.state;
+		const {instances, light, fogFactor} = this.state;
 		const COUNT = instances.length;
 
 		//Map this.props.sprite to this.meshes.pickedTarget
@@ -468,7 +504,7 @@ class GLWrapper extends Component{
 		let material = this.material.clone();
 		material.uniforms.uUseTexture.value = true;
 		material.uniforms.map.value = this.props.sprite; //this.texture;
-		material.uniforms.uFogFactor.value = .000003;
+		material.uniforms.uFogFactor.value = fogFactor;
 		material.uniforms.uUseLighting.value = true;
 		material.uniforms.uUseHighlight.value = true;
 		//material.blending = THREE.AdditiveBlending;
@@ -536,10 +572,7 @@ class GLWrapper extends Component{
 
 	_updateMeshes(){
 
-		console.log("Update meshes");
-
-		//Called when this.state.instances is updated, 
-		const {instances} = this.state;
+		const {instances,fogFactor} = this.state;
 		const COUNT = instances.length;
 		const {instanceHighlightBool0, instanceHighlightBool1} = this.meshes.signs.geometry.attributes;
 		const arrowInstanceColors = this.meshes.arrows.geometry.attributes.instanceColor;
@@ -571,6 +604,13 @@ class GLWrapper extends Component{
 				}
 				instanceHighlightBool0.needsUpdate = true;
 			});
+
+		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
+		this.tween.fog
+			.onUpdate(v=>{
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*fogFactor + (1-v)*currentFogFactor;
+			})
+			.start();
 	}
 
 	_showSelectedImage(id){
@@ -662,6 +702,9 @@ class GLWrapper extends Component{
 				glUtils.updateTransformMatrices(pickedTarget, m0, m1, 0);
 				pickedTarget.visible = true;
 
+				//On camera tween complete, show overlay again
+				this.setState({cameraTransitioning:false});
+
 			})
 			.chain(this.tween.updatePickedTarget)
 			.start();
@@ -672,7 +715,7 @@ class GLWrapper extends Component{
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
 		this.tween.fog
 			.onUpdate(v=>{
-				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00003 + (1-v)*currentFogFactor;
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.00004 + (1-v)*currentFogFactor;
 			})
 			.start();
 
@@ -682,6 +725,8 @@ class GLWrapper extends Component{
 
 		const _instance = this.state.instances.filter(v=>v.id===id)[0];
 		if(!_instance) return;
+
+		const {fogFactor} = this.state;
 
 		//Hide this.meshes.pickedTarget		
 		const s1 = new THREE.Vector3();
@@ -708,14 +753,16 @@ class GLWrapper extends Component{
 				y: y/currentCameraDist*targetCameraDist, 
 				z: z/currentCameraDist*targetCameraDist}, 2000)
 			.chain(this.tween.foo) //No op
-			.onComplete(()=>{ /* No op */})
+			.onComplete(()=>{
+				this.setState({cameraTransitioning:false});
+			})
 			.start();
 
 		//Decrease uFogFactor 
 		const currentFogFactor = this.meshes.signs.material.uniforms.uFogFactor.value;
 		this.tween.fog
 			.onUpdate(v=>{
-				this.meshes.signs.material.uniforms.uFogFactor.value = v*0.000003 + (1-v)*currentFogFactor;
+				this.meshes.signs.material.uniforms.uFogFactor.value = v*fogFactor + (1-v)*currentFogFactor;
 			})
 			.start();
 
@@ -749,6 +796,7 @@ class GLWrapper extends Component{
 	_animate(delta){
 
 		if(this.meshes.signs){
+			this.rotation -= this.state.speed;
 			this.meshes.signs.rotation.x -= this.state.speed;
 			this.meshes.signsPicking.rotation.x -= this.state.speed;
 			this.meshes.arrows.rotation.x -= this.state.speed;
@@ -765,22 +813,33 @@ class GLWrapper extends Component{
 
 	render(){
 
-		const {width,height} = this.props;
+		const {width,height,scene} = this.props;
+		const {instances, dragging, cameraTransitioning} = this.state;
 
 		return (
-			<div className='gl-wrapper'
-				style={{
-					position:'fixed',
-					width, height,
-					top:0,
-					zIndex:-998
-				}}
-				ref={(node)=>{this.wrapperNode=node}}
-				onMouseDown={this.onMouseDown}
-				onMouseUp={this.onMouseUp}
-				onMouseMove={this.onMouseMove}
-				onClick={this.onClick}
-			>
+			<div className = 'gl-wrapper'>
+				{scene.showOverlay&&<GLOverlay
+					width={width}
+					height={height}
+					dragging={dragging}
+					cameraTransitioning={cameraTransitioning}
+					instances={instances}
+					rotation={this.rotation}
+					camera={this.camera}
+				/>}
+				<div className='gl-canvas'
+					style={{
+						position:'fixed',
+						width, height,
+						top:0,
+						zIndex:-998
+					}}
+					ref={(node)=>{this.wrapperNode=node}}
+					onMouseDown={this.onMouseDown}
+					onMouseUp={this.onMouseUp}
+					onMouseMove={this.onMouseMove}
+					onClick={this.onClick}
+				/>
 			</div>
 		);
 	}

@@ -184,14 +184,15 @@ class App extends Component{
 		const sceneSetting = this.props.scenes[currentScene];
 
 		console.groupCollapsed('App:re-render');
-		console.log(this.state.images);
+		// console.log(this.state.images);
 		// console.log(`App:render:${new Date()}`);
-		// console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
+		console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
 		// console.log(selectedImageMetadata);
-		// console.log(selectedImageId);
+		console.log(selectedImageId);
 		// console.log(images[selectedImageIndex]);
-		console.log(imagesToHighlight);
-		console.log(`currentScene:${currentScene}`);
+		// console.log(imagesToHighlight);
+		// console.log(`currentScene:${currentScene}`);
+		// console.log(`layout computing:${layoutComputing}`);
 		console.groupEnd();
 
 		//Compute next and prev randomized id to navigate to
@@ -269,28 +270,31 @@ App.defaultProps = {
 			speed:0.001, //optional
 			ambientLight: [0.0,0.0,.1,1.0]
 		},
-		{
-			id:'cluster',
-			desc:'Cluster',
-			cameraPosition: [0,0,850],
-			layout: 'sphereCluster',
-			layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
-			ambientLight: [1.0,1.0,1.0,1.0]
-		},
+		// {
+		// 	id:'cluster',
+		// 	desc:'Cluster',
+		// 	cameraPosition: [0,0,850],
+		// 	layout: 'sphereCluster',
+		// 	layoutGroupBy: (v,i) => (Math.floor(Math.random()*4)), //FIXME: dummy nesting
+		// 	ambientLight: [1.0,1.0,1.0,1.0]
+		// },
 		{
 			id:'tsne-3d',
 			desc:'3D TSNE',
 			cameraPosition: [0,0,1500],
 			layout: 'tsne',
 			dataSource:'/assets/3dtsne.csv',
-			ambientLight: [0.0,0.0,.1,1.0]
+			ambientLight: [0.0,0.0,.1,1.0],
+			fogFactor:0.0000005,
+			showOverlay:true
 		},
 		{
 			id:'browse', //last scene contains facet browser
 			desc:'Facet browse',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
-			ambientLight: [0.0,0.0,.1,1.0]
+			ambientLight: [0.0,0.0,.1,1.0],
+			showOverlay:true
 		}
 	],
 	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']
