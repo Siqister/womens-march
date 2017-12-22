@@ -31,7 +31,7 @@ export default class extends Component{
 	render(){
 
 		const {data, accessor, name, onFilter, keys} = this.props;
-		const {values} = this.state;
+		const {values} = this.state; 
 		const countByKey = nest().key(accessor).rollup(l => l.length).map(data);
 
 		return	<ToolbarGroup style={{margin:'0 5px'}} className='dimension categorical'>

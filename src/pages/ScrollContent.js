@@ -18,6 +18,7 @@ const ScrollContent = props => {
 			key={v.id}
 		>
 			{(i===lastScene)&&<FacetBrowser 
+				colors={props.colors}
 				data={props.data}
 				dimensions={dimensions}
 				onFilter={ids => { props.onFilter(ids); }}

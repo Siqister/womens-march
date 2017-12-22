@@ -7,7 +7,8 @@ const Scene = props => {
 			style={{
 				height:props.height?props.height:'auto',
 				pointerEvents:'none',
-				position:'relative'
+				position:'relative',
+				overflow:'hidden'
 			}}
 			id={props.id}
 		>

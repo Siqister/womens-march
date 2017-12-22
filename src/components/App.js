@@ -190,7 +190,7 @@ class App extends Component{
 		// console.log(selectedImageMetadata);
 		console.log(selectedImageId);
 		// console.log(images[selectedImageIndex]);
-		// console.log(imagesToHighlight);
+		console.log(imagesToHighlight);
 		// console.log(`currentScene:${currentScene}`);
 		// console.log(`layout computing:${layoutComputing}`);
 		console.groupEnd();
@@ -297,7 +297,7 @@ App.defaultProps = {
 			showOverlay:true
 		}
 	],
-	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)']
+	colors:['rgb(240,240,240)', 'rgb(180,180,180)', 'rgb(80,80,80)', 'rgb(30,30,30)']
 };
 
 export default App;

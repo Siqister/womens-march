@@ -1,38 +1,41 @@
 import React, {Component} from 'react';
 const crossfilter = require('crossfilter');
-import {nest, extent} from 'd3';
-import {Toolbar} from 'material-ui/Toolbar';
+import {nest} from 'd3';
+import {CategoricalDimension} from './Dimension';
+import {MobilePortrait, Default} from '../Responsive';
 
-import {CategoricalDimension, ContinuousDimension} from './Dimension';
+const facetBrowserStatusStyle = {
+	position:'absolute',
+	padding:'10px 15px',
+	top:0,
+	transform:'translate(0,-100%)',
+	fontSize:'16px',
+}
 
 const facetBrowserStyle = {
 	width:'100%',
-	height:100,
+	height:70,
 	position:'absolute',
 	bottom:0,
-	pointerEvents:'all'
-}
+	pointerEvents:'all',
+	display:'flex'
+};
 
-const toolBarStyle = {
-	justifyContent:'none',
-	background:'none'
-}
-
-export default class FacetBrowser extends Component{
+export default class extends Component{
 
 	constructor(props){
 
 		super(props);
 
 		this.state = {
-			filteredData:[]
-		};
+			filteredData:[...props.data]
+		}
 
-		//Initialize crossfilter and crossfilter dimensions
+		//Initialize crossfilter with props.data
 		this.cf = crossfilter(props.data);
 		this.cfDimensions = {};
-		props.dimensions.forEach(d=>{
-			this.cfDimensions[d.name] = this.cf.dimension(d.accessor);
+		props.dimensions.forEach(dimension => {
+			this.cfDimensions[dimension.name] = this.cf.dimension(dimension.accessor);
 		});
 
 		this._renderDimension = this._renderDimension.bind(this);
@@ -42,8 +45,8 @@ export default class FacetBrowser extends Component{
 	componentWillReceiveProps(nextProps){
 
 		if(nextProps.data !== this.props.data){
-			//FIXME: doesn't deal with incremental data addtiions
-			this.cf.add(nextProps.data); 
+			//TODO: this doesn't deal with incremental addition of data
+			this.cf.add(nextProps.data);
 			this.setState({
 				filteredData:[...nextProps.data]
 			});
@@ -80,10 +83,6 @@ export default class FacetBrowser extends Component{
 			filteredData:[...filteredData]
 		});
 
-		//TODO
-		//Filter for continuous values
-
-		//Callback
 		this.props.onFilter(filteredData.map(d => d.id));
 
 	}
@@ -92,20 +91,12 @@ export default class FacetBrowser extends Component{
 
 		switch(d.type){
 			case 'continuous':
-				const ext = extent(this.props.data, d.accessor);
-				return <ContinuousDimension
-					name={d.name}
-					accessor={d.accessor}
-					data={this.state.filteredData}
-					onFilter={this._onFilter.bind(this, d.name, d.type)}
-					extent={ext}
-					key={i}
-				/>
 			case 'single':
 			case 'multiple':
 			default:
 				let keys = nest().key(d.accessor).entries(this.props.data).map(d=>d.key);
 				return <CategoricalDimension
+					colors={this.props.colors}
 					name={d.name}
 					accessor={d.accessor}
 					data={this.state.filteredData}
@@ -117,17 +108,57 @@ export default class FacetBrowser extends Component{
 
 	}
 
+	_toggleDimensions(e){
+
+		//
+
+	}
+
 	render(){
 
-		return (<div className='facet-browser-wrapper' style={facetBrowserStyle}>
-			<div className='facet-browser-inner' style={{padding:'0 60px'}}>
-				<Toolbar style={toolBarStyle} className='clearfix'>
+		const {data,colors} = this.props;
+		const {filteredData} = this.state;
+		const highlightingAll = data.length === filteredData.length;
+
+		return <div>
+			<Default>
+				<div  
+					className='facet-browser' 
+					style={facetBrowserStyle}
+				>
+					<div
+						className='facet-browser-status'
+						style={Object.assign({}, facetBrowserStatusStyle, {color:colors[1]})}
+					>
+						Highlighting <span className='label' style={{background:highlightingAll?colors[2]:'rgb(237,12,110)'}}>{highlightingAll?'all':filteredData.length}</span> signs
+					</div>
 					{this.props.dimensions.map(this._renderDimension)}
-				</Toolbar>
-			</div>
-		</div>)
+				</div>
+			</Default>
+			<MobilePortrait>
+				<div  
+					className='facet-browser' 
+					style={facetBrowserStyle}
+				>
+					<div
+						className='facet-browser-status'
+						style={Object.assign({}, facetBrowserStatusStyle, {
+							color:colors[1],
+							left:'50%',
+							top:'50%',
+							transform:'translate(-50%,-50%)',
+							cursor:'pointer',
+							background:colors[3],
+							borderRadius:'1em'
+						})}
+						onClick={this._toggleDimensions}
+					>
+						<span className='label' style={{background:highlightingAll?colors[2]:'rgb(237,12,110)'}}>{highlightingAll?'all':filteredData.length}</span> signs
+					</div>
+				</div>
+			</MobilePortrait>
+		</div>
 
 	}
 
 }
-
