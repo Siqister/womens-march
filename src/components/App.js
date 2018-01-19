@@ -204,6 +204,7 @@ class App extends Component{
 				<Banner colors={this.props.colors} />
 				<ScrollContent 
 					colors={this.props.colors}
+					width={width}
 					height={height}
 					scenes={this.props.scenes}
 					data={images}
@@ -254,17 +255,17 @@ class App extends Component{
 App.defaultProps = {
 	scenes:[
 		{
-			id:'scene-1', //Required, must be unique
-			desc:'Scene 1',
-			cameraPosition: [2000, 0, 2000], //Required, camera position
+			id:'init', //Required, must be unique
+			desc:'',
+			cameraPosition: [2500, 0, 3000], //Required, camera position
 			layout: 'wheel', //Optional
 			layoutGroupBy: null, //Optional
 			speed:0.001, //optional
 			ambientLight: [0.0,0.0,.1,1.0] //Required, ambient light for this scene
 		},
 		{
-			id:'scene-2', 
-			desc:'Scene 2',
+			id:'see-all-signs', 
+			desc:'See all signs',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			speed:0.001, //optional
@@ -279,8 +280,8 @@ App.defaultProps = {
 		// 	ambientLight: [1.0,1.0,1.0,1.0]
 		// },
 		{
-			id:'tsne-3d',
-			desc:'3D TSNE',
+			id:'clusters',
+			desc:'How the signs relate to each other',
 			cameraPosition: [0,0,1500],
 			layout: 'tsne',
 			dataSource:'/assets/3dtsne.csv',
@@ -290,7 +291,7 @@ App.defaultProps = {
 		},
 		{
 			id:'browse', //last scene contains facet browser
-			desc:'Facet browse',
+			desc:'Browse by sign attributes (coming soon)',
 			cameraPosition: [0,0,800],
 			layout: 'sphere',
 			ambientLight: [0.0,0.0,.1,1.0],

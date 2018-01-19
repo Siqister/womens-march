@@ -52,8 +52,26 @@ html,body{
 
 /*Intro*/
 .intro p{
-	margin:0 0 15px;
+	margin:0 0 20px;
 }
 
+.intro .lead{
+	margin:0 0 25px;
+	font-size:1.4em;
+	font-family:Arnheim;
+	font-weight:bold;
+}
+
+/* fonts */
+@font-face{
+	font-family:Chronicle;
+	font-weight:bold;
+	src:url('../fonts/ChronicleDisp-Semibold.otf');
+}
+@font-face{
+	font-family:Arnheim;
+	font-weight:normal;
+	src:url('../fonts/ArnhemPro-SemiBold.otf');
+}
 
 

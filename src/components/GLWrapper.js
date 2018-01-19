@@ -152,13 +152,13 @@ class GLWrapper extends Component{
 		this.tween.camera = new TWEEN.Tween(this.camera.position)
 			.easing(TWEEN.Easing.Cubic.InOut)
 			.onStart(()=>{
-				this.setState({cameraTransitioning:true}); //hide overlay at the start
+				//this.setState({cameraTransitioning:true}); //hide overlay at the start
 			})
 			.onUpdate(()=>{
 				this.camera.lookAt(new THREE.Vector3(...cameraLookAt)); //Tweens camera position 
 			})
 			.onComplete(()=>{
-				this.setState({cameraTransitioning:false});
+				//this.setState({cameraTransitioning:false});
 			});
 		this.tween.updatePickedTarget = new TWEEN.Tween({x:0})
 			.to({x:1}, 500)
@@ -305,7 +305,6 @@ class GLWrapper extends Component{
 
 	componentDidUpdate(prevProps, prevState){
 
-		//Component is updated only after changes to props.width, props.height, or state.instances (re-layout)
 		const {width, height, selectedImageId} = this.props;
 
 		//Given new props.width and props.height, update camera and off-camera texture
@@ -703,7 +702,7 @@ class GLWrapper extends Component{
 				pickedTarget.visible = true;
 
 				//On camera tween complete, show overlay again
-				this.setState({cameraTransitioning:false});
+				//this.setState({cameraTransitioning:false});
 
 			})
 			.chain(this.tween.updatePickedTarget)
@@ -754,7 +753,7 @@ class GLWrapper extends Component{
 				z: z/currentCameraDist*targetCameraDist}, 2000)
 			.chain(this.tween.foo) //No op
 			.onComplete(()=>{
-				this.setState({cameraTransitioning:false});
+				//this.setState({cameraTransitioning:false});
 			})
 			.start();
 

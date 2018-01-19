@@ -43,7 +43,7 @@ class GLOverlay extends Component{
 			//sign instances have been re-laid out
 			//Pick any random 5 to highlight
 			const length = nextProps.instances.length;
-			const highlight = Array.from({length:5}).map(v => {
+			const highlight = Array.from({length:10}).map(v => {
 				const instance = nextProps.instances[Math.floor(Math.random()*length)];
 
 				fetchMetadata(instance.filename)
@@ -51,7 +51,7 @@ class GLOverlay extends Component{
 					.then(metadata => {
 						const {highlightMetadata} = this.state;
 						this.setState({
-							highlightMetadata: Object.assign({},highlightMetadata,{[metadata.filename]:metadata.text[0]})
+							highlightMetadata: Object.assign({},highlightMetadata,{[metadata.filename]:metadata.mText || ''})
 						});
 					});
 

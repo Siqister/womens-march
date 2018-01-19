@@ -28,7 +28,12 @@ const ScrollContent = props => {
 
 	return <div className='scroll-content' style={{pointerEvents:'none'}}>
 		<Scene id='intro'>
-			<Intro colors={props.colors}/>
+			<Intro 
+				colors={props.colors}
+				width={props.width}
+				height={props.height}
+				initialDataLoaded={props.initialDataLoaded}
+			/>
 		</Scene>
 		{props.initialDataLoaded&&vizStateScenes /*Only render scenes if image data is injected*/}
 	</div>
