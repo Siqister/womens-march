@@ -39,15 +39,15 @@ const Intro = props => {
 	return (
 		<div className='intro' style={{minHeight:props.height}}>
 			<div className='intro-cover' style={Object.assign({}, coverStyle, {height:props.height})}>
-				<iframe 
-					src="https://player.vimeo.com/video/200573710?autoplay=1" 
+{/*				<iframe 
+					src="https://player.vimeo.com/video/247390294?autoplay=1" 
 					width={props.width-40} 
 					height={props.height-40} 
 					frameBorder="0" 
 					webkitallowfullscreen mozallowfullscreen allowfullscreen
 					style={iframeStyle}
 				/>
-			</div>
+*/}			</div>
 			<div className='container intro-content'>
 				<div className='col-md-6 col-md-offset-3'>
 					<div className='intro-text-block' style={style}>

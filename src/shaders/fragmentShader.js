@@ -29,7 +29,7 @@ const fragmentShaderText = `
 			//For signs and mouse target
 			vec4 textureColor = texture2D(map, vec2(vUv.x, vUv.y));
 			vec3 rgb = (textureColor * vColor * vLightWeighting).rgb;
-			float average = (rgb.r + rgb.g + rgb.b)/6.0;
+			float average = (rgb.r + rgb.g + rgb.b)/9.0;
 			vec3 greyscale = vec3(average, average, average);
 
 			if(uUseHighlight){

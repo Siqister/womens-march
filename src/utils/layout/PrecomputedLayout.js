@@ -18,7 +18,7 @@ export default class PrecomputedLayout extends Layout{
 	compute(data, imagesToHighlight=[]){
 
 		//Merge data and imagesToHighlight
-		const imageMap = data.reduce((acc,val)=>{
+		const imageMap = data.reduce((acc,val) => {
 			if(!acc[val.id]) acc[val.id] = Object.assign({},val);
 			return acc;
 		},{});
