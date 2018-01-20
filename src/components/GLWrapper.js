@@ -125,14 +125,15 @@ class GLWrapper extends Component{
 				//orientation
 				uOrientation:{value:new THREE.Vector4(0.0,0.0,1.0,0.0)},
 				//boolean flags to determine how vertices are treated
-				uUsePickingColor:{value:false},
+				uUsePerInstanceColor:{value:false},
+				uUseFogAtten:{value:true},
 				uUseTexture:{value:false},
 				uUseOrientation:{value:false},
 				uUseLighting:{value:false},
 				uUseHighlight:{value:false}, //differentiate between highlighted and unhighlighted signs
 				//sprite
 				map:{value:null},
-				//for interpolating between source and target transform matrices
+				//for interpolating between source and target attribute values
 				uInterpolateTransform:{value:0.0}
 			},
 			vertexShader:vertexShader,
@@ -518,9 +519,9 @@ class GLWrapper extends Component{
 		glUtils.initTransformMatrixAttrib(arrowsGeometry, COUNT); //Initialize per instance transform mat4 instancedBufferAttribute
 		//RawShaderMaterial
 		material = this.material.clone();
-		//material.uniforms.uColor.value = new THREE.Vector4(.8,.8,.6,1.0)//new THREE.Vector4(237/255,12/255,110/255,1.0);
 		material.uniforms.uFogFactor.value = 0.000005;
-		material.uniforms.uUsePickingColor.value = true;
+		material.uniforms.uUseFogAtten.value = false;
+		material.uniforms.uUsePerInstanceColor.value = true;
 		material.blending = THREE.AdditiveBlending;
 		//Mesh
 		this.meshes.arrows = new THREE.Mesh(arrowsGeometry,material);
@@ -528,7 +529,8 @@ class GLWrapper extends Component{
 
 		//---this.meshes.signsPicking---
 		material = this.material.clone();
-		material.uniforms.uUsePickingColor.value = true;
+		material.uniforms.uUsePerInstanceColor.value = true;
+		material.uniforms.uUseFogAtten.value = false;
 		this.meshes.signsPicking = new THREE.Mesh(geometry,material);
 
 
@@ -576,9 +578,9 @@ class GLWrapper extends Component{
 		const {instanceHighlightBool0, instanceHighlightBool1} = this.meshes.signs.geometry.attributes;
 		const arrowInstanceColors = this.meshes.arrows.geometry.attributes.instanceColor;
 
-		//Populate attributes with value
+		//Populate target attribute value
 		for(let i=0; i<COUNT; i++){
-			const {transformMatrixSign, transformMatrixArrow, highlight, arrowColor} = instances[i];
+			const {transformMatrixSign, transformMatrixArrow, highlight, arrowColor, clusterColor:clusterColorValue} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
@@ -589,6 +591,8 @@ class GLWrapper extends Component{
 		instanceHighlightBool1.needsUpdate = true;
 		arrowInstanceColors.needsUpdate = true;
 
+		//Interpolate towards target attribute value
+		//On completion, update initial attribute value to old target attribute value
 		this.tween.updateMeshes
 			.start()
 			.onComplete(()=>{

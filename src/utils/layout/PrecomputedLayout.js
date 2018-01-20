@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {map, scaleLinear} from 'd3';
+import {map, scaleLinear, extent} from 'd3';
 import {fetchLayout} from '../utils';
 import Layout from './Layout';
 
@@ -12,6 +12,9 @@ export default class PrecomputedLayout extends Layout{
 		this.src = null;
 		this.compute = this.compute.bind(this);
 		this.computeInstance = this.computeInstance.bind(this);
+		this.scaleColorR = scaleLinear().range([1,254]).clamp(true);
+		this.scaleColorG = scaleLinear().range([1,254]).clamp(true);
+		this.scaleColorB = scaleLinear().range([1,254]).clamp(true);
 
 	}
 
@@ -33,6 +36,11 @@ export default class PrecomputedLayout extends Layout{
 				const coordinatesMap = map(res, d => d.id);
 				//Mine for max distance from center
 				const maxDistance = Math.max(...res.map(d => Math.sqrt(d.x*d.x+d.y*d.y+d.z*d.z)));
+				//Configure scales
+				this.scaleColorR.domain(extent(res, d => d.x));
+				this.scaleColorG.domain(extent(res, d => d.y));
+				this.scaleColorB.domain(extent(res, d => d.z));
+
 				return {res, coordinatesMap, maxDistance};
 			})
 			.then(({coordinatesMap, maxDistance}) => 
@@ -67,7 +75,7 @@ export default class PrecomputedLayout extends Layout{
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
 
 		//Arrow
-		this.position.set(v.x,v.y+10,v.z);
+		this.position.set(v.x,v.y+10,v.z+10);
 		this.scale.set(5,5,v.highlight?14:7);
 		this.transformMatrixArrow.compose(this.position, new THREE.Quaternion().setFromAxisAngle(this.X_AXIS, Math.PI/2), this.scale);
 
@@ -81,8 +89,7 @@ export default class PrecomputedLayout extends Layout{
 			_transformMatrixSign: this.transformMatrixSign.clone(), //permanent record
 			_transformMatrixArrow: this.transformMatrixArrow.clone(), //permanent record
 			pickingColor: this.color.clone().setHex(i),
-			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(0,160,172)'),
-			//clusterColor: v.highlight?new THREE.Color('rgb(255,255,255)'):new THREE.Color('rgb(255,255,50)'),
+			arrowColor: new THREE.Color(`rgb(${Math.floor(this.scaleColorR(v.x))}, ${Math.floor(this.scaleColorG(v.y))}, ${Math.floor(this.scaleColorB(v.z))})`),
 			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
 			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
 		};

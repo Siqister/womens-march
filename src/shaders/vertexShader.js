@@ -24,7 +24,7 @@ const vertexShaderText = `
 	uniform mat3 normalMatrix;
 
 	//Uniforms: boolean flags
-	uniform bool uUsePickingColor;
+	uniform bool uUsePerInstanceColor;
 	uniform bool uUseTexture;
 	uniform bool uUseOrientation;
 	uniform bool uUseLighting;
@@ -74,10 +74,10 @@ const vertexShaderText = `
 		gl_Position = projectionMatrix * mvPosition;
 
 		//Per instance color
-		if(uUsePickingColor){
-			vColor = instanceColor; //per instance color, for arrows & off-canvas picking texture
+		if(uUsePerInstanceColor){
+			vColor = instanceColor; //unique per instance color, for arrows & off-canvas picking texture
 		}else{
-			vColor = uColor; //a uniform "tinting color", white by default
+			vColor = uColor;
 		}
 
 		//Directional lighting

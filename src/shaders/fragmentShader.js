@@ -2,7 +2,7 @@ const fragmentShaderText = `
 	precision mediump float;
 
 	uniform float uFogFactor;
-	uniform bool uUsePickingColor;
+	uniform bool uUseFogAtten;
 	uniform bool uUseTexture;
 	uniform bool uUseHighlight;
 
@@ -18,7 +18,7 @@ const fragmentShaderText = `
 		//Fog attenuation
 		float atten = 1.0/(1.0 + uFogFactor * dot(vVertexPosition, vVertexPosition));
 
-		if(uUsePickingColor){
+		if(!uUseFogAtten){
 
 			//For off-canvas picking texture
 			//No fog attenuation, no texture; output per instance color directly

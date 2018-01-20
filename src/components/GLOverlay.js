@@ -24,15 +24,16 @@ class GLOverlay extends Component{
 			highlightMetadata:{}
 		}
 
-		this.scaleR = scaleLinear().range([10,50]).domain([1000,100]).clamp(true);
-		this.scaleFontSize = scaleLinear().range([10,30]).domain([1000,100]).clamp(true);
-		this.scaleOpacity = scaleLinear().range([0.5,1]).domain([1000,200]).clamp(true);
+		this.scaleR = scaleLinear().range([15,40]).domain([1000,100]).clamp(true);
+		this.scaleFontSize = scaleLinear().range([10,25]).domain([1000,100]).clamp(true);
+		this.scaleOpacity = scaleLinear().range([0.3,0.8]).domain([1000,200]).clamp(true);
 
 	}
 
 	componentDidMount(){
 
 		this.ctx = this.canvasNode.getContext('2d');
+		this.ctx.globalCompositeOperation = 'screen';
 		this._redraw();
 
 	}
@@ -93,22 +94,27 @@ class GLOverlay extends Component{
 			const screenY = height/2 - clipY*height/2;
 
 			const {r,g,b} = d.arrowColor;
-			const color = `rgba(${r*255},${g*255},${b*255},${this.scaleOpacity(distToCamera)}`;
 
-			this.ctx.strokeStyle = color;
-			this.ctx.fillStyle = color;
+			this.ctx.strokeStyle = `rgba(${r*255},${g*255},${b*255},.8)`;
+			this.ctx.lineWidth = 2;
 			this.ctx.beginPath();
 			this.ctx.moveTo(screenX+radius,screenY);
 			this.ctx.arc(screenX, screenY, radius, 0, Math.PI*2);
-			this.ctx.moveTo(screenX+3,screenY);
-			this.ctx.arc(screenX, screenY, 3, 0, Math.PI*2);
 			this.ctx.closePath();
 			this.ctx.stroke();
+
+			this.ctx.fillStyle = `rgba(255,255,255,${this.scaleOpacity(distToCamera)})`;
+			this.ctx.strokeStyle = `rgba(255,255,255,${this.scaleOpacity(distToCamera)})`;
+			this.ctx.beginPath();
+			this.ctx.moveTo(screenX+2,screenY);
+			this.ctx.arc(screenX, screenY, 2, 0, Math.PI*2);
+			this.ctx.closePath();
+			this.ctx.fill();
 
 			//text
 			const text = this.state.highlightMetadata[d.filename];
 			this.ctx.font = `${this.scaleFontSize(distToCamera)}px sans-serif`;
-			this.ctx.fillText(text, screenX, screenY);
+			this.ctx.fillText(text, screenX+4, screenY+this.scaleFontSize(distToCamera)/2);
 		});
 
 	}
