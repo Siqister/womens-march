@@ -49,21 +49,37 @@ class App extends Component{
 			height: this.appNode.clientHeight
 		});
 
-		//Request initial data, which includes large sprite and layout data...
+		//Request initial data, which includes small 2048 sprite and corresponding texture coord data...
 		//...on data request complete, update state and trigger re-render
-		Promise.all([fetchImageList(), fetchSprite()])
+		Promise.all([fetchImageList('/assets/all_images_2048.json'), fetchSprite('/assets/all_images_2048.png')])
 			.then(([data,texture]) => {
 
+				const imageData = [...data];
+				imageData.size = 2048;
 				const {images, imagesToHighlight} = this.state;
 				this.setState({
-					images:[...images, ...data],
+					images:imageData,
 					imagesToHighlight:[...imagesToHighlight, ...data.map(d => d.id)],
 					sprite:texture,
 					currentScene:0,
 					initialDataLoaded:true
 				});
 
+				//If initial <App> mount comes with image already selected
 				this._loadSelectedImageMetadata(this.state.selectedImageId);
+
+				//Once small sprite is loaded, load large 8192 sprite and corresponding texture coord data...
+				Promise.all([fetchImageList('/assets/all_images.json'), fetchSprite('/assets/all_images_sprite_4096.png')])
+					.then(([data,texture]) => {
+
+						const imageData = [...data];
+						imageData.size = 8192;
+						this.setState({
+							images:imageData,
+							sprite:texture
+						});
+
+					});
 
 			});
 
@@ -187,7 +203,7 @@ class App extends Component{
 		// console.log(this.state.images);
 		// console.log(`App:render:${new Date()}`);
 		console.log('textureLoading / metadataLoading / layoutComputing: '+ this.state.textureLoading + ' / ' + this.state.metadataLoading + '/ ' + this.state.layoutComputing);
-		// console.log(selectedImageMetadata);
+		console.log(selectedImageMetadata);
 		console.log(selectedImageId);
 		// console.log(images[selectedImageIndex]);
 		console.log(imagesToHighlight);

@@ -114,7 +114,7 @@ export default class SphereClusterLayout extends Layout{
 		this.up.set(Math.random()*.6-.3, 1, 0).normalize();
 		rotationMat4.lookAt(this.position, this.CENTER, this.up);
 		
-		this.scale.set(frame.w/8, frame.h/8, 10);
+		this.scale.set(frame.w/4, frame.h/4, 10);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
 		this.transformMatrixSign.multiply(rotationMat4);
 
@@ -131,9 +131,8 @@ export default class SphereClusterLayout extends Layout{
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
 			pickingColor: this.color.clone().setHex(i),
-			//clusterColor: new THREE.Color(this.clusterColorScale(cluster)),
-			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
-			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
+			textureUvOffset: [(frame.x+2)/2048, (frame.y+2)/2048], //FIXME: hardcoded
+			textureUvSize: [(frame.w-4)/2048, (frame.h-4)/2048] //FIXME: hardcoded
 		};
 
 	}

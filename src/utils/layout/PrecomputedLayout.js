@@ -20,6 +20,8 @@ export default class PrecomputedLayout extends Layout{
 
 	compute(data, imagesToHighlight=[]){
 
+		this.spriteSize = data.size;
+
 		//Merge data and imagesToHighlight
 		const imageMap = data.reduce((acc,val) => {
 			if(!acc[val.id]) acc[val.id] = Object.assign({},val);
@@ -71,8 +73,10 @@ export default class PrecomputedLayout extends Layout{
 		//Sign
 		const scaleFactor = v.highlight?1.5:1; //scale highlighted images up
 		this.position.set(v.x,v.y,v.z);		
-		this.scale.set(frame.w/8*scaleFactor, frame.h/8*scaleFactor, 10*scaleFactor);
+		this.scale.set(frame.w/(this.spriteSize/8192*8)*scaleFactor, frame.h/(this.spriteSize/8192*8)*scaleFactor, 10*scaleFactor);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
+
+		const signScale = this.scale.clone();
 
 		//Arrow
 		this.position.set(v.x,v.y+10,v.z+10);
@@ -81,17 +85,19 @@ export default class PrecomputedLayout extends Layout{
 
 		return {
 			id:v.id,
+			frame:v.frame,
 			filename:v.filename,
 			xyz:[v.x, v.y, v.z],
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),
+			scaleVec3: signScale,
 			_transformMatrixSign: this.transformMatrixSign.clone(), //permanent record
 			_transformMatrixArrow: this.transformMatrixArrow.clone(), //permanent record
 			pickingColor: this.color.clone().setHex(i),
 			arrowColor: new THREE.Color(`rgb(${Math.floor(this.scaleColorR(v.x))}, ${Math.floor(this.scaleColorG(v.y))}, ${Math.floor(this.scaleColorB(v.z))})`),
-			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
-			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
+			textureUvOffset: [(frame.x+(this.spriteSize/2048/2))/this.spriteSize, (frame.y+(this.spriteSize/2048/2))/this.spriteSize], //FIXME: hardcoded
+			textureUvSize: [(frame.w-this.spriteSize/2048)/this.spriteSize, (frame.h-this.spriteSize/2048)/this.spriteSize] //FIXME: hardcoded
 		};
 
 	}

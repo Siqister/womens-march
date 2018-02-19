@@ -44,8 +44,8 @@ export default class extends Component{
 
 	componentWillReceiveProps(nextProps){
 
-		if(nextProps.data !== this.props.data){
-			//TODO: this doesn't deal with incremental addition of data
+		//TODO: this doesn't deal with incremental addition of data very well
+		if(nextProps.data.length !== this.props.data.length){
 			this.cf.add(nextProps.data);
 			this.setState({
 				filteredData:[...nextProps.data]

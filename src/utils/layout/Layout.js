@@ -9,6 +9,7 @@ export default class Layout{
 		this.r = 0;
 		this.rStdDev = 0;
 		this.groupByAccessor = null;
+		this.spriteSize; //size of the overall sprite map, used to scale individual signs
 
 		this.position = new THREE.Vector3();
 		this.rotation = new THREE.Quaternion();

@@ -18,6 +18,8 @@ export default class WheelLayout extends Layout{
 
 	compute(data, imagesToHighlight=[]){
 
+		this.spriteSize = data.size;
+
 		this.randomX = randomNormal(this.x, this.xStdDev);
 		this.randomR = randomNormal(this.r, this.rStdDev);
 
@@ -76,8 +78,10 @@ export default class WheelLayout extends Layout{
 
 		this.position.set(x,y,z);
 		this.rotation.setFromAxisAngle(this.X_AXIS, Math.PI/2-theta-Math.PI/8*(Math.random()*.5+1));
-		this.scale.set(frame.w/10, frame.h/10, 10);
+		this.scale.set(frame.w/(this.spriteSize/8192*10), frame.h/(this.spriteSize/8192*10), 10);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
+
+		const signScale = this.scale.clone();
 
 		//For arrows
 		z = Math.cos(theta)*(radius + this.rStdDev);
@@ -91,14 +95,16 @@ export default class WheelLayout extends Layout{
 		//Per instance datum
 		return {
 			id:v.id,
+			frame:v.frame,
 			filename:v.filename,
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign:this.transformMatrixSign.clone(),
 			transformMatrixArrow:this.transformMatrixArrow.clone(),
+			scaleVec3: signScale,
 			pickingColor: this.color.clone().setHex(i),
 			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(0,160,172)'),
-			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
-			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096], //FIXME: hardcoded
+			textureUvOffset: [(frame.x+(this.spriteSize/2048/2))/this.spriteSize, (frame.y+(this.spriteSize/2048/2))/this.spriteSize], //FIXME: hardcoded
+			textureUvSize: [(frame.w-this.spriteSize/2048)/this.spriteSize, (frame.h-this.spriteSize/2048)/this.spriteSize], //FIXME: hardcoded
 			x,
 			theta,
 			radius

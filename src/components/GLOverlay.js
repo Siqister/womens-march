@@ -121,14 +121,14 @@ class GLOverlay extends Component{
 
 	render(){
 
-		const {width,height,dragging,cameraTransitioning} = this.props;
+		const {width,height,dragging,cameraTransitioning,selectedImageId} = this.props;
 
 		return <canvas
 			ref={node => {this.canvasNode = node}}
 			className='gl-overlay'
 			width={width}
 			height={height}
-			style={Object.assign({}, glOverlayStyle, {opacity:(dragging||cameraTransitioning)?0.01:1})}
+			style={Object.assign({}, glOverlayStyle, {opacity:(dragging||cameraTransitioning||selectedImageId)?0.01:1})}
 		/>
 
 	}

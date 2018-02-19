@@ -104,11 +104,12 @@ const Image = props => {
 							style={ imageDetailListStyle } 
 							key={props.metadata._id}
 						>
-							<ImageDetailListItem colors={props.colors} data={props.metadata} id='_id' field='Unique ID'/>
 							<ImageDetailListItem colors={props.colors} data={props.metadata} id='filename' field='File'/>
 							<ImageDetailListItem colors={props.colors} data={props.metadata} id='colors' field='Colors' type='color'/>
 							<ImageDetailListItem colors={props.colors} data={props.metadata} id='labels' field='Labels'/>
-							
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='mConcern' field='Concern'/>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='mStrategy' field='Strategy'/>
+							<ImageDetailListItem colors={props.colors} data={props.metadata} id='mTone' field='Tone'/>
 						</ul>}
 					</CSSTransitionGroup>
 				</div>

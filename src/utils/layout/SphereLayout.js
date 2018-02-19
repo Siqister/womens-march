@@ -15,6 +15,8 @@ export default class SphereLayout extends Layout{
 
 	compute(data, imagesToHighlight=[]){
 
+		this.spriteSize = data.size;
+
 		const LNG_BANDS = Math.ceil(Math.sqrt(data.length)); 
 		const LAT_BANDS = Math.ceil(data.length/LNG_BANDS);
 
@@ -66,9 +68,11 @@ export default class SphereLayout extends Layout{
 		this.up.set(Math.random()*.6-.3, 1, 0).normalize();
 		rotationMat4.lookAt(this.position, this.CENTER, this.up);
 		
-		this.scale.set(frame.w/8, frame.h/8, 10);
+		this.scale.set(frame.w/(this.spriteSize/2048*2), frame.h/(this.spriteSize/2048*2), 10);
 		this.transformMatrixSign.compose(this.position, this.rotation, this.scale);
 		this.transformMatrixSign.multiply(rotationMat4);
+
+		const signScale = this.scale.clone();
 
 		//Arrow
 		instancePosition = instanceNormal.map(v => v*(instanceR + 15 + (v.highlight?15:0)));
@@ -80,15 +84,17 @@ export default class SphereLayout extends Layout{
 
 		return {
 			id:v.id,
+			frame:v.frame,
 			filename:v.filename,
 			xyz:xyz,
 			highlight:v.highlight?1.0:0.0, //glsl attribute has to be float
 			transformMatrixSign: this.transformMatrixSign.clone(),
 			transformMatrixArrow: this.transformMatrixArrow.clone(),
+			scaleVec3: signScale,
 			pickingColor: this.color.clone().setHex(i),
 			arrowColor: v.highlight?new THREE.Color('rgb(237,12,110)'):new THREE.Color('rgb(125,125,125)'),//new THREE.Color('rgb(0,160,172)'),
-			textureUvOffset: [(frame.x+2)/2/4096, (frame.y+2)/2/4096], //FIXME: hardcoded
-			textureUvSize: [(frame.w-4)/2/4096, (frame.h-4)/2/4096] //FIXME: hardcoded
+			textureUvOffset: [(frame.x+(this.spriteSize/2048/2))/this.spriteSize, (frame.y+(this.spriteSize/2048/2))/this.spriteSize], //FIXME: hardcoded
+			textureUvSize: [(frame.w-this.spriteSize/2048)/this.spriteSize, (frame.h-this.spriteSize/2048)/this.spriteSize] //FIXME: hardcoded
 		};
 
 	}

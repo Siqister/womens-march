@@ -211,9 +211,9 @@ class GLWrapper extends Component{
 			});
 		}
 
-		//On scene change or initial data injection, recompute per-instance transform for each sign again
+		//On scene change, changes to sprite/sprite texture coord data, or changes in the images highlighted, recompute per-instance transform for each sign again
 		if(this.props.scene !== scene 
-			|| data.length !== this.props.data.length
+			|| data !== this.props.data
 			|| imagesToHighlight !== this.props.imagesToHighlight
 		){
 
@@ -229,10 +229,6 @@ class GLWrapper extends Component{
 			const sphereLayout = new SphereLayout()
 				.setR(this.state.R);
 
-			// const sphereClusterLayout = new SphereClusterLayout()
-			// 	.setR(this.state.R*1.2)
-			// 	.setGroupByAccessor(scene.layoutGroupBy);
-
 			const tsneLayout = new PrecomputedLayout()
 				.setR(this.state.R*3)
 				.setDataSource(scene.dataSource);
@@ -244,9 +240,6 @@ class GLWrapper extends Component{
 				case 'sphere':
 					setPerInstanceProperties = sphereLayout.compute;
 					break;
-				// case 'sphereCluster':
-				// 	setPerInstanceProperties = sphereClusterLayout.compute;
-				// 	break;
 				case 'tsne':
 					setPerInstanceProperties = tsneLayout.compute;
 					break;
@@ -259,8 +252,8 @@ class GLWrapper extends Component{
 				this.cancelToken.cancel();
 			}
 			this.props.onLayoutStart();
-			//Compute a new layout, return a promise that is either immediately resolved
-			//or resolved later (if sphereClusterLayout)
+
+			//Compute a new layout as a Promise that either resolves immediately or asynchronously
 			Promise.resolve(setPerInstanceProperties(data, imagesToHighlight, this.cancelToken))
 				.then(instances => {
 					this.props.onLayoutEnd();
@@ -443,19 +436,6 @@ class GLWrapper extends Component{
 		this.meshes.pickedTarget = new THREE.Mesh(pickedTargetGeometry,pickedTargetMaterial);
 		this.scene.add(this.meshes.pickedTarget);
 
-
-		//HEMISPHERE LIGHT
-		// const hemisphereGeometry = new THREE.SphereBufferGeometry(this.state.R*5);
-		// const hemisphereMaterial = new THREE.ShaderMaterial({
-		// 	side:THREE.DoubleSide,
-		// 	vertexShader:hemisphereVs,
-		// 	fragmentShader:hemisphereFs,
-		// 	blending: THREE.AdditiveBlending
-		// });
-		// this.meshes.hemisphere = new THREE.Mesh(hemisphereGeometry, hemisphereMaterial);
-		// this.scene.add(this.meshes.hemisphere);
-
-
 		//Set up tweening of picked signs
 		this.tween.updatePickedTarget
 			.onUpdate(v=>{
@@ -575,21 +555,30 @@ class GLWrapper extends Component{
 
 		const {instances,fogFactor} = this.state;
 		const COUNT = instances.length;
-		const {instanceHighlightBool0, instanceHighlightBool1} = this.meshes.signs.geometry.attributes;
+		const {instanceHighlightBool0, instanceHighlightBool1, instanceTexUvOffset, instanceTexUvSize} = this.meshes.signs.geometry.attributes;
 		const arrowInstanceColors = this.meshes.arrows.geometry.attributes.instanceColor;
+
+		//this.props.sprite might have changed...
+		this.meshes.target.material.uniforms.map.value = this.props.sprite;
+		this.meshes.signs.material.uniforms.map.value = this.props.sprite;
 
 		//Populate target attribute value
 		for(let i=0; i<COUNT; i++){
-			const {transformMatrixSign, transformMatrixArrow, highlight, arrowColor, clusterColor:clusterColorValue} = instances[i];
+			const {transformMatrixSign, transformMatrixArrow, highlight, arrowColor, clusterColor:clusterColorValue, textureUvOffset, textureUvSize} = instances[i];
 
 			glUtils.updateTransformMatrices(this.meshes.signs, null, transformMatrixSign, i);
 			glUtils.updateTransformMatrices(this.meshes.arrows, null, transformMatrixArrow, i);
 
+			instanceTexUvOffset.setXY(i, ...textureUvOffset);
+			instanceTexUvSize.setXY(i, ...textureUvSize);
 			instanceHighlightBool1.setX(i, highlight);
 			arrowInstanceColors.setXYZW(i, arrowColor.r, arrowColor.g, arrowColor.b, 1.0);
 		}
 		instanceHighlightBool1.needsUpdate = true;
 		arrowInstanceColors.needsUpdate = true;
+		instanceTexUvOffset.needsUpdate = true;
+		instanceTexUvSize.needsUpdate = true;
+
 
 		//Interpolate towards target attribute value
 		//On completion, update initial attribute value to old target attribute value
@@ -693,9 +682,8 @@ class GLWrapper extends Component{
 
 				//Work out m1
 				const p1 = new THREE.Vector3(0, 0, -35),
-					r1 = new THREE.Quaternion(),
-					s1 = new THREE.Vector3(); //Store decomposed matrix4
-				_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s1);
+					r1 = new THREE.Quaternion(), //Store decomposed matrix4
+					s1 = _instance.scaleVec3;
 				this.camera.matrixWorld.decompose(new THREE.Vector3(), r1, new THREE.Vector3());
 				this.camera.localToWorld(p1);
 				m1 = new THREE.Matrix4().compose(p1, r1, s1);
@@ -732,10 +720,9 @@ class GLWrapper extends Component{
 		const {fogFactor} = this.state;
 
 		//Hide this.meshes.pickedTarget		
-		const s1 = new THREE.Vector3();
+		const s1 = _instance.scaleVec3;
 		const r1 = new THREE.Quaternion();
 		const p1 = new THREE.Vector3(20,20,5);
-		_instance.transformMatrixSign.decompose(new THREE.Vector3(), new THREE.Quaternion(), s1);
 		this.camera.matrixWorld.decompose(new THREE.Vector3(), r1, new THREE.Vector3());
 		this.camera.localToWorld(p1);
 		const m1 = new THREE.Matrix4().compose(p1, r1, s1);
@@ -816,7 +803,7 @@ class GLWrapper extends Component{
 
 	render(){
 
-		const {width,height,scene} = this.props;
+		const {width,height,scene,selectedImageId} = this.props;
 		const {instances, dragging, cameraTransitioning} = this.state;
 
 		return (
@@ -826,6 +813,7 @@ class GLWrapper extends Component{
 					height={height}
 					dragging={dragging}
 					cameraTransitioning={cameraTransitioning}
+					selectedImageId={selectedImageId}
 					instances={instances}
 					rotation={this.rotation}
 					camera={this.camera}

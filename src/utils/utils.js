@@ -4,9 +4,9 @@ import {randomNormal,pie,json,csv} from 'd3';
 //export * from './layout';
 
 //Fetch data
-export const fetchImageList = () => {
+export const fetchImageList = url => {
 	return new Promise((resolve, reject)=>{
-		json('/assets/all_images.json',(err,json)=>{
+		json(url, (err,json)=>{
 			if(err){
 				reject(err);
 			}else{
@@ -40,10 +40,10 @@ export const fetchMetadata = fileName => {
 	return fetch(`https://mfw-data-interface.herokuapp.com/api/v1/image/${fileName}`);
 }
 
-export const fetchSprite = () => {
+export const fetchSprite = url => {
 	return new Promise((resolve, reject)=>{
 		const t = new THREE.TextureLoader()
-			.load('/assets/all_images_sprite_4096.png', 
+			.load(url, 
 				texture => {
 					resolve(texture);
 				},
