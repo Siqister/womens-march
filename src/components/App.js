@@ -51,7 +51,10 @@ class App extends Component{
 
 		//Request initial data, which includes small 2048 sprite and corresponding texture coord data...
 		//...on data request complete, update state and trigger re-render
-		Promise.all([fetchImageList('/assets/all_images_2048.json'), fetchSprite('/assets/all_images_2048.png')])
+		Promise.all([
+				fetchImageList('/assets/all_images_2048.json'), 
+				fetchSprite('/assets/all_images_2048.png')
+			])
 			.then(([data,texture]) => {
 
 				const imageData = [...data];
